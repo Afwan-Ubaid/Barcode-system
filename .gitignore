@@ -19,6 +19,10 @@ build/
 test_generated.bmp
 barcode_*.bmp
 
+# SFML binaries & DLLs
+SFML-2.5.1/
+*.dll
+
 # macOS / Windows OS artifacts
 .DS_Store
 Thumbs.db
