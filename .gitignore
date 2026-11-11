@@ -6,6 +6,7 @@
 *.exp
 *.lib
 *.idb
+*.user
 
 # Visual Studio Directories
 .vs/
@@ -14,6 +15,8 @@ Release/
 x64/
 x86/
 build/
+bin/
+obj/
 
 # Test output bitmaps
 test_generated.bmp

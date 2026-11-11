@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{B2C3D4E5-F6A7-8901-BCDE-F12345678901}</ProjectGuid>
+    <RootNamespace>ScanIT_Frontend</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props"
+            Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')"
+            Label="LocalAppDataProps" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props"
+            Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')"
+            Label="LocalAppDataProps" />
+  </ImportGroup>
+
+  <!-- Output directories -->
+  <PropertyGroup>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)bin\Debug\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)bin\Release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)obj\Frontend\Debug\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)obj\Frontend\Release\</IntDir>
+    <TargetName>barcode_gui</TargetName>
+  </PropertyGroup>
+
+  <!-- ================================================================
+       Include Directories:
+         1. frontend/include        — UITheme, SplashScreen, HomeScreen etc.
+         2. backend/include         — Generator.h, Decoder.h, Validator.h
+         3. SFML-2.5.1/include      — SFML headers
+       ================================================================ -->
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_WINDOWS;_HAS_STD_BYTE=0;NOMINMAX;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>
+        $(ProjectDir)include;
+        $(SolutionDir)backend\include;
+        $(SolutionDir)SFML-2.5.1\include;
+        %(AdditionalIncludeDirectories)
+      </AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <!-- SFML debug libs + Windows system libs -->
+      <AdditionalLibraryDirectories>$(SolutionDir)SFML-2.5.1\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>
+        sfml-main-d.lib;
+        sfml-graphics-d.lib;
+        sfml-window-d.lib;
+        sfml-system-d.lib;
+        sfml-audio-d.lib;
+        vfw32.lib;
+        comdlg32.lib;
+        user32.lib;
+        gdi32.lib;
+        opengl32.lib;
+        winmm.lib;
+        %(AdditionalDependencies)
+      </AdditionalDependencies>
+    </Link>
+    <!-- Copy SFML DLLs and Assets to output after build -->
+    <PostBuildEvent>
+      <Command>
+        xcopy /y /d "$(SolutionDir)SFML-2.5.1\bin\*.dll" "$(OutDir)"
+        if not exist "$(OutDir)assets" mkdir "$(OutDir)assets"
+        xcopy /y /d "$(ProjectDir)assets\*.*" "$(OutDir)assets\"
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_WINDOWS;_HAS_STD_BYTE=0;NOMINMAX;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>
+        $(ProjectDir)include;
+        $(SolutionDir)backend\include;
+        $(SolutionDir)SFML-2.5.1\include;
+        %(AdditionalIncludeDirectories)
+      </AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <!-- SFML release libs + Windows system libs -->
+      <AdditionalLibraryDirectories>$(SolutionDir)SFML-2.5.1\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>
+        sfml-main.lib;
+        sfml-graphics.lib;
+        sfml-window.lib;
+        sfml-system.lib;
+        sfml-audio.lib;
+        vfw32.lib;
+        comdlg32.lib;
+        user32.lib;
+        gdi32.lib;
+        opengl32.lib;
+        winmm.lib;
+        %(AdditionalDependencies)
+      </AdditionalDependencies>
+    </Link>
+    <!-- Copy SFML DLLs and Assets to output after build -->
+    <PostBuildEvent>
+      <Command>
+        xcopy /y /d "$(SolutionDir)SFML-2.5.1\bin\*.dll" "$(OutDir)"
+        if not exist "$(OutDir)assets" mkdir "$(OutDir)assets"
+        xcopy /y /d "$(ProjectDir)assets\*.*" "$(OutDir)assets\"
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+
+  <!-- Frontend Source Files -->
+  <ItemGroup>
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\SplashScreen.cpp" />
+    <ClCompile Include="src\HomeScreen.cpp" />
+    <ClCompile Include="src\GenerateScreen.cpp" />
+    <ClCompile Include="src\ReadScreen.cpp" />
+    <!-- Backend logic compiled directly into frontend project -->
+    <ClCompile Include="..\backend\src\Generator.cpp" />
+    <ClCompile Include="..\backend\src\Decoder.cpp" />
+    <ClCompile Include="..\backend\src\Validator.cpp" />
+    <ClCompile Include="..\backend\src\CameraCapture.cpp" />
+  </ItemGroup>
+
+  <!-- Frontend Header Files -->
+  <ItemGroup>
+    <ClInclude Include="include\UITheme.h" />
+    <ClInclude Include="include\ui_assets.hpp" />
+    <ClInclude Include="include\splash.hpp" />
+    <ClInclude Include="include\SplashScreen.h" />
+    <ClInclude Include="include\HomeScreen.h" />
+    <ClInclude Include="include\GenerateScreen.h" />
+    <ClInclude Include="include\ReadScreen.h" />
+    <!-- Backend headers visible in Solution Explorer -->
+    <ClInclude Include="..\backend\include\Generator.h" />
+    <ClInclude Include="..\backend\include\Decoder.h" />
+    <ClInclude Include="..\backend\include\Validator.h" />
+    <ClInclude Include="..\backend\include\CameraCapture.h" />
+  </ItemGroup>
+
+  <!-- Assets visible in Solution Explorer -->
+  <ItemGroup>
+    <None Include="assets\icon.jpg" />
+    <None Include="assets\icon.png" />
+    <None Include="build_gui.bat" />
+  </ItemGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+
+</Project>
