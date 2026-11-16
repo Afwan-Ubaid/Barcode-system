@@ -1,5 +1,4 @@
 #define NOMINMAX        // Must come before windows.h
-
 #include <windows.h>
 #include <commdlg.h>
 #include <algorithm>
