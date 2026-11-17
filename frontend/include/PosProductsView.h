@@ -19,7 +19,10 @@ public:
     static void drawViewport(sf::RenderTarget& target, float mainX,
                              const sf::Texture& cameraTexture,
                              float flashTimer, float lastScanTimer, const std::string& lastScannedInfo,
-                             const sf::Font& fontSemiBold,
+                             bool barcodeFound, const BarcodeBox& barcodeBox,
+                             int camWidth, int camHeight, const std::string& detectedBarcode,
+                             const std::string& cameraName, bool isExternalCam, int cameraCount,
+                             const sf::Font& fontSemiBold, const sf::Font& fontBold,
                              std::function<const sf::Texture&(const std::string&)> getTexture);
 
     static void drawProducts(sf::RenderTarget& target, sf::Vector2f mouse, float mainX,
@@ -34,15 +37,18 @@ public:
                                 const std::vector<ProductItem>& products,
                                 float scrollOffset, const std::string& currentRole,
                                 const std::string& productFilePath,
+                                const std::string& searchQuery, bool searchFocused,
                                 const sf::Font& fontRegular, const sf::Font& fontMedium,
                                 const sf::Font& fontSemiBold, const sf::Font& fontBold,
                                 const sf::Font& fontSerif);
 
     static void drawInventoryTab(sf::RenderTarget& target, sf::Vector2f mouse, float mainX,
                                  const std::vector<ProductItem>& products,
-                                 float scrollOffset,
+                                 const InventoryManager& inventoryMgr,
+                                 int inventorySubTab, float scrollOffset,
                                  const std::string& currentRole,
-                                 const sf::Font& fontRegular,
+                                 const std::string& searchQuery, bool searchFocused,
+                                 const sf::Font& fontRegular, const sf::Font& fontMedium,
                                  const sf::Font& fontSemiBold, const sf::Font& fontBold,
                                  const sf::Font& fontSerif);
 };

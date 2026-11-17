@@ -22,6 +22,7 @@ cl /EHsc /O2 /std:c++17 /D_HAS_STD_BYTE=0 /DNOMINMAX /DWIN32_LEAN_AND_MEAN ^
   src\StaffManager.cpp ^
   src\ActivityLogger.cpp ^
   src\ProductCatalog.cpp ^
+  src\InventoryManager.cpp ^
   src\CartService.cpp ^
   src\PosNavigation.cpp ^
   src\PosProductsView.cpp ^
@@ -44,6 +45,7 @@ cl /EHsc /O2 /std:c++17 /D_HAS_STD_BYTE=0 /DNOMINMAX /DWIN32_LEAN_AND_MEAN ^
   /out:..\barcode_gui.exe
 
 if %errorlevel% equ 0 (
+    del *.obj resource.res >nul 2>&1
     copy /y ..\SFML-2.5.1\bin\*.dll .. >nul
     if not exist "..\assets" mkdir "..\assets"
     xcopy /y /e /i assets\* ..\assets >nul

@@ -7,7 +7,10 @@
 void PosProductsView::drawViewport(sf::RenderTarget& target, float mainX,
                                    const sf::Texture& cameraTexture,
                                    float flashTimer, float lastScanTimer, const std::string& lastScannedInfo,
-                                   const sf::Font& fontSemiBold,
+                                   bool barcodeFound, const BarcodeBox& barcodeBox,
+                                   int camWidth, int camHeight, const std::string& detectedBarcode,
+                                   const std::string& cameraName, bool isExternalCam, int cameraCount,
+                                   const sf::Font& fontSemiBold, const sf::Font& fontBold,
                                    std::function<const sf::Texture&(const std::string&)> getTexture) {
     sf::FloatRect r{mainX, 135.f, Layout::MAIN_W, 160.f};
     drawShadow(target, r.left, r.top, r.width, r.height, 14, 5, 8, 10, 3);
@@ -21,20 +24,31 @@ void PosProductsView::drawViewport(sf::RenderTarget& target, float mainX,
     float paneW = r.width - 8.f;
     float paneH = r.height - 8.f;
 
+    float cropX = 0.f, cropY = 0.f, cropW = 1.f, cropH = 1.f;
+    float scaleX = 1.f, scaleY = 1.f;
+
     if (cameraTexture.getSize().x > 0) {
         sf::Sprite camSprite(cameraTexture);
         float srcW = (float)cameraTexture.getSize().x;
         float srcH = (float)cameraTexture.getSize().y;
         float targetAspect = paneW / paneH;
-        float cropH = srcW / targetAspect;
+        cropH = srcW / targetAspect;
+        cropW = srcW;
         if (cropH <= srcH) {
-            camSprite.setTextureRect(sf::IntRect(0, (int)((srcH - cropH) / 2.f), (int)srcW, (int)cropH));
+            cropY = (srcH - cropH) / 2.f;
+            cropX = 0.f;
+            camSprite.setTextureRect(sf::IntRect(0, (int)cropY, (int)srcW, (int)cropH));
         } else {
-            float cropW = srcH * targetAspect;
-            camSprite.setTextureRect(sf::IntRect((int)((srcW - cropW) / 2.f), 0, (int)cropW, (int)srcH));
+            cropW = srcH * targetAspect;
+            cropX = (srcW - cropW) / 2.f;
+            cropY = 0.f;
+            cropH = srcH;
+            camSprite.setTextureRect(sf::IntRect((int)cropX, 0, (int)cropW, (int)srcH));
         }
+        scaleX = paneW / camSprite.getTextureRect().width;
+        scaleY = paneH / camSprite.getTextureRect().height;
         camSprite.setPosition(paneX, paneY);
-        camSprite.setScale(paneW / camSprite.getTextureRect().width, paneH / camSprite.getTextureRect().height);
+        camSprite.setScale(scaleX, scaleY);
         target.draw(camSprite);
     } else {
         drawRounded(target, paneX, paneY, paneW, paneH, 8, sf::Color(22, 22, 26));
@@ -61,20 +75,81 @@ void PosProductsView::drawViewport(sf::RenderTarget& target, float mainX,
     sf::RectangleShape cBR2({retThick, retSize}); cBR2.setPosition(r.left + r.width - retPad - retThick, r.top + r.height - retPad - retSize); cBR2.setFillColor(retColor); target.draw(cBR2);
 
     // Live continuous status badge at top-left
-    drawRounded(target, r.left + 14.f, r.top + 12.f, 142.f, 20.f, 5.f, sf::Color(15, 15, 18, 210), sf::Color(255, 255, 255, 45), 1.f);
+    float badgeW = barcodeFound ? 165.f : 142.f;
+    drawRounded(target, r.left + 14.f, r.top + 12.f, badgeW, 20.f, 5.f, sf::Color(15, 15, 18, 210), sf::Color(255, 255, 255, 45), 1.f);
     sf::CircleShape liveDot(3.5f, 16);
     liveDot.setOrigin(3.5f, 3.5f);
     liveDot.setPosition(r.left + 24.f, r.top + 22.f);
-    liveDot.setFillColor(ThemeColor::Green);
+    liveDot.setFillColor(barcodeFound ? sf::Color(34, 197, 94) : ThemeColor::Green);
     target.draw(liveDot);
-    drawText(target, fontSemiBold, "CONTINUOUS SCANNER", 7.8f, sf::Color(245, 245, 245), r.left + 33.f, r.top + 22.f);
+    std::string badgeLabel = barcodeFound ? ("OPTICAL LOCK: " + detectedBarcode) : "CONTINUOUS SCANNER";
+    drawText(target, fontSemiBold, badgeLabel, 7.8f, sf::Color(245, 245, 245), r.left + 33.f, r.top + 22.f);
+
+    // Active Camera Source & Quick Switch Pill at top-right
+    float camBadgeW = 215.f;
+    float camBadgeX = r.left + r.width - camBadgeW - 14.f;
+    float camBadgeY = r.top + 11.f;
+    sf::Color badgeBg = isExternalCam ? sf::Color(15, 75, 40, 220) : sf::Color(28, 36, 52, 220);
+    sf::Color badgeBorder = isExternalCam ? sf::Color(34, 197, 94, 200) : sf::Color(148, 163, 184, 130);
+    drawRounded(target, camBadgeX, camBadgeY, camBadgeW, 22.f, 6.f, badgeBg, badgeBorder, 1.2f);
+
+    std::string camPrefix = isExternalCam ? "[Phone] " : "[Laptop] ";
+    std::string cleanName = cameraName;
+    if (cleanName.length() > 14) cleanName = cleanName.substr(0, 12) + "..";
+    std::string pillText = camPrefix + cleanName + (cameraCount > 1 ? " | Switch (C)" : "");
+    drawText(target, fontSemiBold, pillText, 8.f, isExternalCam ? sf::Color(220, 252, 231) : sf::Color(241, 245, 249),
+             camBadgeX + camBadgeW / 2.f, camBadgeY + 11.f, TextAlignment::Center);
 
     // Outer border
     drawRounded(target, r.left, r.top, r.width, r.height, 12, ThemeColor::None, sf::Color(140, 130, 120, 140), 1.2f);
 
+    // Real-Time Bounding Box for Detected Barcode (ISE-28 Requirement)
+    if (barcodeFound && barcodeBox.detected && camWidth > 0 && camHeight > 0) {
+        float bx1 = paneX + (barcodeBox.x1 - cropX) * scaleX;
+        float by1 = paneY + (barcodeBox.y1 - cropY) * scaleY;
+        float bx2 = paneX + (barcodeBox.x2 - cropX) * scaleX;
+        float by2 = paneY + (barcodeBox.y2 - cropY) * scaleY;
+
+        bx1 = std::clamp(bx1, paneX + 2.f, paneX + paneW - 20.f);
+        bx2 = std::clamp(bx2, bx1 + 25.f, paneX + paneW - 2.f);
+        by1 = std::clamp(by1, paneY + 2.f, paneY + paneH - 20.f);
+        by2 = std::clamp(by2, by1 + 25.f, paneY + paneH - 2.f);
+
+        float bw = bx2 - bx1;
+        float bh = by2 - by1;
+
+        // Glowing semi-transparent green box fill
+        drawRounded(target, bx1, by1, bw, bh, 6.f, sf::Color(34, 197, 94, 45), sf::Color(34, 197, 94, 235), 2.2f);
+
+        // 4 High-Tech Corner Reticles
+        float cLen = std::min(14.f, std::min(bw, bh) / 3.f);
+        float cThick = 3.f;
+        sf::Color neonGreen(34, 197, 94, 255);
+        // Top-Left corner
+        sf::RectangleShape bTL1({cLen, cThick}); bTL1.setPosition(bx1, by1); bTL1.setFillColor(neonGreen); target.draw(bTL1);
+        sf::RectangleShape bTL2({cThick, cLen}); bTL2.setPosition(bx1, by1); bTL2.setFillColor(neonGreen); target.draw(bTL2);
+        // Top-Right corner
+        sf::RectangleShape bTR1({cLen, cThick}); bTR1.setPosition(bx2 - cLen, by1); bTR1.setFillColor(neonGreen); target.draw(bTR1);
+        sf::RectangleShape bTR2({cThick, cLen}); bTR2.setPosition(bx2 - cThick, by1); bTR2.setFillColor(neonGreen); target.draw(bTR2);
+        // Bottom-Left corner
+        sf::RectangleShape bBL1({cLen, cThick}); bBL1.setPosition(bx1, by2 - cThick); bBL1.setFillColor(neonGreen); target.draw(bBL1);
+        sf::RectangleShape bBL2({cThick, cLen}); bBL2.setPosition(bx1, by2 - cLen); bBL2.setFillColor(neonGreen); target.draw(bBL2);
+        // Bottom-Right corner
+        sf::RectangleShape bBR1({cLen, cThick}); bBR1.setPosition(bx2 - cLen, by2 - cThick); bBR1.setFillColor(neonGreen); target.draw(bBR1);
+        sf::RectangleShape bBR2({cThick, cLen}); bBR2.setPosition(bx2 - cThick, by2 - cLen); bBR2.setFillColor(neonGreen); target.draw(bBR2);
+
+        // Detection tag badge above bounding box
+        float tagW = 150.f;
+        float tagH = 18.f;
+        float tagY = std::max(paneY + 4.f, by1 - tagH - 4.f);
+        float tagX = std::clamp(bx1, paneX + 4.f, paneX + paneW - tagW - 4.f);
+        drawRounded(target, tagX, tagY, tagW, tagH, 4.f, sf::Color(16, 80, 40, 240), sf::Color(34, 197, 94, 220), 1.f);
+        drawText(target, fontBold, "[ ✔ CODE: " + (detectedBarcode.empty() ? "DETECTED" : detectedBarcode) + " ]", 8.5f, sf::Color(240, 255, 240), tagX + tagW / 2.f, tagY + 9.f, TextAlignment::Center);
+    }
+
     // Animated Moving Red Laser Scan Line sweeping up and down across the ENTIRE camera pane
     float pulse = 0.75f + 0.25f * std::sin((float)clock() / CLOCKS_PER_SEC * 6.f);
-    float sweep = 0.5f + 0.5f * std::sin((float)clock() / CLOCKS_PER_SEC * 2.2f); // oscillates smoothly between 0.0 and 1.0
+    float sweep = 0.5f + 0.5f * std::sin((float)clock() / CLOCKS_PER_SEC * 2.2f);
     float minY = paneY + 12.f;
     float maxY = paneY + paneH - 12.f;
     float ly = minY + sweep * (maxY - minY);
@@ -96,7 +171,7 @@ void PosProductsView::drawViewport(sf::RenderTarget& target, float mainX,
         drawRounded(target, r.left + 15, r.top + r.height - 34, r.width - 30, 24, 6,
                     sf::Color(30, 80, 50, (sf::Uint8)alpha));
         drawSprite(target, getTexture("icons/check.png"), r.left + 22, r.top + r.height - 29, 14, 14,
-                   sf::Color(180, 255, 180, (sf::Uint8)alpha));
+                    sf::Color(180, 255, 180, (sf::Uint8)alpha));
         drawText(target, fontSemiBold, "Scanned: " + lastScannedInfo + " -> Added to receipt", 9.5f,
                  sf::Color(255, 255, 255, (sf::Uint8)alpha), r.left + 42, r.top + r.height - 22);
     }
@@ -115,13 +190,13 @@ void PosProductsView::drawProducts(sf::RenderTarget& target, sf::Vector2f m, flo
                                   const sf::Font& fontBold, const sf::Font& fontSerif,
                                   std::function<const sf::Texture&(const std::string&)> getTexture) {
     drawText(target, fontSerif, "Products", 18, ThemeColor::Ink, mainX, 328);
-    drawText(target, fontRegular, "(product.txt catalog)", 9, ThemeColor::Mute, mainX + 80, 332);
 
-    // Category filter pills
+    // Category filter pills (Supermarket departments)
     float pillRight = mainX + Layout::MAIN_W;
-    for (int i = 4; i >= 0; i--) {
-        float w = getTextWidth(fontSemiBold, Layout::CATEGORIES[i], 10) + 20.f;
+    for (int i = Layout::CATEGORY_COUNT - 1; i >= 0; i--) {
+        float w = getTextWidth(fontSemiBold, Layout::CATEGORIES[i], 8.5f) + 14.f;
         pillRight -= w;
+        if (pillRight < mainX + 80.f) break;
         bool selected = (activeCategory == Layout::CATEGORIES[i]);
         bool hovered = pointInRect(m, pillRight, 318.f, w, 22.f);
 
@@ -130,7 +205,7 @@ void PosProductsView::drawProducts(sf::RenderTarget& target, sf::Vector2f m, flo
         } else if (hovered) {
             drawRounded(target, pillRight, 318.f, w, 22.f, 11, sf::Color(232, 224, 207));
         }
-        drawText(target, fontSemiBold, Layout::CATEGORIES[i], 10, selected ? ThemeColor::White : ThemeColor::Mute,
+        drawText(target, fontSemiBold, Layout::CATEGORIES[i], 8.5f, selected ? ThemeColor::White : ThemeColor::Mute,
                  pillRight + w / 2.f, 329.f, TextAlignment::Center, 0.f);
 
         pillRight -= 4.f;
@@ -165,134 +240,273 @@ void PosProductsView::drawProductsTab(sf::RenderTarget& target, sf::Vector2f /*m
                                      const std::vector<ProductItem>& products,
                                      float scrollOffset, const std::string& currentRole,
                                      const std::string& productFilePath,
+                                     const std::string& searchQuery, bool searchFocused,
                                      const sf::Font& fontRegular, const sf::Font& fontMedium,
                                      const sf::Font& fontSemiBold, const sf::Font& fontBold,
                                      const sf::Font& fontSerif) {
-    drawText(target, fontSerif, "Product Catalog Database", 24, ThemeColor::Ink, mainX, 50);
-    drawText(target, fontRegular, "Live product database linked with barcode scanner (" + productFilePath + ")", 10.5f, ThemeColor::Mute, mainX, 74);
+    drawText(target, fontSerif, "Product Catalog", 21, ThemeColor::Ink, mainX, 48);
 
+    // Search bar
+    float searchW = 160.f;
+    float searchX = mainX + Layout::MAIN_W - 140.f - searchW - 10.f;
+    drawRounded(target, searchX, 48, searchW, 30, 6, ThemeColor::Paper, searchFocused ? ThemeColor::Blue : ThemeColor::Line, 1.2f);
+    std::string sDisplay = searchQuery.empty() ? (searchFocused ? "|" : "Search products...") : (searchQuery + (searchFocused ? "|" : ""));
+    drawText(target, fontRegular, sDisplay, 9.f, searchQuery.empty() ? ThemeColor::Mute : ThemeColor::Ink, searchX + 10, 56);
+
+    // + Add Product (stocks from Inventory)
     if (currentRole == "Admin") {
-        drawRounded(target, mainX + Layout::MAIN_W - 130, 50, 130, 34, 6, ThemeColor::Blue);
-        drawText(target, fontSemiBold, "+ Add Product", 11, ThemeColor::White, mainX + Layout::MAIN_W - 65, 67, TextAlignment::Center);
+        drawRounded(target, mainX + Layout::MAIN_W - 140, 48, 140, 30, 6, ThemeColor::Blue);
+        drawText(target, fontSemiBold, "+ Add Product", 9.5f, ThemeColor::White, mainX + Layout::MAIN_W - 70, 56, TextAlignment::Center);
     } else {
-        drawRounded(target, mainX + Layout::MAIN_W - 150, 50, 150, 34, 6, sf::Color(230, 222, 210), ThemeColor::Edge, 1);
-        drawText(target, fontSemiBold, "[Admin Only] + Add", 9.5f, ThemeColor::Mute, mainX + Layout::MAIN_W - 75, 67, TextAlignment::Center);
+        drawRounded(target, mainX + Layout::MAIN_W - 140, 48, 140, 30, 6, sf::Color(230, 222, 210), ThemeColor::Edge, 1);
+        drawText(target, fontSemiBold, "[Admin Only] + Add", 9.f, ThemeColor::Mute, mainX + Layout::MAIN_W - 70, 56, TextAlignment::Center);
     }
 
-    float ty = 100.f;
-    drawRounded(target, mainX, ty, Layout::MAIN_W, 560, 10, ThemeColor::Paper, ThemeColor::Line, 1);
+    float ty = 92.f;
+    drawRounded(target, mainX, ty, Layout::MAIN_W, 570, 10, ThemeColor::Paper, ThemeColor::Line, 1);
 
     // Table Header
-    drawText(target, fontSemiBold, "Barcode", 10, ThemeColor::Mute, mainX + 20, ty + 18);
-    drawText(target, fontSemiBold, "Item Name", 10, ThemeColor::Mute, mainX + 110, ty + 18);
-    drawText(target, fontSemiBold, "Category", 10, ThemeColor::Mute, mainX + 240, ty + 18);
-    drawText(target, fontSemiBold, "Price", 10, ThemeColor::Mute, mainX + 340, ty + 18);
-    drawText(target, fontSemiBold, "Stock", 10, ThemeColor::Mute, mainX + 410, ty + 18);
-    drawText(target, fontSemiBold, "Actions", 10, ThemeColor::Mute, mainX + 475, ty + 18);
+    drawText(target, fontSemiBold, "Barcode", 9.5f, ThemeColor::Mute, mainX + 15, ty + 14);
+    drawText(target, fontSemiBold, "Item Name", 9.5f, ThemeColor::Mute, mainX + 105, ty + 14);
+    drawText(target, fontSemiBold, "Category", 9.5f, ThemeColor::Mute, mainX + 225, ty + 14);
+    drawText(target, fontSemiBold, "Price", 9.5f, ThemeColor::Mute, mainX + 315, ty + 14);
+    drawText(target, fontSemiBold, "Stock", 9.5f, ThemeColor::Mute, mainX + 375, ty + 14);
+    drawText(target, fontSemiBold, "Detail", 9.5f, ThemeColor::Mute, mainX + 435, ty + 14);
+    drawText(target, fontSemiBold, "Action", 9.5f, ThemeColor::Mute, mainX + 495, ty + 14);
 
-    sf::RectangleShape hdrLine({Layout::MAIN_W - 40, 1});
-    hdrLine.setPosition(mainX + 20, ty + 30);
+    sf::RectangleShape hdrLine({Layout::MAIN_W - 30, 1});
+    hdrLine.setPosition(mainX + 15, ty + 26);
     hdrLine.setFillColor(ThemeColor::Line);
     target.draw(hdrLine);
 
-    for (size_t i = 0; i < products.size(); i++) {
-        float rowY = ty + 46.f + static_cast<float>(i) * 46.f - scrollOffset;
-        if (rowY < ty + 30.f || rowY > ty + 530.f) continue;
+    // Filter indices by search query (case-insensitive)
+    std::string qLower = searchQuery;
+    std::transform(qLower.begin(), qLower.end(), qLower.begin(), ::tolower);
 
-        const auto& p = products[i];
-        drawText(target, fontMedium, p.barcode, 10.5f, ThemeColor::Ink, mainX + 20, rowY);
-        drawText(target, fontBold, p.name, 11.f, ThemeColor::Ink, mainX + 110, rowY);
-        drawText(target, fontRegular, p.category, 10.f, ThemeColor::Mute, mainX + 240, rowY);
-        drawText(target, fontBold, formatRs(p.price), 11.f, ThemeColor::Ink, mainX + 340, rowY);
+    std::vector<int> visibleIndices;
+    for (size_t i = 0; i < products.size(); i++) {
+        if (qLower.empty()) {
+            visibleIndices.push_back(static_cast<int>(i));
+            continue;
+        }
+        std::string nLower = products[i].name;
+        std::transform(nLower.begin(), nLower.end(), nLower.begin(), ::tolower);
+        std::string bLower = products[i].barcode;
+        std::transform(bLower.begin(), bLower.end(), bLower.begin(), ::tolower);
+        std::string cLower = products[i].category;
+        std::transform(cLower.begin(), cLower.end(), cLower.begin(), ::tolower);
+        if (nLower.find(qLower) != std::string::npos ||
+            bLower.find(qLower) != std::string::npos ||
+            cLower.find(qLower) != std::string::npos) {
+            visibleIndices.push_back(static_cast<int>(i));
+        }
+    }
+
+    for (size_t vi = 0; vi < visibleIndices.size(); vi++) {
+        int idx = visibleIndices[vi];
+        float rowY = ty + 38.f + static_cast<float>(vi) * 44.f - scrollOffset;
+        if (rowY < ty + 26.f || rowY > ty + 540.f) continue;
+
+        const auto& p = products[idx];
+        drawText(target, fontMedium, p.barcode, 9.5f, ThemeColor::Ink, mainX + 15, rowY);
+        drawText(target, fontBold, p.name, 10.5f, ThemeColor::Ink, mainX + 105, rowY);
+        drawText(target, fontRegular, p.category, 9.5f, ThemeColor::Mute, mainX + 225, rowY);
+        drawText(target, fontBold, formatRs(p.price), 10.5f, ThemeColor::Ink, mainX + 315, rowY);
 
         bool low = p.stock < 15;
-        drawText(target, fontSemiBold, std::to_string(p.stock), 10.5f,
+        drawText(target, fontSemiBold, std::to_string(p.stock), 10.f,
                  p.stock == 0 ? ThemeColor::Red : (low ? ThemeColor::Amber : ThemeColor::Green),
-                 mainX + 410, rowY);
+                 mainX + 375, rowY);
+
+        // [ Desc ] button
+        drawRounded(target, mainX + 420, rowY - 6, 50, 22, 4, sf::Color(240, 245, 250), ThemeColor::Blue, 1.f);
+        drawText(target, fontSemiBold, "Desc", 8.5f, ThemeColor::Blue, mainX + 445, rowY + 3, TextAlignment::Center);
 
         if (currentRole == "Admin") {
-            drawRounded(target, mainX + 470, rowY - 8, 36, 22, 4, sf::Color(254, 226, 226), sf::Color(220, 80, 70), 1.f);
-            drawText(target, fontSemiBold, "Del", 9.f, ThemeColor::Red, mainX + 488, rowY + 3, TextAlignment::Center);
+            drawRounded(target, mainX + 485, rowY - 6, 38, 22, 4, sf::Color(254, 226, 226), sf::Color(220, 80, 70), 1.f);
+            drawText(target, fontSemiBold, "Del", 8.5f, ThemeColor::Red, mainX + 504, rowY + 3, TextAlignment::Center);
         } else {
-            drawRounded(target, mainX + 460, rowY - 8, 52, 22, 4, sf::Color(235, 230, 220));
-            drawText(target, fontRegular, "View Only", 8.5f, ThemeColor::Mute, mainX + 486, rowY + 3, TextAlignment::Center);
+            drawRounded(target, mainX + 480, rowY - 6, 50, 22, 4, sf::Color(235, 230, 220));
+            drawText(target, fontRegular, "Locked", 8.f, ThemeColor::Mute, mainX + 505, rowY + 3, TextAlignment::Center);
         }
 
-        sf::RectangleShape sep({Layout::MAIN_W - 40, 1});
-        sep.setPosition(mainX + 20, rowY + 18);
+        sf::RectangleShape sep({Layout::MAIN_W - 30, 1});
+        sep.setPosition(mainX + 15, rowY + 18);
         sep.setFillColor(ThemeColor::Line);
         target.draw(sep);
     }
 }
 
 void PosProductsView::drawInventoryTab(sf::RenderTarget& target, sf::Vector2f /*m*/, float mainX,
-                                      const std::vector<ProductItem>& products,
-                                      float scrollOffset, const std::string& currentRole,
-                                      const sf::Font& fontRegular, const sf::Font& fontSemiBold,
-                                      const sf::Font& fontBold, const sf::Font& fontSerif) {
-    drawText(target, fontSerif, "Inventory & Stock Audit", 24, ThemeColor::Ink, mainX, 50);
-    drawText(target, fontRegular, "Real-time stock level audit linked with continuous barcode scanner", 10.5f, ThemeColor::Mute, mainX, 74);
+                                       const std::vector<ProductItem>& products,
+                                       const InventoryManager& inventoryMgr,
+                                       int inventorySubTab, float scrollOffset,
+                                       const std::string& currentRole,
+                                       const std::string& searchQuery, bool searchFocused,
+                                       const sf::Font& fontRegular, const sf::Font& fontMedium,
+                                       const sf::Font& fontSemiBold,
+                                       const sf::Font& fontBold, const sf::Font& fontSerif) {
+    drawText(target, fontSerif, "Inventory & Supplier Procurement", 22, ThemeColor::Ink, mainX, 46);
+
+    const auto& invItems = inventoryMgr.getItems();
+    const auto& purchases = inventoryMgr.getPurchases();
 
     int healthy = 0, lowStock = 0, outOfStock = 0;
-    for (const auto& p : products) {
-        if (p.stock == 0) outOfStock++;
-        else if (p.stock < 15) lowStock++;
+    std::vector<std::string> uniqueSuppliers = inventoryMgr.getUniqueSuppliers();
+    for (const auto& it : invItems) {
+        if (it.stock == 0) outOfStock++;
+        else if (it.stock < 15) lowStock++;
         else healthy++;
     }
 
     auto drawKpi = [&](const std::string& label, int count, sf::Color col, float x) {
-        drawRounded(target, x, 96, 125, 48, 8, ThemeColor::Paper, ThemeColor::Line, 1);
-        drawText(target, fontRegular, label, 9.5f, ThemeColor::Mute, x + 12, 110);
-        drawText(target, fontBold, std::to_string(count), 16, col, x + 12, 130);
+        drawRounded(target, x, 88, 125, 44, 8, ThemeColor::Paper, ThemeColor::Line, 1);
+        drawText(target, fontRegular, label, 8.5f, ThemeColor::Mute, x + 10, 98);
+        drawText(target, fontBold, std::to_string(count), 14, col, x + 10, 116);
     };
 
-    drawKpi("Total Items", (int)products.size(), ThemeColor::Ink, mainX);
+    drawKpi("Total Items", (int)invItems.size(), ThemeColor::Ink, mainX);
     drawKpi("Healthy Stock", healthy, ThemeColor::Green, mainX + 138);
     drawKpi("Low Stock (<15)", lowStock, ThemeColor::Amber, mainX + 276);
-    drawKpi("Out of Stock", outOfStock, ThemeColor::Red, mainX + 414);
+    drawKpi("Active Suppliers", (int)uniqueSuppliers.size(), ThemeColor::Blue, mainX + 414);
 
-    float ty = 155.f;
-    drawRounded(target, mainX, ty, Layout::MAIN_W, 510, 10, ThemeColor::Paper, ThemeColor::Line, 1);
+    // Sub-tab switcher, Search bar, and Add Supplier button
+    float tabY = 140.f;
+    bool subTab0 = (inventorySubTab == 0);
+    bool subTab1 = (inventorySubTab == 1);
 
-    if (currentRole != "Admin") {
-        drawRounded(target, mainX + 15, ty + 12, Layout::MAIN_W - 30, 28, 6, sf::Color(254, 243, 199), sf::Color(217, 119, 6), 1.f);
-        drawText(target, fontSemiBold, "[Employee View] Stock levels are read-only. Adjusting inventory requires Admin credentials.", 9.5f, sf::Color(146, 64, 14), mainX + 25, ty + 26);
+    // Pill 1: Stock & Items
+    drawRounded(target, mainX, tabY, 115, 26, 6, subTab0 ? ThemeColor::Dark : sf::Color(235, 227, 212), ThemeColor::Line, 1.f);
+    drawText(target, fontSemiBold, "Stock (" + std::to_string(invItems.size()) + ")", 9.f, subTab0 ? ThemeColor::White : ThemeColor::Ink, mainX + 57, tabY + 12, TextAlignment::Center);
+
+    // Pill 2: Supplier Purchase Ledger
+    drawRounded(target, mainX + 122, tabY, 120, 26, 6, subTab1 ? ThemeColor::Dark : sf::Color(235, 227, 212), ThemeColor::Line, 1.f);
+    drawText(target, fontSemiBold, "Ledger (" + std::to_string(purchases.size()) + ")", 9.f, subTab1 ? ThemeColor::White : ThemeColor::Ink, mainX + 182, tabY + 12, TextAlignment::Center);
+
+    // Search bar
+    float invSearchW = 140.f;
+    float invSearchX = mainX + 250.f;
+    drawRounded(target, invSearchX, tabY, invSearchW, 26, 6, ThemeColor::Paper, searchFocused ? ThemeColor::Blue : ThemeColor::Line, 1.2f);
+    std::string invSDisplay = searchQuery.empty() ? (searchFocused ? "|" : "Search...") : (searchQuery + (searchFocused ? "|" : ""));
+    drawText(target, fontRegular, invSDisplay, 8.5f, searchQuery.empty() ? ThemeColor::Mute : ThemeColor::Ink, invSearchX + 8, tabY + 6);
+
+    // Top Right: + Add Supplier / Purchase Item (Admin only)
+    if (currentRole == "Admin") {
+        drawRounded(target, mainX + Layout::MAIN_W - 145, tabY, 145, 26, 6, ThemeColor::Blue);
+        drawText(target, fontSemiBold, "+ Add Supplier Item", 9.f, ThemeColor::White, mainX + Layout::MAIN_W - 72, tabY + 12, TextAlignment::Center);
+    } else {
+        drawRounded(target, mainX + Layout::MAIN_W - 145, tabY, 145, 26, 6, sf::Color(230, 222, 210), ThemeColor::Edge, 1);
+        drawText(target, fontSemiBold, "[Admin Only] + Add", 8.5f, ThemeColor::Mute, mainX + Layout::MAIN_W - 72, tabY + 12, TextAlignment::Center);
     }
 
-    float listStartY = (currentRole != "Admin") ? (ty + 48.f) : (ty + 20.f);
+    float ty = 174.f;
+    drawRounded(target, mainX, ty, Layout::MAIN_W, 490, 10, ThemeColor::Paper, ThemeColor::Line, 1);
 
-    for (size_t i = 0; i < products.size(); i++) {
-        float rowY = listStartY + 15.f + static_cast<float>(i) * 54.f - scrollOffset;
-        if (rowY < ty + 20.f || rowY > ty + 480.f) continue;
+    if (currentRole != "Admin") {
+        drawRounded(target, mainX + 15, ty + 8, Layout::MAIN_W - 30, 24, 6, sf::Color(254, 243, 199), sf::Color(217, 119, 6), 1.f);
+        drawText(target, fontSemiBold, "[Employee View] Supplier costs & restock permissions are read-only. Editing requires Admin credentials.", 8.5f, sf::Color(146, 64, 14), mainX + 25, ty + 18);
+    }
 
-        const auto& p = products[i];
-        drawText(target, fontBold, p.name, 12.f, ThemeColor::Ink, mainX + 20, rowY);
-        drawText(target, fontRegular, "SKU: " + p.barcode + " | " + p.unit + " | " + p.category, 9.5f, ThemeColor::Mute, mainX + 20, rowY + 16);
+    float listStartY = (currentRole != "Admin") ? (ty + 38.f) : (ty + 12.f);
 
-        bool low = p.stock < 15;
-        drawRounded(target, mainX + 270, rowY - 4, 95, 24, 5,
-                    p.stock == 0 ? sf::Color(254, 226, 226) : (low ? sf::Color(254, 243, 199) : sf::Color(220, 252, 231)));
-        drawText(target, fontSemiBold, std::to_string(p.stock) + (p.stock == 0 ? " Empty" : (low ? " Low" : " In Stock")), 9.f,
-                 p.stock == 0 ? ThemeColor::Red : (low ? ThemeColor::Amber : sf::Color(22, 101, 52)),
-                 mainX + 317, rowY + 8, TextAlignment::Center);
+    if (inventorySubTab == 0) {
+        // -------------------------------------------------------------
+        // SUB-TAB 0: CURRENT STOCK & ITEMS
+        // -------------------------------------------------------------
+        std::vector<int> filteredIndices = inventoryMgr.getFilteredItemIndices(searchQuery);
 
-        if (currentRole == "Admin") {
-            drawRounded(target, mainX + 375, rowY - 4, 42, 24, 4, sf::Color(230, 238, 246), ThemeColor::Blue, 1);
-            drawText(target, fontSemiBold, "+10", 9.5f, ThemeColor::Ink, mainX + 396, rowY + 8, TextAlignment::Center);
+        for (size_t i = 0; i < filteredIndices.size(); i++) {
+            int idx = filteredIndices[i];
+            float rowY = listStartY + 12.f + static_cast<float>(i) * 54.f - scrollOffset;
+            if (rowY < ty + 14.f || rowY > ty + 465.f) continue;
 
-            drawRounded(target, mainX + 425, rowY - 4, 42, 24, 4, sf::Color(230, 238, 246), ThemeColor::Blue, 1);
-            drawText(target, fontSemiBold, "+50", 9.5f, ThemeColor::Ink, mainX + 446, rowY + 8, TextAlignment::Center);
+            const auto& item = invItems[idx];
+            drawText(target, fontBold, item.name, 11.5f, ThemeColor::Ink, mainX + 15, rowY);
 
-            drawRounded(target, mainX + 475, rowY - 4, 55, 24, 4, ThemeColor::Blue);
-            drawText(target, fontSemiBold, "Custom", 9.f, ThemeColor::White, mainX + 502, rowY + 8, TextAlignment::Center);
-        } else {
-            drawRounded(target, mainX + 385, rowY - 4, 140, 24, 4, sf::Color(240, 235, 225));
-            drawText(target, fontRegular, "[Restock Locked]", 8.5f, ThemeColor::Mute, mainX + 455, rowY + 8, TextAlignment::Center);
+            // Clean line without messy description: Barcode | Category (Unit) | Supplier | Retail Price
+            std::string suppInfo = item.supplier.empty() ? "Direct Inbound" : item.supplier;
+            std::string infoLine = item.barcode + " | " + item.category + " (" + item.unit + ") | " + suppInfo;
+            drawText(target, fontRegular, infoLine, 8.5f, ThemeColor::Mute, mainX + 15, rowY + 16);
+
+            std::string priceLine = "Retail: Rs " + std::to_string(item.retailPrice);
+            if (currentRole == "Admin" && item.costPrice > 0) {
+                priceLine += " | Cost: Rs " + std::to_string(item.costPrice);
+            }
+            drawText(target, fontSemiBold, priceLine, 8.5f, sf::Color(100, 90, 80), mainX + 15, rowY + 30);
+
+            // [ Description ] popup button (Requirement: separate button instead of showing in middle line)
+            drawRounded(target, mainX + 250, rowY + 10, 68, 22, 4, sf::Color(240, 245, 250), ThemeColor::Blue, 1.f);
+            drawText(target, fontSemiBold, "Description", 8.f, ThemeColor::Blue, mainX + 284, rowY + 19, TextAlignment::Center);
+
+            // Stock badge
+            bool low = item.stock < 15;
+            drawRounded(target, mainX + 325, rowY + 10, 72, 22, 5,
+                        item.stock == 0 ? sf::Color(254, 226, 226) : (low ? sf::Color(254, 243, 199) : sf::Color(220, 252, 231)));
+            drawText(target, fontSemiBold, std::to_string(item.stock) + (item.stock == 0 ? " Empty" : (low ? " Low" : " In Stk")), 8.f,
+                     item.stock == 0 ? ThemeColor::Red : (low ? ThemeColor::Amber : sf::Color(22, 101, 52)),
+                     mainX + 361, rowY + 19, TextAlignment::Center);
+
+            if (currentRole == "Admin") {
+                drawRounded(target, mainX + 405, rowY + 10, 36, 22, 4, sf::Color(230, 238, 246), ThemeColor::Blue, 1);
+                drawText(target, fontSemiBold, "+10", 8.5f, ThemeColor::Ink, mainX + 423, rowY + 19, TextAlignment::Center);
+
+                drawRounded(target, mainX + 447, rowY + 10, 36, 22, 4, sf::Color(230, 238, 246), ThemeColor::Blue, 1);
+                drawText(target, fontSemiBold, "+50", 8.5f, ThemeColor::Ink, mainX + 465, rowY + 19, TextAlignment::Center);
+
+                drawRounded(target, mainX + 489, rowY + 10, 42, 22, 4, ThemeColor::Blue);
+                drawText(target, fontSemiBold, "Order", 8.f, ThemeColor::White, mainX + 510, rowY + 19, TextAlignment::Center);
+            } else {
+                drawRounded(target, mainX + 405, rowY + 10, 126, 22, 4, sf::Color(240, 235, 225));
+                drawText(target, fontRegular, "[Restock Locked]", 8.f, ThemeColor::Mute, mainX + 468, rowY + 19, TextAlignment::Center);
+            }
+
+            sf::RectangleShape sep({Layout::MAIN_W - 30, 1});
+            sep.setPosition(mainX + 15, rowY + 44);
+            sep.setFillColor(ThemeColor::Line);
+            target.draw(sep);
         }
+    } else {
+        // -------------------------------------------------------------
+        // SUB-TAB 1: SUPPLIER PROCUREMENT LEDGER
+        // -------------------------------------------------------------
+        drawText(target, fontSemiBold, "Date & Supplier", 9.f, ThemeColor::Mute, mainX + 15, listStartY);
+        drawText(target, fontSemiBold, "Barcode / Item Purchased", 9.f, ThemeColor::Mute, mainX + 150, listStartY);
+        drawText(target, fontSemiBold, "Detail", 9.f, ThemeColor::Mute, mainX + 300, listStartY);
+        drawText(target, fontSemiBold, "Qty", 9.f, ThemeColor::Mute, mainX + 360, listStartY);
+        drawText(target, fontSemiBold, "Cost", 9.f, ThemeColor::Mute, mainX + 415, listStartY);
+        drawText(target, fontSemiBold, "Total", 9.f, ThemeColor::Mute, mainX + 475, listStartY);
 
-        sf::RectangleShape sep({Layout::MAIN_W - 40, 1});
-        sep.setPosition(mainX + 20, rowY + 28);
-        sep.setFillColor(ThemeColor::Line);
-        target.draw(sep);
+        sf::RectangleShape hSep({Layout::MAIN_W - 30, 1.5f});
+        hSep.setPosition(mainX + 15, listStartY + 14);
+        hSep.setFillColor(ThemeColor::Line);
+        target.draw(hSep);
+
+        std::vector<int> filteredPurchases = inventoryMgr.getFilteredPurchaseIndices(searchQuery);
+
+        for (size_t i = 0; i < filteredPurchases.size(); i++) {
+            int idx = filteredPurchases[i];
+            float rowY = listStartY + 24.f + static_cast<float>(i) * 38.f - scrollOffset;
+            if (rowY < ty + 30.f || rowY > ty + 465.f) continue;
+
+            const auto& p = purchases[idx];
+            drawText(target, fontBold, p.supplier, 9.5f, ThemeColor::Ink, mainX + 15, rowY);
+            drawText(target, fontRegular, p.date, 8.f, ThemeColor::Mute, mainX + 15, rowY + 14);
+
+            drawText(target, fontBold, p.barcode, 9.5f, ThemeColor::Ink, mainX + 150, rowY);
+            drawText(target, fontRegular, p.description.substr(0, 18), 8.f, ThemeColor::Mute, mainX + 150, rowY + 14);
+
+            // [ Desc ] button for Ledger
+            drawRounded(target, mainX + 288, rowY + 3, 50, 20, 4, sf::Color(240, 245, 250), ThemeColor::Blue, 1.f);
+            drawText(target, fontSemiBold, "Desc", 8.f, ThemeColor::Blue, mainX + 313, rowY + 11, TextAlignment::Center);
+
+            drawText(target, fontSemiBold, std::to_string(p.quantity) + " pcs", 9.5f, ThemeColor::Ink, mainX + 360, rowY + 6);
+            drawText(target, fontRegular, "Rs " + std::to_string(p.unitCost), 9.5f, ThemeColor::Ink, mainX + 415, rowY + 6);
+            drawText(target, fontBold, "Rs " + std::to_string(p.totalCost), 9.5f, ThemeColor::Blue, mainX + 475, rowY + 6);
+
+            sf::RectangleShape rSep({Layout::MAIN_W - 30, 1});
+            rSep.setPosition(mainX + 15, rowY + 30);
+            rSep.setFillColor(ThemeColor::Line);
+            target.draw(rSep);
+        }
     }
 }

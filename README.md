@@ -54,42 +54,31 @@ The backend is built from scratch without external image libraries for BMP handl
 ├── ScanIT.sln               # Master Visual Studio solution (Frontend + Backend)
 ├── barcode_gui.exe          # Compiled standalone GUI binary
 ├── barcode_console.exe      # Compiled standalone Console binary
+├── sync_barcodes.bat        # Utility to synchronize barcode image assets
 │
 ├── backend/                 # Core engine & CLI application
-│   ├── include/
-│   │   ├── CameraCapture.h  # Windows Media Foundation async camera worker
-│   │   ├── Decoder.h        # Optical decoding & adaptive binarization algorithms
-│   │   ├── Generator.h      # Code 39 pattern encoder and BMP file writer
-│   │   ├── TestSuite.h      # TDD unit test runner
-│   │   └── Validator.h      # Input validation logic
-│   ├── src/
-│   │   ├── CameraCapture.cpp
-│   │   ├── Decoder.cpp
-│   │   ├── Generator.cpp
-│   │   ├── TestSuite.cpp
-│   │   ├── Validator.cpp
-│   │   └── main.cpp         # Interactive CLI console entry point
-│   ├── build.bat            # Backend standalone MSVC build script
+│   ├── include/             # Header files (Camera, Decoder, Generator, etc.)
+│   ├── src/                 # Implementation files & CLI main
+│   ├── build.bat            # Backend MSVC build script
 │   └── ScanIT_Backend.vcxproj
 │
 ├── frontend/                # SFML Desktop GUI Application
 │   ├── assets/              # UI sprites, fonts, icons, sound/visual assets
-│   ├── include/
-│   │   ├── GenerateScreen.h # Generation view & live barcode preview
-│   │   ├── HomeScreen.h     # Dashboard & activity history timeline
-│   │   ├── ReadScreen.h     # Viewport, image upload & live camera scanning
-│   │   ├── SplashScreen.h   # Animated loading & branding sequence
-│   │   └── UITheme.h        # Design tokens, color palette & typography
-│   ├── src/
-│   │   ├── GenerateScreen.cpp
-│   │   ├── HomeScreen.cpp
-│   │   ├── ReadScreen.cpp
-│   │   ├── SplashScreen.cpp
-│   │   └── main.cpp         # GUI application entry point
-│   ├── build_gui.bat        # Frontend standalone MSVC build script
+│   ├── include/             # POS & Dashboard UI views and models
+│   ├── src/                 # POS GUI implementation files & main
+│   ├── build_gui.bat        # Frontend MSVC build script
 │   └── ScanIT_Frontend.vcxproj
 │
-└── assets/                  # Root assets for runtime lookup
+├── assets/                  # Root runtime assets for SFML application
+├── barcodes/                # Generated Code 39 BMP barcode bitmaps
+│
+├── docs/                    # Project Documentation & Deliverables
+│   ├── diagrams/            # Architecture, ERD, and flow diagrams (.png, .svg)
+│   ├── screenshots/         # Application feature & UI screenshots
+│   └── media/               # Project presentation / demo media
+│
+├── SFML-2.5.1/              # SFML 2.5.1 C++ library (headers & link libraries)
+└── *.txt                    # Runtime database files (product, inventory, order, bill, etc.)
 ```
 
 ---
@@ -151,5 +140,5 @@ msbuild ScanIT.sln /p:Configuration=Debug /p:Platform=x64
 
 To run all 9 TDD test cases:
 1. Start `barcode_console.exe`.
-2. Select option `[4] QA: Run Automated TDD Test Suite`.
+2. Select option `[8] QA: Run Automated TDD Test Suite`.
 3. The console will display a detailed breakdown of all test assertions and their pass/fail status.

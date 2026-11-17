@@ -168,6 +168,7 @@
     <ClCompile Include="src\StaffManager.cpp" />
     <ClCompile Include="src\ActivityLogger.cpp" />
     <ClCompile Include="src\ProductCatalog.cpp" />
+    <ClCompile Include="src\InventoryManager.cpp" />
     <ClCompile Include="src\CartService.cpp" />
     <ClCompile Include="src\PosNavigation.cpp" />
     <ClCompile Include="src\PosProductsView.cpp" />
@@ -202,6 +203,7 @@
     <ClInclude Include="include\StaffManager.h" />
     <ClInclude Include="include\ActivityLogger.h" />
     <ClInclude Include="include\ProductCatalog.h" />
+    <ClInclude Include="include\InventoryManager.h" />
     <ClInclude Include="include\CartService.h" />
     <ClInclude Include="include\PosNavigation.h" />
     <ClInclude Include="include\PosProductsView.h" />

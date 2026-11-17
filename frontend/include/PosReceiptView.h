@@ -21,6 +21,7 @@ public:
                                  int subtotal, int discount, int total,
                                  bool discountApplied, int paymentMethod, bool paymentDone,
                                  float receiptScrollOffset,
+                                 int draftsCount,
                                  const sf::Font& fontRegular, const sf::Font& fontMedium,
                                  const sf::Font& fontSemiBold, const sf::Font& fontBold,
                                  const sf::Font& fontSerif,

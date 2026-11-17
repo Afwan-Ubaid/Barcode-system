@@ -14,22 +14,23 @@
 namespace Layout {
     constexpr float SIDE_W = 72.f;
     constexpr float MAIN_W = 545.f;
-    constexpr float PANEL_W = 266.f;
+    constexpr float PANEL_W = 336.f;
 
     constexpr float CARD_W = 175.f;
     constexpr float CARD_H = 126.f;
     constexpr float CARD_GAP = 10.f;
     constexpr float CARD_Y = 347.f;
 
-    constexpr float RP_W = 232.f;
+    constexpr float RP_W = 302.f;
     constexpr float RP_Y = 66.f;
     constexpr float RP_H = 378.f;
     constexpr float ROW_Y = 128.f;
     constexpr float ROW_H = 50.f;
 
-    extern const char* CATEGORIES[5];
-    extern const char* NAV_ITEMS[6][2];
-    extern const float NAV_Y[6];
+    constexpr int CATEGORY_COUNT = 9;
+    extern const char* CATEGORIES[CATEGORY_COUNT];
+    extern const char* NAV_ITEMS[7][2];
+    extern const float NAV_Y[7];
 }
 
 enum class TextAlignment {

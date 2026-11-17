@@ -164,6 +164,7 @@ bool InventoryManager::loadInventory(const std::string& customPath) {
         }
     }
     in.close();
+    sortAlphabetically();
     return true;
 }
 
@@ -261,6 +262,7 @@ bool InventoryManager::addOrRestockItem(const InventoryItem& item, int purchaseQ
     rec.totalCost = purchaseQty * unitCost;
     mPurchases.insert(mPurchases.begin(), rec); // Most recent first
 
+    sortAlphabetically();
     return saveInventory();
 }
 
@@ -277,6 +279,15 @@ bool InventoryManager::deductStock(const std::string& barcode, int qty) {
     int idx = findIndexByBarcode(barcode);
     if (idx >= 0) {
         mItems[idx].stock = std::max(0, mItems[idx].stock - qty);
+        return saveInventory();
+    }
+    return false;
+}
+
+bool InventoryManager::updateItemStock(const std::string& barcode, int newStock) {
+    int idx = findIndexByBarcode(barcode);
+    if (idx >= 0) {
+        mItems[idx].stock = std::max(0, newStock);
         return saveInventory();
     }
     return false;
@@ -313,4 +324,64 @@ int InventoryManager::findIndexByBarcode(const std::string& barcode) const {
         if (mItems[i].barcode == barcode) return static_cast<int>(i);
     }
     return -1;
+}
+
+void InventoryManager::sortAlphabetically() {
+    std::sort(mItems.begin(), mItems.end(), [](const InventoryItem& a, const InventoryItem& b) {
+        return toLowerStr(a.name) < toLowerStr(b.name);
+    });
+}
+
+std::vector<std::string> InventoryManager::getUniqueSuppliers() const {
+    std::vector<std::string> result;
+    for (const auto& it : mItems) {
+        if (!it.supplier.empty() && std::find(result.begin(), result.end(), it.supplier) == result.end()) {
+            result.push_back(it.supplier);
+        }
+    }
+    for (const auto& p : mPurchases) {
+        if (!p.supplier.empty() && std::find(result.begin(), result.end(), p.supplier) == result.end()) {
+            result.push_back(p.supplier);
+        }
+    }
+    std::sort(result.begin(), result.end());
+    return result;
+}
+
+std::vector<int> InventoryManager::getFilteredItemIndices(const std::string& query) const {
+    std::vector<int> res;
+    std::string q = toLowerStr(trimStr(query));
+    for (size_t i = 0; i < mItems.size(); ++i) {
+        if (q.empty()) {
+            res.push_back((int)i);
+        } else {
+            const auto& it = mItems[i];
+            if (toLowerStr(it.name).find(q) != std::string::npos ||
+                it.barcode.find(q) != std::string::npos ||
+                toLowerStr(it.category).find(q) != std::string::npos ||
+                toLowerStr(it.supplier).find(q) != std::string::npos) {
+                res.push_back((int)i);
+            }
+        }
+    }
+    return res;
+}
+
+std::vector<int> InventoryManager::getFilteredPurchaseIndices(const std::string& query) const {
+    std::vector<int> res;
+    std::string q = toLowerStr(trimStr(query));
+    for (size_t i = 0; i < mPurchases.size(); ++i) {
+        if (q.empty()) {
+            res.push_back((int)i);
+        } else {
+            const auto& p = mPurchases[i];
+            if (toLowerStr(p.supplier).find(q) != std::string::npos ||
+                toLowerStr(p.description).find(q) != std::string::npos ||
+                p.barcode.find(q) != std::string::npos ||
+                p.date.find(q) != std::string::npos) {
+                res.push_back((int)i);
+            }
+        }
+    }
+    return res;
 }

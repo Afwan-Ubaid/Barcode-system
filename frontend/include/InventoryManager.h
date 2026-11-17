@@ -57,12 +57,18 @@ public:
 
     // Decrements stock upon sale
     bool deductStock(const std::string& barcode, int qty);
+    bool updateItemStock(const std::string& barcode, int newStock);
 
     // Generates a unique, unused 6-digit numeric barcode (e.g., "100011")
     std::string generateUniqueBarcode() const;
 
     const InventoryItem* findByBarcode(const std::string& barcode) const;
     int findIndexByBarcode(const std::string& barcode) const;
+
+    void sortAlphabetically();
+    std::vector<std::string> getUniqueSuppliers() const;
+    std::vector<int> getFilteredItemIndices(const std::string& query) const;
+    std::vector<int> getFilteredPurchaseIndices(const std::string& query) const;
 
 private:
     bool createDefaultInventoryFile(const std::string& path);

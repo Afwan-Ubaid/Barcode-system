@@ -4,16 +4,19 @@
 #include <algorithm>
 
 namespace Layout {
-    const char* CATEGORIES[] = {"All", "Grocery", "Drinks", "Snacks", "Household"};
+    const char* CATEGORIES[] = {
+        "All", "Grocery", "Drinks", "Bakery", "Dairy", "Snacks", "Fruits & Veg", "Household", "Personal Care"
+    };
     const char* NAV_ITEMS[][2] = {
         {"POS", "pos"},
         {"Products", "products"},
         {"Inventory", "inventory"},
         {"Sales", "sales"},
         {"Activity", "activity"},
-        {"Settings", "settings"}
+        {"Settings", "settings"},
+        {"Return", "return"}
     };
-    const float NAV_Y[] = {98.f, 150.f, 202.f, 254.f, 306.f, 358.f};
+    const float NAV_Y[] = {88.f, 138.f, 188.f, 238.f, 288.f, 338.f, 388.f};
 }
 
 sf::ConvexShape roundedRect(float x, float y, float w, float h, float r) {

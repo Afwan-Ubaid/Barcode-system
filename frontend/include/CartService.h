@@ -52,12 +52,25 @@ public:
     bool chargeSale(std::vector<ProductItem>& products, const std::string& userName, std::string& outMessage);
     std::string printReceipt(const std::vector<ProductItem>& products, const std::string& cashierName, bool& outSuccess);
 
+    // Park & Retrieve Draft Orders
+    bool parkCurrentCart(const std::vector<ProductItem>& products, const std::string& label = "");
+    bool parkCurrentCart(const std::string& label = "") { return parkCurrentCart({}, label); }
+    bool resumeDraft(int index);
+    void deleteDraft(int index);
+    const std::vector<DraftCart>& getDraftCarts() const { return mDraftCarts; }
+    const std::vector<DraftCart>& getDrafts() const { return mDraftCarts; }
+    int getDraftsCount() const { return (int)mDraftCarts.size(); }
+
     const std::string& getLastReceiptText() const { return mLastReceiptText; }
+    const std::string& getLastOrderId() const { return mLastOrderId; }
+    const std::string& getLastCashier() const { return mLastCashier; }
+    const std::string& getLastDateStr() const { return mLastDateStr; }
     const std::vector<SaleRecord>& getSalesHistory() const { return mSalesHistory; }
     std::vector<SaleRecord>& getSalesHistory() { return mSalesHistory; }
 
 private:
     std::vector<CartLine> mCart;
+    std::vector<DraftCart> mDraftCarts;
     std::vector<SaleRecord> mSalesHistory;
     bool mDiscountApplied = true;
     int mPaymentMethod = 0; // 0=Cash, 1=Card, 2=Wallet
@@ -65,6 +78,9 @@ private:
     int mCashGiven = 0;
     std::string mCashGivenStr = "";
     std::string mLastReceiptText;
+    std::string mLastOrderId = "ORD-1001";
+    std::string mLastCashier = "System Admin";
+    std::string mLastDateStr = "";
 };
 
 #endif // CART_SERVICE_H

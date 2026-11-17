@@ -67,6 +67,17 @@ struct CartLine {
 };
 
 // ----------------------------------------------------------------------------
+// Draft / Held Cart Model (Park Sale & Retrieve Later)
+// ----------------------------------------------------------------------------
+struct DraftCart {
+    std::string draftId;
+    std::string time;
+    std::string customerLabel;
+    std::vector<CartLine> items;
+    int totalAmount = 0;
+};
+
+// ----------------------------------------------------------------------------
 // Sale Record Model (Completed Transactions)
 // ----------------------------------------------------------------------------
 struct SaleRecord {
@@ -77,6 +88,8 @@ struct SaleRecord {
     int cashGiven = 0;
     int changeGiven = 0;
     std::vector<CartLine> items;
+    std::string orderId = "ORD-1001";
+    std::string cashier = "admin";
 };
 
 // ----------------------------------------------------------------------------

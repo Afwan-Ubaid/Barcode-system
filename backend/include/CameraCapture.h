@@ -9,20 +9,31 @@
 
 /**
  * Windows Media Foundation Native Real-Time Camera Streamer & Frame Grabber
- * Streams 30 FPS video continuously directly from laptop webcams & USB cameras.
+ * Supports auto-detection of mobile phone cameras (DroidCam, Iriun, Camo, USB UVC)
+ * with seamless fallback to integrated laptop webcams and instant camera switching.
  * Built by Intruders
  */
+
+struct CameraDeviceInfo {
+    int index;
+    std::string name;
+    bool isMobileOrExternal;
+};
 
 class CameraStream {
 public:
     CameraStream();
     ~CameraStream();
 
-    // Starts continuous background video streaming (30 FPS)
-    bool start(int deviceIndex = 0);
+    // Starts continuous background video streaming (30 FPS).
+    // If deviceIndex == -1, auto-detects external/mobile camera first, falling back to laptop webcam.
+    bool start(int deviceIndex = -1);
 
     // Stops video stream and releases camera hardware
     void stop();
+
+    // Cycles to the next available camera or specific index
+    bool switchCamera(int targetIndex = -1);
 
     // Returns whether stream is currently active
     bool isRunning() const;
@@ -32,6 +43,21 @@ public:
 
     // Active camera hardware device name
     std::string getCameraName() const;
+
+    // Active camera device index
+    int getActiveDeviceIndex() const;
+
+    // Whether active camera is a connected mobile phone / external scanner
+    bool isActiveCameraExternal() const;
+
+    // Enumerates all video devices currently connected to Windows
+    static std::vector<CameraDeviceInfo> getAvailableCameras();
+
+    // Returns the total count of connected camera devices
+    static int getAvailableCameraCount();
+
+    // Auto-detects best device index (prefers mobile/external camera, falls back to 0)
+    static int getBestCameraIndex();
 
 private:
     void workerThreadFunc(int deviceIndex);
@@ -44,10 +70,11 @@ private:
     std::vector<unsigned char> mRgbaBuffer;
     int mWidth;
     int mHeight;
+    int mActiveDeviceIndex;
     std::string mCameraName;
 };
 
 // One-shot snapshot helper (captures a single frame to BMP file)
-bool captureFrameFromCamera(const std::string& outBmpPath, std::string& cameraName, std::string& errorMessage);
+bool captureFrameFromCamera(const std::string& outBmpPath, std::string& cameraName, std::string& errorMessage, int deviceIndex = -1);
 
 #endif // CAMERA_CAPTURE_H

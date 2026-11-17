@@ -6,6 +6,8 @@
 #include <vector>
 #include <functional>
 #include "PosModels.h"
+#include "CartService.h"
+#include "InventoryManager.h"
 
 // ============================================================================
 // ISE SOFTWARE ENGINEERING PRINCIPLE: Separation of Concerns (SoC)
@@ -16,8 +18,11 @@ class PosModalsView {
 public:
     static void drawReceiptModal(sf::RenderTarget& target, sf::Vector2f mouse,
                                  float currentWidth, float designHeight,
-                                 const std::string& receiptText,
-                                 const sf::Font& fontRegular, const sf::Font& fontSemiBold,
+                                 const CartService& cartService,
+                                 const std::vector<ProductItem>& products,
+                                 const std::string& cashierName,
+                                 const sf::Font& fontRegular, const sf::Font& fontMedium,
+                                 const sf::Font& fontSemiBold, const sf::Font& fontBold,
                                  const sf::Font& fontSerif,
                                  std::function<const sf::Texture&(const std::string&)> getTexture);
 
@@ -66,6 +71,78 @@ public:
                                    bool inputFocused,
                                    const sf::Font& fontRegular, const sf::Font& fontSemiBold,
                                    const sf::Font& fontBold, const sf::Font& fontSerif);
+
+    static void drawAddInventoryModal(sf::RenderTarget& target, sf::Vector2f mouse,
+                                      float currentWidth, float designHeight,
+                                      const std::string& supplier,
+                                      const std::string& desc,
+                                      const std::string& category,
+                                      const std::string& unit,
+                                      const std::string& retailPriceStr,
+                                      const std::string& costPriceStr,
+                                      const std::string& qtyStr,
+                                      const std::string& dateStr,
+                                      const std::string& barcodeStr,
+                                      int activeField,
+                                      bool barcodeGenerated,
+                                      const std::vector<std::string>& previousVendors,
+                                      bool vendorDropdownOpen,
+                                      bool scanningUniversal,
+                                      const sf::Font& fontRegular, const sf::Font& fontMedium,
+                                      const sf::Font& fontSemiBold, const sf::Font& fontBold,
+                                      const sf::Font& fontSerif,
+                                      std::function<const sf::Texture&(const std::string&)> getTexture);
+
+    static void drawProductSpecModal(sf::RenderTarget& target, sf::Vector2f mouse,
+                                     float currentWidth, float designHeight,
+                                     const ProductItem& product,
+                                     const sf::Font& fontRegular, const sf::Font& fontMedium,
+                                     const sf::Font& fontSemiBold, const sf::Font& fontBold,
+                                     const sf::Font& fontSerif,
+                                     std::function<const sf::Texture&(const std::string&)> getTexture);
+
+    static void drawQuickCheckModal(sf::RenderTarget& target, sf::Vector2f mouse,
+                                    float currentWidth, float designHeight,
+                                    const std::string& barcodeQuery,
+                                    bool inputFocused,
+                                    const ProductItem* foundProduct,
+                                    const sf::Font& fontRegular, const sf::Font& fontMedium,
+                                    const sf::Font& fontSemiBold, const sf::Font& fontBold,
+                                    const sf::Font& fontSerif,
+                                    std::function<const sf::Texture&(const std::string&)> getTexture);
+
+    static void drawItemDescriptionModal(sf::RenderTarget& target, sf::Vector2f mouse,
+                                         float currentWidth, float designHeight,
+                                         const std::string& name, const std::string& barcode,
+                                         const std::string& category, const std::string& unit,
+                                         int price, int cost, int stock,
+                                         const std::string& supplier, const std::string& date,
+                                         const sf::Font& fontRegular, const sf::Font& fontMedium,
+                                         const sf::Font& fontSemiBold, const sf::Font& fontBold,
+                                         const sf::Font& fontSerif,
+                                         std::function<const sf::Texture&(const std::string&)> getTexture);
+
+    static void drawAddProductFromInventoryModal(sf::RenderTarget& target, sf::Vector2f mouse,
+                                                float currentWidth, float designHeight,
+                                                const std::vector<InventoryItem>& invItems,
+                                                const std::vector<int>& visibleIndices,
+                                                const std::string& searchQuery,
+                                                bool searchFocused,
+                                                int selectedItemIdx,
+                                                const std::string& transferQtyStr,
+                                                float scrollOffset,
+                                                const sf::Font& fontRegular, const sf::Font& fontMedium,
+                                                const sf::Font& fontSemiBold, const sf::Font& fontBold,
+                                                const sf::Font& fontSerif,
+                                                std::function<const sf::Texture&(const std::string&)> getTexture);
+
+    static void drawHeldDraftsModal(sf::RenderTarget& target, sf::Vector2f mouse,
+                                   float currentWidth, float designHeight,
+                                   const std::vector<DraftCart>& drafts,
+                                   const std::vector<ProductItem>& products,
+                                   const sf::Font& fontRegular, const sf::Font& fontMedium,
+                                   const sf::Font& fontSemiBold, const sf::Font& fontBold,
+                                   const sf::Font& fontSerif);
 
     static void drawWalletModal(sf::RenderTarget& target, sf::Vector2f mouse) {}
     static void drawDescModal(sf::RenderTarget& target, sf::Vector2f mouse) {}

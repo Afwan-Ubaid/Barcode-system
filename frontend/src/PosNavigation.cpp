@@ -21,9 +21,9 @@ void PosNavigation::drawSidebar(sf::RenderTarget& target, sf::Vector2f m, float 
     drawSprite(target, getTexture("icons/scan.png"), 22, 22, 24, 24, ThemeColor::Ink);
     drawText(target, fontSemiBold, "ScanIT", 11, ThemeColor::Ink, 34, 58, TextAlignment::Center, 0.4f);
 
-    // Navigation Buttons (Admin: POS, Products, Inventory, Sales, Activity, Settings; Employee: POS, Products, Sales)
+    // Navigation Buttons (Admin: POS, Products, Inventory, Sales, Activity, Settings, Return; Employee: POS, Products, Sales, Return)
     bool isAdmin = (currentRole == "Admin");
-    std::vector<int> visibleTabs = isAdmin ? std::vector<int>{0, 1, 2, 3, 4, 5} : std::vector<int>{0, 1, 3};
+    std::vector<int> visibleTabs = isAdmin ? std::vector<int>{0, 1, 2, 3, 4, 5, 6} : std::vector<int>{0, 1, 3, 6};
 
     for (size_t slot = 0; slot < visibleTabs.size(); slot++) {
         int i = visibleTabs[slot];
@@ -72,7 +72,7 @@ void PosNavigation::drawSidebar(sf::RenderTarget& target, sf::Vector2f m, float 
     drawText(target, fontRegular, roleSubtitle, 8, ThemeColor::Mute, 34, 700, TextAlignment::Center, 0.1f);
 }
 
-void PosNavigation::drawHeader(sf::RenderTarget& target, float mainX,
+void PosNavigation::drawHeader(sf::RenderTarget& target, sf::Vector2f mouse, float mainX,
                               const std::string& currentRole, const std::string& currentUserName,
                               const sf::Font& fontRegular, const sf::Font& fontMedium,
                               const sf::Font& fontSemiBold, const sf::Font& fontSerif) {
@@ -83,14 +83,17 @@ void PosNavigation::drawHeader(sf::RenderTarget& target, float mainX,
     }
     drawText(target, fontSerif, "Point of Sale", 28, ThemeColor::Ink, mainX, 62, TextAlignment::Left, 0.f);
 
-    float statusW = getTextWidth(fontMedium, "Continuous scanner active", 10, 0.2f);
-    drawText(target, fontMedium, "Continuous scanner active", 10, ThemeColor::Ink, mainX + Layout::MAIN_W, 68, TextAlignment::Right, 0.2f);
-
-    sf::CircleShape dot(4, 16);
-    dot.setOrigin(4, 4);
-    dot.setPosition(mainX + Layout::MAIN_W - statusW - 11, 68);
-    dot.setFillColor(ThemeColor::Green);
-    target.draw(dot);
+    // Quick Check Pill Button (ISE-56 Standalone Inspection Overlay)
+    float qcW = 112.f;
+    float qcH = 25.f;
+    float qcX = mainX + 230.f;
+    float qcY = 56.f;
+    bool hovQc = pointInRect(mouse, qcX, qcY, qcW, qcH);
+    drawRounded(target, qcX, qcY, qcW, qcH, 6,
+                hovQc ? ThemeColor::BlueHover : sf::Color(245, 238, 226),
+                hovQc ? ThemeColor::BlueHover : ThemeColor::Edge, 1.f);
+    drawText(target, fontSemiBold, "QUICK CHECK", 9.f,
+             hovQc ? ThemeColor::White : ThemeColor::Ink, qcX + qcW / 2.f, qcY + 12.5f, TextAlignment::Center);
 }
 
 void PosNavigation::drawSearch(sf::RenderTarget& target, sf::Vector2f m, float mainX,

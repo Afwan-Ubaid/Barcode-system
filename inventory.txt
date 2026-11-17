@@ -1,0 +1,30 @@
+# ==============================================================================
+# ScanIT Inventory & Supplier Procurement Database
+# ==============================================================================
+# [INVENTORY_ITEMS]
+# Format: Barcode,Description,Category,Unit,RetailPrice,CostPrice,Stock,Supplier,ArrivalDate,BarcodePath
+100001,Fresh Milk,Dairy,1 L,320,250,26,Nestle Pakistan,2026-11-15,barcodes/barcode_100001.bmp
+100002,Sourdough Bread,Bakery,1 loaf,180,130,15,Artisan Bakes,2026-11-16,barcodes/barcode_100002.bmp
+100003,Atelier coffee,Drinks,250 g,180,120,32,Espresso Labs,2026-11-14,barcodes/barcode_100003.bmp
+100004,Red apples,Fruits & Veg,1 kg,240,170,90,Fresh Orchards,2026-11-17,barcodes/barcode_100004.bmp
+100005,Orange Juice,Drinks,1 L,290,210,18,Citrus Farms,2026-11-15,barcodes/barcode_100005.bmp
+100006,Basmati rice,Grocery,1 kg,540,420,50,Punjab Grains,2026-11-12,barcodes/barcode_100006.bmp
+100007,Pistachio Crunch,Snacks,150 g,350,260,20,NutriDelight,2026-11-16,barcodes/barcode_100007.bmp
+100008,Lavender Deterg.,Household,1.5 L,480,360,12,CleanHome Co,2026-11-13,barcodes/barcode_100008.bmp
+234567,Cereal Box,Grocery,500 g,420,310,25,Morning Foods,2026-11-10,barcodes/barcode_234567.bmp
+567890,Green Tea,Drinks,100 g,260,190,30,Himalayan Herbs,2026-11-11,barcodes/barcode_567890.bmp
+100009,wadood,Snacks,1 L,320,250,30,Nestle Pakistan,2026-11-17,barcodes/barcode_100009.bmp
+
+# [SUPPLIER_PURCHASE_HISTORY]
+# Format: Date | Supplier | Barcode | Description | QtyPurchased | UnitCostPrice | TotalCost
+2026-11-17 | Nestle Pakistan | 100009 | wadood | 30 | 250 | 7500
+2026-11-15 | Nestle Pakistan | 100001 | Fresh Milk | 50 | 250 | 12500
+2026-11-16 | Artisan Bakes | 100002 | Sourdough Bread | 30 | 130 | 3900
+2026-11-14 | Espresso Labs | 100003 | Atelier coffee | 40 | 120 | 4800
+2026-11-17 | Fresh Orchards | 100004 | Red apples | 60 | 170 | 10200
+2026-11-15 | Citrus Farms | 100005 | Orange Juice | 30 | 210 | 6300
+2026-11-12 | Punjab Grains | 100006 | Basmati rice | 80 | 420 | 33600
+2026-11-16 | NutriDelight | 100007 | Pistachio Crunch | 25 | 260 | 6500
+2026-11-13 | CleanHome Co | 100008 | Lavender Deterg. | 20 | 360 | 7200
+2026-11-10 | Morning Foods | 234567 | Cereal Box | 35 | 310 | 10850
+2026-11-11 | Himalayan Herbs | 567890 | Green Tea | 40 | 190 | 7600

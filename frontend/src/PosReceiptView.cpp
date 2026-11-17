@@ -9,6 +9,7 @@ void PosReceiptView::drawReceiptDrawer(sf::RenderTarget& target, sf::Vector2f m,
                                       int subtotal, int discount, int total,
                                       bool discountApplied, int paymentMethod, bool paymentDone,
                                       float receiptScrollOffset,
+                                      int draftsCount,
                                       const sf::Font& fontRegular, const sf::Font& fontMedium,
                                       const sf::Font& fontSemiBold, const sf::Font& fontBold,
                                       const sf::Font& fontSerif,
@@ -25,7 +26,43 @@ void PosReceiptView::drawReceiptDrawer(sf::RenderTarget& target, sf::Vector2f m,
     target.draw(div);
 
     // Header "Current Sale"
-    drawText(target, fontSerif, "Current Sale", 22, ThemeColor::Ink, rpX, 36);
+    drawText(target, fontSerif, "Current Sale", 18, ThemeColor::Ink, rpX, 24);
+
+    // Drafts / Parked Carts Button (Badge if drafts exist)
+    float draftW = 76.f, draftH = 22.f;
+    float draftX = rpX + Layout::RP_W - draftW;
+    float draftY = 12.f;
+    bool hovDraft = pointInRect(m, draftX, draftY, draftW, draftH);
+    sf::Color draftBg = draftsCount > 0 ? (hovDraft ? sf::Color(245, 158, 11) : sf::Color(251, 191, 36))
+                                       : (hovDraft ? sf::Color(230, 222, 210) : sf::Color(242, 236, 226));
+    drawRounded(target, draftX, draftY, draftW, draftH, 4, draftBg, ThemeColor::Edge, 1.f);
+    std::string draftLabel = "Drafts (" + std::to_string(draftsCount) + ")";
+    drawText(target, fontSemiBold, draftLabel, 8.5f, draftsCount > 0 ? ThemeColor::Ink : ThemeColor::Mute,
+             draftX + draftW / 2.f, draftY + 11.f, TextAlignment::Center);
+
+    // Hold Cart Button
+    float holdW = 68.f, holdH = 22.f;
+    float holdX = rpX;
+    float holdY = 38.f;
+    bool hovHold = pointInRect(m, holdX, holdY, holdW, holdH);
+    drawRounded(target, holdX, holdY, holdW, holdH, 4,
+                hovHold ? sf::Color(254, 243, 199) : sf::Color(245, 240, 230),
+                hovHold ? ThemeColor::Amber : ThemeColor::Line, 1.f);
+    drawText(target, fontSemiBold, "Hold Cart", 8.5f,
+             hovHold ? sf::Color(180, 83, 9) : ThemeColor::Ink,
+             holdX + holdW / 2.f, holdY + 11.f, TextAlignment::Center);
+
+    // Clear Cart Button (Instant clear entire cart)
+    float clrW = 68.f, clrH = 22.f;
+    float clrX = rpX + 74.f;
+    float clrY = 38.f;
+    bool hovClr = pointInRect(m, clrX, clrY, clrW, clrH);
+    drawRounded(target, clrX, clrY, clrW, clrH, 4,
+                hovClr ? sf::Color(254, 226, 226) : sf::Color(245, 240, 230),
+                hovClr ? ThemeColor::Red : ThemeColor::Line, 1.f);
+    drawText(target, fontSemiBold, "Clear Cart", 8.5f,
+             hovClr ? ThemeColor::Red : ThemeColor::Ink,
+             clrX + clrW / 2.f, clrY + 11.f, TextAlignment::Center);
 
     // Receipt Paper with authentic zigzag perforated bottom edge
     drawShadow(target, rpX, Layout::RP_Y, Layout::RP_W, Layout::RP_H, 6, 5, 7, 10, 3);
@@ -61,8 +98,8 @@ void PosReceiptView::drawReceiptDrawer(sf::RenderTarget& target, sf::Vector2f m,
     target.draw(hline1);
 
     drawText(target, fontMedium, "Purchases", 9, ThemeColor::Mute, rpX + 10, Layout::RP_Y + 45.f);
-    drawText(target, fontMedium, "QTY", 9, ThemeColor::Mute, rpX + 152, Layout::RP_Y + 45.f, TextAlignment::Center);
-    drawText(target, fontMedium, "PRICE", 9, ThemeColor::Mute, rpX + Layout::RP_W - 10, Layout::RP_Y + 45.f, TextAlignment::Right);
+    drawText(target, fontMedium, "QTY", 9, ThemeColor::Mute, rpX + 172.f, Layout::RP_Y + 45.f, TextAlignment::Center);
+    drawText(target, fontMedium, "PRICE", 9, ThemeColor::Mute, rpX + 258.f, Layout::RP_Y + 45.f, TextAlignment::Right);
 
     sf::RectangleShape hline2({Layout::RP_W - 16, 1});
     hline2.setPosition(rpX + 8, Layout::RP_Y + 56.f);
@@ -85,59 +122,64 @@ void PosReceiptView::drawReceiptDrawer(sf::RenderTarget& target, sf::Vector2f m,
 
         if (y0 < Layout::ROW_Y - 5.f || y0 > Layout::RP_Y + Layout::RP_H - 24.f) continue;
 
-        // 1. Product thumbnail
-        drawRounded(target, rpX + 8, y0 + 4, 24, 24, 5, p.cardTint);
-        drawSprite(target, getTexture("products/" + p.iconKey + ".png"), rpX + 11, y0 + 7, 18, 18);
+        // 1. Cute Item Thumbnail Icon (26x26)
+        float iconX = rpX + 8.f;
+        float iconY = y0 + 11.f;
+        drawRounded(target, iconX, iconY, 26.f, 26.f, 5.f, sf::Color(246, 240, 230), ThemeColor::Line, 1.f);
+        drawSprite(target, getTexture("products/" + p.iconKey + ".png"), iconX + 3.f, iconY + 3.f, 20.f, 20.f);
 
-        // 2. Delete button below product icon
-        float delX = rpX + 7.f;
-        float delY = y0 + 30.f;
-        float delW = 26.f;
-        float delH = 13.f;
-        bool hovDel = pointInRect(m, delX, delY, delW, delH);
-        drawRounded(target, delX, delY, delW, delH, 3,
-                    hovDel ? sf::Color(254, 226, 226) : sf::Color(246, 240, 234),
-                    hovDel ? ThemeColor::Red : ThemeColor::Edge, 1);
-        drawSprite(target, getTexture("icons/trash.png"), delX + 2, delY + 2.f, 9, 9,
-                   hovDel ? ThemeColor::Red : ThemeColor::Mute);
-        drawText(target, fontSemiBold, "Del", 7.5f,
-                 hovDel ? ThemeColor::Red : ThemeColor::Mute, delX + 12, delY + 6.5f);
-
-        // 3. Name & Unit
+        // 2. Product Name & Unit Price
+        float textX = rpX + 38.f;
         std::string shortName = p.name;
         if (shortName.length() > 14) shortName = shortName.substr(0, 12) + "..";
-        drawText(target, fontSemiBold, shortName, 10.5f, ThemeColor::Ink, rpX + 38, y0 + 9);
-        drawText(target, fontRegular, p.unit + " | " + formatRs(p.price), 8, ThemeColor::Mute, rpX + 38, y0 + 22);
+        drawText(target, fontSemiBold, shortName, 10.5f, ThemeColor::Ink, textX, y0 + 8.f);
+
+        std::string priceUnit = p.unit + " @ Rs " + std::to_string(p.price);
+        drawText(target, fontRegular, priceUnit, 8.5f, ThemeColor::Mute, textX, y0 + 25.f);
+
+        // 3. Subtle info/spec icon badge [i] (Cleanly placed after price unit text)
+        float unitW = getTextWidth(fontRegular, priceUnit, 8.5f);
+        float infoX = textX + unitW + 5.f;
+        float infoY = y0 + 22.f;
+        bool hovInfo = pointInRect(m, infoX, infoY, 14.f, 14.f);
+        drawRounded(target, infoX, infoY, 14.f, 14.f, 7.f,
+                    hovInfo ? ThemeColor::Blue : sf::Color(242, 236, 226),
+                    hovInfo ? ThemeColor::Blue : ThemeColor::Edge, 1.f);
+        drawText(target, fontSemiBold, "i", 8.f,
+                 hovInfo ? ThemeColor::White : ThemeColor::Mute, infoX + 7.f, infoY + 6.8f, TextAlignment::Center);
 
         // 4. Quantity Stepper
-        bool hovMinus = pointInRect(m, rpX + 126, y0 + 11, 16, 16);
-        drawRounded(target, rpX + 126, y0 + 11, 16, 16, 4,
+        float minusX = rpX + 144.f;
+        bool hovMinus = pointInRect(m, minusX, y0 + 15.f, 16.f, 18.f);
+        drawRounded(target, minusX, y0 + 15.f, 16.f, 18.f, 4,
                     hovMinus ? sf::Color(236, 228, 212) : ThemeColor::Paper, ThemeColor::Edge, 1);
-        sf::RectangleShape mline({6, 1.2f});
-        mline.setPosition(rpX + 131.f, y0 + 18.4f);
-        mline.setFillColor(ThemeColor::Ink);
-        target.draw(mline);
+        drawText(target, fontBold, "-", 11.f, ThemeColor::Ink, minusX + 8.f, y0 + 23.f, TextAlignment::Center);
 
-        bool hovQty = pointInRect(m, rpX + 144, y0 + 11, 17, 16);
-        drawRounded(target, rpX + 144, y0 + 11, 17, 16, 4,
-                    hovQty ? sf::Color(236, 228, 212) : ThemeColor::Paper,
-                    hovQty ? ThemeColor::Ink : ThemeColor::Edge, 1);
-        drawText(target, fontSemiBold, std::to_string(item.quantity), 9.5f, ThemeColor::Ink, rpX + 152.5f, y0 + 19, TextAlignment::Center);
+        float qtyX = rpX + 163.f;
+        drawRounded(target, qtyX, y0 + 15.f, 18.f, 18.f, 4,
+                    ThemeColor::Paper, ThemeColor::Edge, 1);
+        drawText(target, fontBold, std::to_string(item.quantity), 9.5f, ThemeColor::Ink, qtyX + 9.f, y0 + 23.f, TextAlignment::Center);
 
-        bool hovPlus = pointInRect(m, rpX + 163, y0 + 11, 16, 16);
-        drawRounded(target, rpX + 163, y0 + 11, 16, 16, 4,
+        float plusX = rpX + 184.f;
+        bool hovPlus = pointInRect(m, plusX, y0 + 15.f, 16.f, 18.f);
+        drawRounded(target, plusX, y0 + 15.f, 16.f, 18.f, 4,
                     hovPlus ? sf::Color(236, 228, 212) : ThemeColor::Paper, ThemeColor::Edge, 1);
-        sf::RectangleShape pline1({6, 1.2f});
-        pline1.setPosition(rpX + 168.f, y0 + 18.4f);
-        pline1.setFillColor(ThemeColor::Ink);
-        target.draw(pline1);
-        sf::RectangleShape pline2({1.2f, 6});
-        pline2.setPosition(rpX + 170.4f, y0 + 16.f);
-        pline2.setFillColor(ThemeColor::Ink);
-        target.draw(pline2);
+        drawText(target, fontBold, "+", 11.f, ThemeColor::Ink, plusX + 8.f, y0 + 23.f, TextAlignment::Center);
 
-        // 5. Line item total price
-        drawText(target, fontBold, formatRs(p.price * item.quantity), 10.5f, ThemeColor::Ink, rpX + Layout::RP_W - 8, y0 + 19, TextAlignment::Right);
+        // 5. Line item total price (Right aligned in price column)
+        drawText(target, fontBold, formatRs(p.price * item.quantity), 10.5f, ThemeColor::Ink, rpX + 258.f, y0 + 23.f, TextAlignment::Right);
+
+        // 6. Delete button on far right (Trashcan icon button)
+        float delX = rpX + 270.f;
+        float delY = y0 + 14.f;
+        float delW = 22.f;
+        float delH = 22.f;
+        bool hovDel = pointInRect(m, delX, delY, delW, delH);
+        drawRounded(target, delX, delY, delW, delH, 4,
+                    hovDel ? sf::Color(254, 226, 226) : sf::Color(246, 240, 232),
+                    hovDel ? ThemeColor::Red : ThemeColor::Line, 1);
+        drawSprite(target, getTexture("icons/trash.png"), delX + 5.f, delY + 4.5f, 12, 13,
+                   hovDel ? ThemeColor::Red : ThemeColor::Mute);
 
         // Row separator
         sf::RectangleShape rline({Layout::RP_W - 18, 1});
@@ -187,21 +229,23 @@ void PosReceiptView::drawReceiptDrawer(sf::RenderTarget& target, sf::Vector2f m,
 
     // Cash and Card Selection Buttons
     float btnPayY = chipY + 98.f;
+    float payBtnW = (Layout::RP_W - 12.f) / 2.f;
     bool selCash = (paymentMethod == 0);
-    bool hovCash = pointInRect(m, rpX, btnPayY, 110.f, 30.f);
-    drawRounded(target, rpX, btnPayY, 110.f, 30.f, 6,
+    bool hovCash = pointInRect(m, rpX, btnPayY, payBtnW, 30.f);
+    drawRounded(target, rpX, btnPayY, payBtnW, 30.f, 6,
                 hovCash ? sf::Color(255, 253, 248) : ThemeColor::Paper,
                 selCash ? ThemeColor::Ink : ThemeColor::Edge, selCash ? 1.5f : 1.f);
-    drawSprite(target, getTexture("icons/cash.png"), rpX + 22, btnPayY + 8, 14, 14, ThemeColor::Ink);
-    drawText(target, fontSemiBold, "Cash", 11, ThemeColor::Ink, rpX + 44, btnPayY + 15);
+    drawSprite(target, getTexture("icons/cash.png"), rpX + 35.f, btnPayY + 8, 14, 14, ThemeColor::Ink);
+    drawText(target, fontSemiBold, "Cash", 11, ThemeColor::Ink, rpX + 58.f, btnPayY + 15);
 
     bool selCard = (paymentMethod == 1);
-    bool hovCard = pointInRect(m, rpX + 122.f, btnPayY, 110.f, 30.f);
-    drawRounded(target, rpX + 122.f, btnPayY, 110.f, 30.f, 6,
+    float cardX = rpX + payBtnW + 12.f;
+    bool hovCard = pointInRect(m, cardX, btnPayY, payBtnW, 30.f);
+    drawRounded(target, cardX, btnPayY, payBtnW, 30.f, 6,
                 hovCard ? sf::Color(255, 253, 248) : ThemeColor::Paper,
                 selCard ? ThemeColor::Ink : ThemeColor::Edge, selCard ? 1.5f : 1.f);
-    drawSprite(target, getTexture("icons/card.png"), rpX + 144, btnPayY + 8, 14, 14, ThemeColor::Ink);
-    drawText(target, fontSemiBold, "Card", 11, ThemeColor::Ink, rpX + 166, btnPayY + 15);
+    drawSprite(target, getTexture("icons/card.png"), cardX + 35.f, btnPayY + 8, 14, 14, ThemeColor::Ink);
+    drawText(target, fontSemiBold, "Card", 11, ThemeColor::Ink, cardX + 58.f, btnPayY + 15);
 
     // Charge / Pay Button
     float chargeY = btnPayY + 40.f;

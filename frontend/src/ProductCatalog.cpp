@@ -145,11 +145,13 @@ bool ProductCatalog::loadProductsFile(const std::string& customPath) {
             std::string lower = toLowerStr(rawName);
             if (lower.find("coffee") != std::string::npos) { category = "Drinks"; iconKey = "coffee"; }
             else if (lower.find("tea") != std::string::npos || lower.find("juice") != std::string::npos) { category = "Drinks"; iconKey = "juice"; }
-            else if (lower.find("bread") != std::string::npos || lower.find("cereal") != std::string::npos) { category = "Grocery"; iconKey = "bread"; }
-            else if (lower.find("apple") != std::string::npos) { category = "Grocery"; iconKey = "apple"; }
-            else if (lower.find("rice") != std::string::npos) { category = "Grocery"; iconKey = "rice"; }
+            else if (lower.find("bread") != std::string::npos) { category = "Bakery"; iconKey = "bread"; }
+            else if (lower.find("milk") != std::string::npos) { category = "Dairy"; iconKey = "milk"; }
+            else if (lower.find("apple") != std::string::npos || lower.find("fruit") != std::string::npos || lower.find("veg") != std::string::npos) { category = "Fruits & Veg"; iconKey = "apple"; }
+            else if (lower.find("rice") != std::string::npos || lower.find("cereal") != std::string::npos) { category = "Grocery"; iconKey = "rice"; }
             else if (lower.find("snack") != std::string::npos || lower.find("crunch") != std::string::npos) { category = "Snacks"; iconKey = "coffee"; }
             else if (lower.find("deterg") != std::string::npos || lower.find("clean") != std::string::npos) { category = "Household"; iconKey = "milk"; }
+            else if (lower.find("soap") != std::string::npos || lower.find("shampoo") != std::string::npos || lower.find("care") != std::string::npos) { category = "Personal Care"; iconKey = "milk"; }
 
             sf::Color tint = tints[idCounter % 8];
             mProducts.push_back({idCounter, rawName, unit, category, iconKey, barcode, price, stock, tint});
@@ -160,17 +162,27 @@ bool ProductCatalog::loadProductsFile(const std::string& customPath) {
 
     if (mProducts.empty()) {
         mProducts = {
-            {0, "Fresh Milk",      "1 L",    "Grocery",   "milk",   "100001", 320, 24, sf::Color(240, 230, 222)},
-            {1, "Sourdough Bread", "1 loaf", "Grocery",   "bread",  "100002", 180, 15, sf::Color(241, 236, 214)},
-            {2, "Atelier coffee",  "250 g",  "Drinks",    "coffee", "100003", 180, 32, sf::Color(232, 236, 230)},
-            {3, "Red apples",      "1 kg",   "Grocery",   "apple",  "100004", 240, 40, sf::Color(242, 228, 222)},
+            {0, "Atelier coffee",  "250 g",  "Drinks",    "coffee", "100003", 180, 32, sf::Color(232, 236, 230)},
+            {1, "Basmati rice",    "1 kg",   "Grocery",   "rice",   "100006", 540, 50, sf::Color(232, 236, 238)},
+            {2, "Fresh Milk",      "1 L",    "Grocery",   "milk",   "100001", 320, 24, sf::Color(240, 230, 222)},
+            {3, "Lavender Deterg.","1.5 L",  "Household", "milk",   "100008", 480, 12, sf::Color(230, 234, 240)},
             {4, "Orange Juice",    "1 L",    "Drinks",    "juice",  "100005", 290, 18, sf::Color(243, 236, 218)},
-            {5, "Basmati rice",    "1 kg",   "Grocery",   "rice",   "100006", 540, 50, sf::Color(232, 236, 238)},
-            {6, "Pistachio Crunch","150 g",  "Snacks",    "coffee", "100007", 350, 20, sf::Color(240, 236, 220)},
-            {7, "Lavender Deterg.","1.5 L",  "Household", "milk",   "100008", 480, 12, sf::Color(230, 234, 240)}
+            {5, "Pistachio Crunch","150 g",  "Snacks",    "coffee", "100007", 350, 20, sf::Color(240, 236, 220)},
+            {6, "Red apples",      "1 kg",   "Grocery",   "apple",  "100004", 240, 40, sf::Color(242, 228, 222)},
+            {7, "Sourdough Bread", "1 loaf", "Grocery",   "bread",  "100002", 180, 15, sf::Color(241, 236, 214)}
         };
     }
+    sortAlphabetically();
     return true;
+}
+
+void ProductCatalog::sortAlphabetically() {
+    std::sort(mProducts.begin(), mProducts.end(), [](const ProductItem& a, const ProductItem& b) {
+        return toLowerStr(a.name) < toLowerStr(b.name);
+    });
+    for (size_t i = 0; i < mProducts.size(); ++i) {
+        mProducts[i].id = std::to_string(101 + (int)i);
+    }
 }
 
 std::vector<int> ProductCatalog::getVisibleProducts(const std::string& searchQuery, const std::string& activeCategory) const {
@@ -231,6 +243,7 @@ void ProductCatalog::addOrUpdateProduct(const ProductItem& item) {
         newItem.id = std::to_string(100 + (int)mProducts.size() + 1);
         mProducts.push_back(newItem);
     }
+    sortAlphabetically();
     saveProductsFile();
 }
 

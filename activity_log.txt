@@ -10,3 +10,24 @@
 2026-11-17 19:35:22|INVENTORY|admin|Restocked +50 units of Fresh Milk
 2026-11-17 19:35:23|INVENTORY|admin|Restocked +10 units of Fresh Milk
 2026-11-17 19:35:34|SALE|admin|Processed card sale of Rs 1,090
+2026-11-17 21:42:18|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-17 21:47:50|RETURN|admin|Customer returned 1x Fresh Milk (100001) - Refunded Rs 320 - Restocked in product.txt and inventory.txt
+2026-11-17 21:48:15|SALE|admin|Processed card sale of Rs 1,450
+2026-11-17 21:49:17|SALE|admin|Processed cash sale of Rs 60
+2026-11-17 21:57:55|SALE|admin|Processed card sale of Rs 2,460
+2026-11-17 22:10:40|INVENTORY|admin|Restocked +50 units of Red apples
+2026-11-17 22:27:18|INVENTORY|admin|Bought 30 units of wadood (100009) from Nestle Pakistan at Rs 250/unit on 2026-11-17
+2026-11-17 22:33:22|SALE|admin|Processed cash sale of Rs 420
+2026-11-17 22:36:35|RETURN|admin|Customer returned 1x Fresh Milk (100001) - Refunded Rs 320 - Restocked in product.txt and inventory.txt
+2026-11-17 22:37:30|LOGIN|admin|Operator logged out of terminal session
+2026-11-17 22:37:40|LOGIN|Afwan|Authenticated user session (Employee) via login terminal
+2026-11-18 00:30:50|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-18 00:36:58|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-18 02:00:33|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-18 02:11:18|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-18 02:15:09|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-18 02:57:01|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-18 03:14:19|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-18 03:22:18|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-18 03:24:41|LOGIN|admin|Operator logged out of terminal session
+2026-11-18 03:24:48|LOGIN|Afwan|Authenticated user session (Employee) via login terminal

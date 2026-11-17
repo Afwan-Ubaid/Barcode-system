@@ -49,8 +49,102 @@ static bool writeBmp24(const std::string& path, const std::vector<unsigned char>
     return true;
 }
 
+static bool isInternalCameraName(const std::string& name) {
+    std::string lower = name;
+    for (char& c : lower) c = (char)tolower(c);
+    if (lower.find("integrated") != std::string::npos) return true;
+    if (lower.find("internal") != std::string::npos) return true;
+    if (lower.find("true vision") != std::string::npos) return true;
+    if (lower.find("truevision") != std::string::npos) return true;
+    if (lower.find("facetime") != std::string::npos) return true;
+    if (lower.find("easycamera") != std::string::npos) return true;
+    return false;
+}
+
+static bool isLikelyExternalCamera(const std::string& name, int index, int count) {
+    std::string lower = name;
+    for (char& c : lower) c = (char)tolower(c);
+    if (lower.find("droidcam") != std::string::npos) return true;
+    if (lower.find("iriun") != std::string::npos) return true;
+    if (lower.find("camo") != std::string::npos) return true;
+    if (lower.find("phone") != std::string::npos) return true;
+    if (lower.find("mobile") != std::string::npos) return true;
+    if (lower.find("ivcam") != std::string::npos) return true;
+    if (lower.find("epoccam") != std::string::npos) return true;
+    if (lower.find("ip webcam") != std::string::npos) return true;
+    if (lower.find("obs virtual") != std::string::npos) return true;
+    if (lower.find("android") != std::string::npos) return true;
+    if (lower.find("pixel") != std::string::npos) return true;
+    if (lower.find("usb video") != std::string::npos) return true;
+    if (count > 1 && index > 0 && !isInternalCameraName(name)) return true;
+    return false;
+}
+
+std::vector<CameraDeviceInfo> CameraStream::getAvailableCameras() {
+    std::vector<CameraDeviceInfo> result;
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    MFStartup(MF_VERSION);
+
+    IMFAttributes* pConfig = nullptr;
+    if (SUCCEEDED(MFCreateAttributes(&pConfig, 1))) {
+        pConfig->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID);
+
+        IMFActivate** ppDevices = nullptr;
+        UINT32 count = 0;
+        if (SUCCEEDED(MFEnumDeviceSources(pConfig, &ppDevices, &count)) && ppDevices) {
+            for (UINT32 i = 0; i < count; ++i) {
+                WCHAR* friendlyName = nullptr;
+                UINT32 len = 0;
+                ppDevices[i]->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, &friendlyName, &len);
+                std::string name = "Camera " + std::to_string(i);
+                if (friendlyName) {
+                    char nameBuf[256] = { 0 };
+                    WideCharToMultiByte(CP_UTF8, 0, friendlyName, -1, nameBuf, sizeof(nameBuf) - 1, NULL, NULL);
+                    name = nameBuf;
+                    CoTaskMemFree(friendlyName);
+                }
+
+                bool isExt = isLikelyExternalCamera(name, (int)i, (int)count);
+                result.push_back({ (int)i, name, isExt });
+                ppDevices[i]->Release();
+            }
+            CoTaskMemFree(ppDevices);
+        }
+        pConfig->Release();
+    }
+
+    MFShutdown();
+    CoUninitialize();
+    return result;
+}
+
+int CameraStream::getAvailableCameraCount() {
+    auto cams = getAvailableCameras();
+    return (int)cams.size();
+}
+
+int CameraStream::getBestCameraIndex() {
+    auto cams = getAvailableCameras();
+    if (cams.empty()) return -1;
+
+    // 1st Priority: Look for mobile phone camera software/driver or external scanner
+    for (const auto& cam : cams) {
+        if (cam.isMobileOrExternal) {
+            return cam.index;
+        }
+    }
+
+    // 2nd Priority: If multiple cameras exist and secondary camera is not internal, pick device 1
+    if (cams.size() > 1 && !isInternalCameraName(cams[1].name)) {
+        return 1;
+    }
+
+    // Fallback: Device 0 (Laptop integrated webcam)
+    return 0;
+}
+
 CameraStream::CameraStream()
-    : mRunning(false), mHasNewFrame(false), mWidth(640), mHeight(480), mCameraName("Camera") {
+    : mRunning(false), mHasNewFrame(false), mWidth(640), mHeight(480), mActiveDeviceIndex(0), mCameraName("Camera") {
 }
 
 CameraStream::~CameraStream() {
@@ -58,11 +152,46 @@ CameraStream::~CameraStream() {
 }
 
 bool CameraStream::start(int deviceIndex) {
-    if (mRunning) return true;
+    if (mRunning) {
+        if (deviceIndex == mActiveDeviceIndex) return true;
+        stop();
+    }
+
+    if (deviceIndex < 0) {
+        deviceIndex = getBestCameraIndex();
+        if (deviceIndex < 0) deviceIndex = 0;
+    }
+
+    mActiveDeviceIndex = deviceIndex;
     mRunning = true;
     mHasNewFrame = false;
     mThread = std::thread(&CameraStream::workerThreadFunc, this, deviceIndex);
     return true;
+}
+
+bool CameraStream::switchCamera(int targetIndex) {
+    auto cams = getAvailableCameras();
+    if (cams.empty()) return false;
+
+    int nextIdx = 0;
+    if (targetIndex >= 0) {
+        nextIdx = targetIndex % (int)cams.size();
+    } else {
+        nextIdx = (mActiveDeviceIndex + 1) % (int)cams.size();
+    }
+
+    stop();
+    return start(nextIdx);
+}
+
+int CameraStream::getActiveDeviceIndex() const {
+    return mActiveDeviceIndex;
+}
+
+bool CameraStream::isActiveCameraExternal() const {
+    std::string name = getCameraName();
+    int count = getAvailableCameraCount();
+    return isLikelyExternalCamera(name, mActiveDeviceIndex, count);
 }
 
 void CameraStream::stop() {
@@ -194,6 +323,9 @@ void CameraStream::workerThreadFunc(int deviceIndex) {
                 if (SUCCEEDED(pBuffer->Lock(&pData, &maxLen, &curLen)) && pData) {
                     if (curLen >= width * height * 4) {
                         std::lock_guard<std::mutex> lock(mFrameMutex);
+                        if (mRgbaBuffer.size() < width * height * 4) {
+                            mRgbaBuffer.resize(width * height * 4, 255);
+                        }
                         // Convert RGB32 (BGRX) to RGBA for SFML
                         unsigned char* dst = mRgbaBuffer.data();
                         for (size_t i = 0; i < width * height; ++i) {
@@ -211,6 +343,8 @@ void CameraStream::workerThreadFunc(int deviceIndex) {
                 pBuffer->Release();
             }
             pSample->Release();
+        } else {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     }
 
@@ -224,9 +358,9 @@ void CameraStream::workerThreadFunc(int deviceIndex) {
     CoUninitialize();
 }
 
-bool captureFrameFromCamera(const std::string& outBmpPath, std::string& cameraName, std::string& errorMessage) {
+bool captureFrameFromCamera(const std::string& outBmpPath, std::string& cameraName, std::string& errorMessage, int deviceIndex) {
     CameraStream stream;
-    if (!stream.start(0)) {
+    if (!stream.start(deviceIndex)) {
         errorMessage = "Could not initialize camera stream.";
         return false;
     }

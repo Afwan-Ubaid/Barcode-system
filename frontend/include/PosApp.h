@@ -13,6 +13,7 @@
 #include "StaffManager.h"
 #include "ActivityLogger.h"
 #include "ProductCatalog.h"
+#include "InventoryManager.h"
 #include "CartService.h"
 #include "SplashScreen.h"
 #include "LoginScreen.h"
@@ -20,6 +21,7 @@
 #include "../../backend/include/Decoder.h"
 #include "../../backend/include/Generator.h"
 #include "../../backend/include/Validator.h"
+#include "../../backend/include/PaymentStrategy.h"
 
 // ============================================================================
 // ISE SOFTWARE ENGINEERING PRINCIPLE: High Cohesion & Loose Coupling
@@ -49,14 +51,21 @@ private:
     void handleTextInput(sf::Uint32 unicode);
     void simulateScan(int productId = -1);
     void onBarcodeScanned(const std::string& barcode);
+    void lookupReturnItem(const std::string& barcode);
+    void processReturn();
+    void recordSaleToOutputFiles(const std::vector<CartLine>& cartItems, const std::string& cashierName, int paymentMethod);
+    void generateNewItemBarcode();
+    void saveNewInventoryItem();
 
     void showToast(const std::string& message);
+    void switchCamera();
     void updateLayout(float winW, float winH);
 
     // Domain Managers & Services (Separation of Concerns)
     StaffManager mStaffManager;
     ActivityLogger mActivityLogger;
     ProductCatalog mProductCatalog;
+    InventoryManager mInventoryManager;
     CartService mCartService;
 
     // Window & Display Layout
@@ -103,6 +112,13 @@ private:
     float mLastScanTimer = 0.f;
     bool mSoundEnabled = true;
 
+    // Search Fields in Products & Inventory Tabs
+    std::string mProductsSearchQuery = "";
+    bool mProductsSearchFocused = false;
+    std::string mInventorySearchQuery = "";
+    bool mInventorySearchFocused = false;
+    int mSalesTimeFilter = 0; // 0 = All, 1 = Today, 2 = This Week, 3 = This Month
+
     // Scrolling Offsets
     float mReceiptScrollOffset = 0.f;
     float mEnlargeScrollOffset = 0.f;
@@ -110,6 +126,7 @@ private:
     float mInventoryScrollOffset = 0.f;
     float mSalesScrollOffset = 0.f;
     float mLogScrollOffset = 0.f;
+    float mAddProductScrollOffset = 0.f;
 
     // Modals Visibility
     bool mReceiptModalOpen = false;
@@ -119,6 +136,67 @@ private:
     bool mCardModalOpen = false;
     bool mAddStaffModalOpen = false;
     bool mResetPassModalOpen = false;
+    bool mAddInventoryModalOpen = false;
+    bool mItemDescModalOpen = false;
+    bool mAddProductModalOpen = false;
+    bool mDraftsModalOpen = false;
+
+    // Inventory View Sub-Tabs & Supplier Ledger
+    int mInventorySubTab = 0; // 0 = Stock & Items, 1 = Supplier Ledger
+    float mSupplierScrollOffset = 0.f;
+
+    // Add Inventory & Supplier Modal Input States
+    std::string mNewItemSupplier = "Nestle Pakistan";
+    std::string mNewItemDesc = "";
+    std::string mNewItemCategory = "Grocery";
+    std::string mNewItemUnit = "1 L";
+    std::string mNewItemPriceStr = "320";
+    std::string mNewItemCostStr = "250";
+    std::string mNewItemQtyStr = "30";
+    std::string mNewItemDateStr = "2026-11-17";
+    std::string mNewItemBarcode = "";
+    int mNewItemActiveField = 1;
+    bool mNewItemGenerated = false;
+    bool mVendorDropdownOpen = false;
+    bool mScanningUniversalSupplier = false;
+
+    // Item Description Modal Details
+    std::string mDescItemName = "";
+    std::string mDescItemBarcode = "";
+    std::string mDescItemCategory = "";
+    std::string mDescItemUnit = "";
+    int mDescItemPrice = 0;
+    int mDescItemCost = 0;
+    int mDescItemStock = 0;
+    std::string mDescItemSupplier = "";
+    std::string mDescItemDate = "";
+
+    // Quick Check Overlay & Product Spec Modal (ISE-55, ISE-56, ISE-57)
+    bool mQuickCheckModalOpen = false;
+    std::string mQuickCheckBarcode = "";
+    int mQuickCheckProductIdx = -1;
+    bool mQuickCheckInputFocused = true;
+    bool mSpecModalOpen = false;
+    int mSpecProductIdx = -1;
+
+    // Add Product From Inventory Modal States
+    std::string mAddProductSearchQuery = "";
+    bool mAddProductSearchFocused = false;
+    int mSelectedInventoryForProduct = -1;
+    std::string mTransferQtyStr = "10";
+
+    // Return Tab State
+    std::string mReturnBarcode = "";
+    bool mReturnBarcodeFocused = true;
+    int mReturnQty = 1;
+    int mSelectedReturnProductIdx = -1;
+    std::string mReturnSaleInfo = "";
+    int mReturnSalePrice = 0;
+    std::string mReturnOrderId = "";
+    std::string mReturnCustomer = "";
+    std::string mReturnDate = "";
+    std::string mReturnStatusMessage = "";
+    bool mReturnSuccess = false;
 
     // Modal Input States
     int mEditingCartIndex = -1;
@@ -144,6 +222,8 @@ private:
     int mCamHeight = 0;
     bool mCameraRunning = false;
     bool mCameraBarcodeFound = false;
+    float mBarcodeFoundTimer = 0.f;
+    std::string mDetectedBarcode = "";
     BarcodeBox mBarcodeBox;
 };
 

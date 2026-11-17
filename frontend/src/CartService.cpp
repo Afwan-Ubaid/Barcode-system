@@ -94,7 +94,7 @@ void CartService::setCashGivenStr(const std::string& str) {
     mCashGiven = parseCashGiven();
 }
 
-bool CartService::chargeSale(std::vector<ProductItem>& products, const std::string& /*userName*/, std::string& outMessage) {
+bool CartService::chargeSale(std::vector<ProductItem>& products, const std::string& userName, std::string& outMessage) {
     if (mCart.empty()) {
         outMessage = "Cannot charge: receipt is empty";
         return false;
@@ -113,6 +113,13 @@ bool CartService::chargeSale(std::vector<ProductItem>& products, const std::stri
     localtime_s(&tmNow, &now);
     char buf[32];
     std::strftime(buf, sizeof(buf), "%H:%M:%S", &tmNow);
+    char fullDateBuf[64];
+    std::strftime(fullDateBuf, sizeof(fullDateBuf), "%Y-%m-%d %H:%M:%S", &tmNow);
+
+    mLastDateStr = fullDateBuf;
+    mLastOrderId = "ORD-" + std::to_string(1001 + mSalesHistory.size());
+    mLastCashier = userName.empty() ? "System Admin" : userName;
+
     rec.timestamp = buf;
     rec.itemCount = (int)mCart.size();
     rec.totalAmount = total;
@@ -120,6 +127,8 @@ bool CartService::chargeSale(std::vector<ProductItem>& products, const std::stri
     rec.cashGiven = (mPaymentMethod == 0 ? given : total);
     rec.changeGiven = (mPaymentMethod == 0 ? std::max(0, given - total) : 0);
     rec.items = mCart;
+    rec.orderId = mLastOrderId;
+    rec.cashier = mLastCashier;
     mSalesHistory.push_back(rec);
 
     // Decrement stock levels
@@ -140,29 +149,45 @@ std::string CartService::printReceipt(const std::vector<ProductItem>& products, 
         return "";
     }
 
+    if (!cashierName.empty()) {
+        mLastCashier = cashierName;
+    }
+
     std::time_t now = std::time(nullptr);
     tm tmNow;
     localtime_s(&tmNow, &now);
     char dateBuf[64];
     std::strftime(dateBuf, sizeof(dateBuf), "%Y-%m-%d %H:%M:%S", &tmNow);
+    mLastDateStr = dateBuf;
+
+    if (mLastOrderId.empty() || mLastOrderId == "ORD-1001") {
+        mLastOrderId = "ORD-" + std::to_string(1000 + mSalesHistory.size());
+    }
 
     std::stringstream ss;
     ss << "========================================================\n";
-    ss << "                   SCANIT POS RECEIPT                   \n";
-    ss << "                 Sales Counter / Register 04            \n";
+    ss << "             SCANIT SUPERMARKET & SMART POS             \n";
+    ss << "          Smart Point of Sale & Retail Express          \n";
+    ss << "        Main Boulevard, Gulberg III, Lahore, PK         \n";
+    ss << "          Tel: 042-35789000  *  NTN: 8492019-3          \n";
+    ss << "         Terminal: REG-04  *  Store: PK-LHR-01          \n";
     ss << "========================================================\n";
-    ss << "Date:     " << dateBuf << "\n";
-    ss << "Cashier:  " << (cashierName.empty() ? "Muya Khan" : cashierName) << "\n";
-    ss << "Order ID: #" << (1000 + mSalesHistory.size()) << "\n";
+    ss << "                 SALES RECEIPT / INVOICE                \n";
     ss << "--------------------------------------------------------\n";
-    ss << "PURCHASED ITEMS:\n";
+    ss << "Date:     " << mLastDateStr << "\n";
+    ss << "Order ID: #" << mLastOrderId << "\n";
+    ss << "Cashier:  " << mLastCashier << "\n";
+    ss << "Terminal: POS Counter 04\n";
+    ss << "Status:   COMPLETED / PAID IN FULL\n";
+    ss << "--------------------------------------------------------\n";
+    ss << "ITEM NAME                  QTY    UNIT PRICE     TOTAL  \n";
     ss << "--------------------------------------------------------\n";
 
     for (const auto& line : mCart) {
         if (line.productId >= 0 && line.productId < (int)products.size()) {
             const auto& p = products[line.productId];
-            char lineBuf[90];
-            std::snprintf(lineBuf, sizeof(lineBuf), "%-26s x%-3d @ Rs %-5d = Rs %d\n",
+            char lineBuf[128];
+            std::snprintf(lineBuf, sizeof(lineBuf), "%-26s x%-2d    Rs %-8d  Rs %d\n",
                           p.name.substr(0, 26).c_str(), line.quantity, p.price, p.price * line.quantity);
             ss << lineBuf;
         }
@@ -171,22 +196,26 @@ std::string CartService::printReceipt(const std::vector<ProductItem>& products, 
     ss << "--------------------------------------------------------\n";
     ss << "Subtotal:                                  " << formatRs(getSubtotal(products)) << "\n";
     if (getDiscount() > 0) {
-        ss << "Discount:                                 " << formatRs(-getDiscount()) << "\n";
+        ss << "Discount (Store Promo):                   " << formatRs(-getDiscount()) << "\n";
     }
-    ss << "Taxes:                                     Rs 0 (Tax Free)\n";
-    ss << "--------------------------------------------------------\n";
+    ss << "========================================================\n";
     ss << "TOTAL AMOUNT:                              " << formatRs(getTotal(products)) << "\n";
-    ss << "Payment Method:                            " << (mPaymentMethod == 0 ? "Cash" : "Card") << "\n";
+    ss << "========================================================\n";
+    ss << "Payment Method:                            " << (mPaymentMethod == 0 ? "CASH" : "CARD (VISA/MC)") << "\n";
 
     if (mPaymentMethod == 0) {
         ss << "Cash Tendered:                             " << formatRs(parseCashGiven()) << "\n";
-        ss << "Change Given Back:                         " << formatRs(getChangeAmount(products)) << "\n";
+        ss << "Change Returned:                           " << formatRs(getChangeAmount(products)) << "\n";
     } else {
-        ss << "Card POS Auth:                             APPROVED #984321\n";
+        ss << "Card POS Approval:                         AUTH #984321 - APPROVED\n";
     }
 
-    ss << "========================================================\n";
-    ss << "            THANK YOU FOR SHOPPING WITH SCANIT!         \n";
+    ss << "--------------------------------------------------------\n";
+    ss << "                 * " << mLastOrderId << " *\n";
+    ss << "--------------------------------------------------------\n";
+    ss << "       THANK YOU FOR SHOPPING WITH SCANIT STORE!        \n";
+    ss << "    Exchange / Return valid for 7 days with this slip   \n";
+    ss << "         Customer Helpline: info@scanit-pos.com         \n";
     ss << "========================================================\n";
 
     mLastReceiptText = ss.str();
@@ -199,4 +228,33 @@ std::string CartService::printReceipt(const std::vector<ProductItem>& products, 
 
     outSuccess = true;
     return mLastReceiptText;
+}
+
+bool CartService::parkCurrentCart(const std::vector<ProductItem>& products, const std::string& label) {
+    if (mCart.empty()) return false;
+    DraftCart d;
+    d.draftId = "Draft #" + std::to_string(mDraftCarts.size() + 1);
+    d.customerLabel = label.empty() ? ("Customer " + std::to_string(mDraftCarts.size() + 1)) : label;
+    d.time = getCurrentTimeHHMMSS();
+    d.items = mCart;
+    d.totalAmount = getTotal(products);
+    mDraftCarts.push_back(d);
+    clear();
+    return true;
+}
+
+bool CartService::resumeDraft(int index) {
+    if (index >= 0 && index < (int)mDraftCarts.size()) {
+        mCart = mDraftCarts[index].items;
+        mDraftCarts.erase(mDraftCarts.begin() + index);
+        mPaymentDone = false;
+        return true;
+    }
+    return false;
+}
+
+void CartService::deleteDraft(int index) {
+    if (index >= 0 && index < (int)mDraftCarts.size()) {
+        mDraftCarts.erase(mDraftCarts.begin() + index);
+    }
 }

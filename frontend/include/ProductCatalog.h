@@ -25,10 +25,13 @@ public:
     std::vector<int> getVisibleProducts(const std::string& searchQuery, const std::string& activeCategory) const;
     int findProductByBarcode(const std::string& barcode) const;
 
+    void sortAlphabetically();
     void deleteProduct(int index);
     void addStock(int index, int amount);
     void deductStock(int index, int amount);
     void addOrUpdateProduct(const ProductItem& item);
+    void addProduct(const ProductItem& item) { addOrUpdateProduct(item); }
+    bool saveToFile() { return saveProductsFile(); }
 
 private:
     std::vector<ProductItem> mProducts;

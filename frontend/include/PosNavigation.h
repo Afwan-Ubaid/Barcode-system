@@ -18,7 +18,7 @@ public:
                             const sf::Font& fontRegular, const sf::Font& fontMedium, const sf::Font& fontSemiBold,
                             std::function<const sf::Texture&(const std::string&)> getTexture);
 
-    static void drawHeader(sf::RenderTarget& target, float mainX,
+    static void drawHeader(sf::RenderTarget& target, sf::Vector2f mouse, float mainX,
                            const std::string& currentRole, const std::string& currentUserName,
                            const sf::Font& fontRegular, const sf::Font& fontMedium,
                            const sf::Font& fontSemiBold, const sf::Font& fontSerif);

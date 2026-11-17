@@ -6,6 +6,7 @@
 #include <vector>
 #include <functional>
 #include "PosModels.h"
+#include "InventoryManager.h"
 
 // ============================================================================
 // ISE SOFTWARE ENGINEERING PRINCIPLE: Separation of Concerns (SoC)
@@ -15,8 +16,12 @@
 class PosReportsView {
 public:
     static void drawSalesTab(sf::RenderTarget& target, sf::Vector2f mouse, float mainX,
-                             const std::vector<SaleRecord>& salesHistory, float scrollOffset,
-                             const sf::Font& fontRegular, const sf::Font& fontBold,
+                             const std::vector<SaleRecord>& salesHistory,
+                             const std::vector<ProductItem>& products,
+                             const InventoryManager& inventoryMgr,
+                             int salesTimeFilter, float scrollOffset,
+                             const sf::Font& fontRegular, const sf::Font& fontMedium,
+                             const sf::Font& fontSemiBold, const sf::Font& fontBold,
                              const sf::Font& fontSerif);
 
     static void drawActivityLogsTab(sf::RenderTarget& target, sf::Vector2f mouse, float mainX,
@@ -30,11 +35,22 @@ public:
                                 const std::vector<StaffMember>& staffList,
                                 const std::string& currentRole, const std::string& currentUserName,
                                 bool cameraRunning, bool soundEnabled,
+                                const std::string& cameraName, bool isExternalCam, int cameraCount,
                                 const sf::Font& fontRegular, const sf::Font& fontMedium,
                                 const sf::Font& fontSemiBold, const sf::Font& fontBold,
                                 const sf::Font& fontSerif);
 
-    static void drawReturnTab(sf::RenderTarget& target, sf::Vector2f mouse);
+    static void drawReturnTab(sf::RenderTarget& target, sf::Vector2f mouse, float mainX,
+                              const std::string& returnBarcode, bool returnBarcodeFocused,
+                              int returnQty, const ProductItem* foundProduct,
+                              const std::string& saleInfo, int salePrice,
+                              const std::string& saleOrderId, const std::string& saleCustomer,
+                              const std::string& saleDate, bool returnSuccess,
+                              const std::string& statusMessage, const sf::Texture& cameraTexture,
+                              const sf::Font& fontRegular, const sf::Font& fontMedium,
+                              const sf::Font& fontSemiBold, const sf::Font& fontBold,
+                              const sf::Font& fontSerif,
+                              std::function<const sf::Texture&(const std::string&)> getTexture);
 };
 
 #endif // POS_REPORTS_VIEW_H
