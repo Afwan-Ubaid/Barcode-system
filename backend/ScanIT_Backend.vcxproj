@@ -85,6 +85,8 @@
     <ClCompile Include="src\Validator.cpp" />
     <ClCompile Include="src\TestSuite.cpp" />
     <ClCompile Include="src\CameraCapture.cpp" />
+    <ClCompile Include="src\ProductManager.cpp" />
+    <ClCompile Include="src\CliHandlers.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <!-- Header Files -->
@@ -94,6 +96,8 @@
     <ClInclude Include="include\Validator.h" />
     <ClInclude Include="include\TestSuite.h" />
     <ClInclude Include="include\CameraCapture.h" />
+    <ClInclude Include="include\ProductManager.h" />
+    <ClInclude Include="include\CliHandlers.h" />
   </ItemGroup>
   <!-- Build scripts -->
   <ItemGroup>

@@ -1,50 +1,35 @@
-#ifndef SPLASHSCREEN_H
-#define SPLASHSCREEN_H
+#ifndef SPLASH_SCREEN_H
+#define SPLASH_SCREEN_H
+
 #include <SFML/Graphics.hpp>
 #include <string>
+
 class SplashScreen {
 public:
-    SplashScreen(sf::RenderWindow& window, sf::Font& font);
-    bool load();
-    bool update(float deltaTime);
-    void handleEvent(const sf::Event& event);
-    void draw();
-
-    bool isFinished() const { return mFinished; }
+    SplashScreen();
+    bool init(const std::string& assetsDir, const sf::Font& fontRegular, const sf::Font& fontSemiBold, const sf::Font& fontBold, const sf::Font& fontSerif);
+    void update(float dt);
+    void render(sf::RenderTarget& target, float designWidth, float designHeight);
+    bool isFinished() const;
+    void skip();
+    float getProgress() const;
 
 private:
-    sf::RenderWindow&  mWindow;
-    sf::Font&          mFont;
+    float mTimer = 0.f;
+    float mDuration = 2.4f;
+    bool mFinished = false;
 
-    sf::Texture        mIconTexture;
-    sf::Sprite         mIconSprite;
-    bool               mIconLoaded;
+    const sf::Font* mFontRegular = nullptr;
+    const sf::Font* mFontSemiBold = nullptr;
+    const sf::Font* mFontBold = nullptr;
+    const sf::Font* mFontSerif = nullptr;
 
-    // Glowing Neon Rings behind 3D icon
-    sf::CircleShape    mRingOuter;
-    sf::CircleShape    mRingInner;
-    sf::CircleShape    mCoreGlow;
+    sf::Texture mBgTexture;
+    sf::Texture mEmblemTexture;
+    bool mHasBg = false;
+    bool mHasEmblem = false;
 
-    // Texts
-    sf::Text           mTitle;
-    sf::Text           mVersionBadge;
-    sf::RectangleShape mBadgeBox;
-    sf::Text           mSubtitle;
-    sf::Text           mBuiltBy;
-    sf::Text           mLoadingText;
-    sf::Text           mPercentText;
-    sf::Text           mSkipHint;
-
-    // Loading bar
-    sf::RectangleShape mBarBG;
-    sf::RectangleShape mBarFill;
-
-    float mProgress;
-    float mElapsed;
-    float mTotalDuration;
-    float mFloatOffset;
-    float mFloatTime;
-    bool  mFinished;
+    std::string mBrandingTarget = "BUILT BY INTRUDERS";
 };
 
-#endif // SPLASHSCREEN_H
+#endif // SPLASH_SCREEN_H

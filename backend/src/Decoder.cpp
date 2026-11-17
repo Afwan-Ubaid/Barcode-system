@@ -50,7 +50,7 @@ struct BarcodeRun {
     int len;
 };
 
-static bool parseCode39Runs(const vector<BarcodeRun>& runs, string& outDigits) {
+static bool parseCode39Runs(const vector<BarcodeRun>& runs, string& outDigits, size_t* outStart = nullptr, size_t* outEnd = nullptr) {
     if (runs.size() < 79) return false;
 
     // Scan through all possible start positions
@@ -103,6 +103,8 @@ static bool parseCode39Runs(const vector<BarcodeRun>& runs, string& outDigits) {
             }
             if (allDigits) {
                 outDigits = decoded.substr(1, 6);
+                if (outStart) *outStart = start;
+                if (outEnd) *outEnd = idx;
                 return true;
             }
         }
@@ -110,16 +112,13 @@ static bool parseCode39Runs(const vector<BarcodeRun>& runs, string& outDigits) {
     return false;
 }
 
-bool decodeBarcodeFromMemory(const unsigned char* pixelData, int width, int height, bool isRGBA, string& decodedCode, string& errorMessage, bool fastMode) {
+bool detectBarcodeInFrame(const unsigned char* pixelData, int width, int height, bool isRGBA, string& decodedCode, BarcodeBox& outBox, bool fastMode) {
+    outBox.detected = false;
     if (!pixelData || width <= 10 || height <= 10) {
-        errorMessage = "Error: Invalid image buffer dimensions.";
         return false;
     }
 
     int bpp = isRGBA ? 4 : 3;
-
-    // Multi-angle and multi-scanline sweep
-    // In fastMode (used during live video feed), evaluate 3 key angles at wider step for zero lag
     vector<float> angles;
     int yStep = 6;
     vector<int> deltas;
@@ -161,7 +160,6 @@ bool decodeBarcodeFromMemory(const unsigned char* pixelData, int width, int heig
                 localAvg[x] = sum / count;
             }
 
-            // Test adaptive threshold deltas
             for (int delta : deltas) {
                 vector<bool> isBar(width);
                 for (int x = 0; x < width; ++x) {
@@ -182,22 +180,55 @@ bool decodeBarcodeFromMemory(const unsigned char* pixelData, int width, int heig
                 }
                 runs.push_back({cur, len});
 
-                if (parseCode39Runs(runs, decodedCode)) {
-                    errorMessage.clear();
+                size_t startRun = 0, endRun = 0;
+                if (parseCode39Runs(runs, decodedCode, &startRun, &endRun)) {
+                    int xStart = 0;
+                    for (size_t i = 0; i < startRun; ++i) xStart += runs[i].len;
+                    int bW = 0;
+                    for (size_t i = startRun; i < endRun && i < runs.size(); ++i) bW += runs[i].len;
+                    int xEnd = xStart + bW;
+
+                    outBox.x1 = std::max(0, xStart - 8);
+                    outBox.x2 = std::min(width - 1, xEnd + 8);
+                    outBox.y1 = std::max(0, yMid - 55);
+                    outBox.y2 = std::min(height - 1, yMid + 55);
+                    outBox.detected = true;
                     return true;
                 }
 
                 // Reverse runs (in case phone/paper is rotated 180°)
                 std::reverse(runs.begin(), runs.end());
-                if (parseCode39Runs(runs, decodedCode)) {
+                if (parseCode39Runs(runs, decodedCode, &startRun, &endRun)) {
                     std::reverse(decodedCode.begin(), decodedCode.end());
-                    errorMessage.clear();
+                    int rStart = 0;
+                    for (size_t i = 0; i < startRun; ++i) rStart += runs[i].len;
+                    int bW = 0;
+                    for (size_t i = startRun; i < endRun && i < runs.size(); ++i) bW += runs[i].len;
+                    int rEnd = rStart + bW;
+
+                    int xStart = width - 1 - rEnd;
+                    int xEnd = width - 1 - rStart;
+
+                    outBox.x1 = std::max(0, xStart - 8);
+                    outBox.x2 = std::min(width - 1, xEnd + 8);
+                    outBox.y1 = std::max(0, yMid - 55);
+                    outBox.y2 = std::min(height - 1, yMid + 55);
+                    outBox.detected = true;
                     return true;
                 }
             }
         }
     }
 
+    return false;
+}
+
+bool decodeBarcodeFromMemory(const unsigned char* pixelData, int width, int height, bool isRGBA, string& decodedCode, string& errorMessage, bool fastMode) {
+    BarcodeBox box;
+    if (detectBarcodeInFrame(pixelData, width, height, isRGBA, decodedCode, box, fastMode)) {
+        errorMessage.clear();
+        return true;
+    }
     errorMessage = "Optical pattern not detected. Ensure barcode is inside the red laser viewfinder.";
     return false;
 }

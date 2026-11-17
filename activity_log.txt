@@ -1,0 +1,8 @@
+# ScanIT Activity Log & Audit Trail
+# Format: Timestamp|Category|User|Details
+2026-11-17 01:27:10|SALE|admin|Processed sale #1001 of Rs 1,090 (Cash)
+2026-11-17 01:27:11|SALE|admin|Processed sale #1001 of Rs 1,090 (Cash)
+2026-11-17 04:30:21|INVENTORY|admin|Restocked +50 units of Fresh Milk
+2026-11-17 04:30:23|INVENTORY|admin|Restocked +50 units of Fresh Milk
+2026-11-17 04:30:50|STAFF|admin|Added Employee ID: Afwan
+2026-11-17 11:55:35|SALE|admin|Processed sale #1001 of Rs 1,230 by Card
