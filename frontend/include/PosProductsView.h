@@ -19,9 +19,7 @@ public:
     static void drawViewport(sf::RenderTarget& target, float mainX,
                              const sf::Texture& cameraTexture,
                              float flashTimer, float lastScanTimer, const std::string& lastScannedInfo,
-                             bool barcodeFound, const BarcodeBox& barcodeBox,
-                             int camWidth, int camHeight, const std::string& detectedBarcode,
-                             const sf::Font& fontSemiBold, const sf::Font& fontBold,
+                             const sf::Font& fontSemiBold,
                              std::function<const sf::Texture&(const std::string&)> getTexture);
 
     static void drawProducts(sf::RenderTarget& target, sf::Vector2f mouse, float mainX,
@@ -42,10 +40,9 @@ public:
 
     static void drawInventoryTab(sf::RenderTarget& target, sf::Vector2f mouse, float mainX,
                                  const std::vector<ProductItem>& products,
-                                 const InventoryManager& inventoryMgr,
-                                 int inventorySubTab, float scrollOffset,
+                                 float scrollOffset,
                                  const std::string& currentRole,
-                                 const sf::Font& fontRegular, const sf::Font& fontMedium,
+                                 const sf::Font& fontRegular,
                                  const sf::Font& fontSemiBold, const sf::Font& fontBold,
                                  const sf::Font& fontSerif);
 };
