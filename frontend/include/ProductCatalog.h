@@ -16,6 +16,7 @@ public:
 
     bool loadProductsFile(const std::string& customPath = "");
     bool saveDefaultProductFile(const std::string& path);
+    bool saveProductsFile(const std::string& path = "");
 
     const std::vector<ProductItem>& getProducts() const { return mProducts; }
     std::vector<ProductItem>& getProducts() { return mProducts; }
@@ -26,6 +27,8 @@ public:
 
     void deleteProduct(int index);
     void addStock(int index, int amount);
+    void deductStock(int index, int amount);
+    void addOrUpdateProduct(const ProductItem& item);
 
 private:
     std::vector<ProductItem> mProducts;

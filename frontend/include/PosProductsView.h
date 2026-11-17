@@ -6,6 +6,8 @@
 #include <vector>
 #include <functional>
 #include "PosModels.h"
+#include "InventoryManager.h"
+#include "../../backend/include/Decoder.h"
 
 // ============================================================================
 // ISE SOFTWARE ENGINEERING PRINCIPLE: Separation of Concerns (SoC)
@@ -17,7 +19,9 @@ public:
     static void drawViewport(sf::RenderTarget& target, float mainX,
                              const sf::Texture& cameraTexture,
                              float flashTimer, float lastScanTimer, const std::string& lastScannedInfo,
-                             const sf::Font& fontSemiBold,
+                             bool barcodeFound, const BarcodeBox& barcodeBox,
+                             int camWidth, int camHeight, const std::string& detectedBarcode,
+                             const sf::Font& fontSemiBold, const sf::Font& fontBold,
                              std::function<const sf::Texture&(const std::string&)> getTexture);
 
     static void drawProducts(sf::RenderTarget& target, sf::Vector2f mouse, float mainX,
@@ -38,9 +42,12 @@ public:
 
     static void drawInventoryTab(sf::RenderTarget& target, sf::Vector2f mouse, float mainX,
                                  const std::vector<ProductItem>& products,
-                                 float scrollOffset, const std::string& currentRole,
-                                 const sf::Font& fontRegular, const sf::Font& fontSemiBold,
-                                 const sf::Font& fontBold, const sf::Font& fontSerif);
+                                 const InventoryManager& inventoryMgr,
+                                 int inventorySubTab, float scrollOffset,
+                                 const std::string& currentRole,
+                                 const sf::Font& fontRegular, const sf::Font& fontMedium,
+                                 const sf::Font& fontSemiBold, const sf::Font& fontBold,
+                                 const sf::Font& fontSerif);
 };
 
 #endif // POS_PRODUCTS_VIEW_H
