@@ -140,6 +140,24 @@ private:
     bool mItemDescModalOpen = false;
     bool mAddProductModalOpen = false;
     bool mDraftsModalOpen = false;
+    bool mSaleDetailModalOpen = false;
+    bool mPromoModalOpen = false;
+
+    // Sales Tab Sub-Tabs (0 = Sales Orders, 1 = Customer Returns)
+    int mSalesSubTab = 0;
+    std::vector<ReturnRecord> mReturnHistory;
+    bool loadReturnsFile(const std::string& filename = "returns.txt");
+    bool saveReturnsFile(const std::string& filename = "returns.txt");
+    bool appendReturnRecord(const ReturnRecord& rec);
+
+    int mSelectedSaleIndex = -1;
+
+    // Promo Code Management Modal States
+    std::string mNewPromoCode = "";
+    std::string mNewPromoDiscountStr = "15%";
+    std::string mNewPromoTargetType = "ALL"; // "ALL", "ITEM", "SUPPLIER"
+    std::string mNewPromoTargetValue = "ALL";
+    int mNewPromoActiveField = 0; // 0=code, 1=discount, 2=targetVal
 
     // Inventory View Sub-Tabs & Supplier Ledger
     int mInventorySubTab = 0; // 0 = Stock & Items, 1 = Supplier Ledger
@@ -189,6 +207,7 @@ private:
     std::string mReturnBarcode = "";
     bool mReturnBarcodeFocused = true;
     int mReturnQty = 1;
+    int mReturnMaxQty = 0;
     int mSelectedReturnProductIdx = -1;
     std::string mReturnSaleInfo = "";
     int mReturnSalePrice = 0;
@@ -197,6 +216,14 @@ private:
     std::string mReturnDate = "";
     std::string mReturnStatusMessage = "";
     bool mReturnSuccess = false;
+
+    // Discount Modal State
+    bool mDiscountModalOpen = false;
+    std::string mEmployeeDiscountUser = "";
+    std::string mEmployeeDiscountPass = "";
+    std::string mPromoCodeInput = "";
+    int mDiscountActiveField = 0; // 0=none, 1=user, 2=pass, 3=promo
+    std::string mDiscountModalError = "";
 
     // Modal Input States
     int mEditingCartIndex = -1;

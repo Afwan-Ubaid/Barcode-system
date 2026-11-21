@@ -24,6 +24,7 @@ public:
 
     std::vector<int> getVisibleProducts(const std::string& searchQuery, const std::string& activeCategory) const;
     int findProductByBarcode(const std::string& barcode) const;
+    int findProductByName(const std::string& name) const;
 
     void sortAlphabetically();
     void deleteProduct(int index);

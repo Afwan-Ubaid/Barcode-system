@@ -3,7 +3,10 @@ cd /d "%~dp0"
 echo ============================================
 echo   ScanIT - Point of Sale GUI Build
 echo ============================================
-call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat" >nul 2>&1
+call "C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvars64.bat" >nul 2>&1
+if %errorlevel% neq 0 (
+    call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat" >nul 2>&1
+)
 if %errorlevel% neq 0 (
     echo [ERROR] Visual Studio environment not found.
     pause

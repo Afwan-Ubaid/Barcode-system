@@ -133,12 +133,29 @@ bool ProductCatalog::loadProductsFile(const std::string& customPath) {
             std::string pId = tokens[0];
             std::string barcode = tokens[1];
             std::string acronym = tokens[2];
-            std::string rawName = tokens[3];
+
+            // Join tokens between acronym and unit as product name
+            size_t nameEnd = (tokens.size() >= 9) ? (tokens.size() - 6) : 4;
+            if (nameEnd <= 3) nameEnd = 4;
+            std::string rawName;
+            for (size_t k = 3; k < nameEnd && k < tokens.size(); k++) {
+                if (!rawName.empty()) rawName += " ";
+                rawName += tokens[k];
+            }
+            if (rawName.empty() && tokens.size() > 3) rawName = tokens[3];
             for (char& c : rawName) if (c == '_') c = ' ';
-            std::string unit = tokens[4];
+
+            std::string unit = "count";
+            if (tokens.size() >= 6) unit = tokens[tokens.size() - 6];
+            else if (tokens.size() > 4) unit = tokens[4];
+
             int price = 100, stock = 20;
-            try { price = std::stoi(tokens[5]); } catch (...) {}
-            try { stock = std::stoi(tokens[8]); } catch (...) {}
+            if (tokens.size() >= 5) {
+                try { price = std::stoi(tokens[tokens.size() - 5]); } catch (...) {}
+            }
+            if (tokens.size() >= 2) {
+                try { stock = std::stoi(tokens[tokens.size() - 2]); } catch (...) {}
+            }
 
             std::string category = "Grocery";
             std::string iconKey = "milk";
@@ -187,13 +204,31 @@ void ProductCatalog::sortAlphabetically() {
 
 std::vector<int> ProductCatalog::getVisibleProducts(const std::string& searchQuery, const std::string& activeCategory) const {
     std::vector<int> result;
-    std::string q = toLowerStr(searchQuery);
+    std::string q = toLowerStr(trimStr(searchQuery));
+
     for (int i = 0; i < (int)mProducts.size(); i++) {
         const auto& p = mProducts[i];
-        if (activeCategory != "All" && p.category != activeCategory) continue;
+        // If search is active, match across all categories; otherwise filter by active department
+        if (q.empty() && activeCategory != "All" && p.category != activeCategory) {
+            continue;
+        }
         if (!q.empty()) {
             std::string nameLower = toLowerStr(p.name);
-            if (nameLower.find(q) == std::string::npos && p.barcode.find(q) == std::string::npos) {
+            std::string bcLower = toLowerStr(p.barcode);
+            std::string acrLower = toLowerStr(p.acronym);
+            std::string catLower = toLowerStr(p.category);
+
+            std::string nameUnderscore = nameLower;
+            for (char& c : nameUnderscore) if (c == ' ') c = '_';
+
+            std::string qUnderscore = q;
+            for (char& c : qUnderscore) if (c == ' ') c = '_';
+
+            if (nameLower.find(q) == std::string::npos &&
+                nameUnderscore.find(qUnderscore) == std::string::npos &&
+                bcLower.find(q) == std::string::npos &&
+                acrLower.find(q) == std::string::npos &&
+                catLower.find(q) == std::string::npos) {
                 continue;
             }
         }
@@ -203,8 +238,36 @@ std::vector<int> ProductCatalog::getVisibleProducts(const std::string& searchQue
 }
 
 int ProductCatalog::findProductByBarcode(const std::string& barcode) const {
+    std::string bTrim = trimStr(barcode);
     for (int i = 0; i < (int)mProducts.size(); i++) {
-        if (mProducts[i].barcode == barcode) return i;
+        if (mProducts[i].barcode == bTrim) return i;
+    }
+    return -1;
+}
+
+int ProductCatalog::findProductByName(const std::string& name) const {
+    std::string q = toLowerStr(trimStr(name));
+    if (q.empty()) return -1;
+
+    std::string qUnderscore = q;
+    for (char& c : qUnderscore) if (c == ' ') c = '_';
+
+    // 1. Exact match
+    for (int i = 0; i < (int)mProducts.size(); i++) {
+        std::string nLower = toLowerStr(mProducts[i].name);
+        std::string nUnderscore = nLower;
+        for (char& c : nUnderscore) if (c == ' ') c = '_';
+        if (nLower == q || nUnderscore == qUnderscore) return i;
+    }
+
+    // 2. Substring match
+    for (int i = 0; i < (int)mProducts.size(); i++) {
+        std::string nLower = toLowerStr(mProducts[i].name);
+        std::string nUnderscore = nLower;
+        for (char& c : nUnderscore) if (c == ' ') c = '_';
+        if (nLower.find(q) != std::string::npos || nUnderscore.find(qUnderscore) != std::string::npos) {
+            return i;
+        }
     }
     return -1;
 }

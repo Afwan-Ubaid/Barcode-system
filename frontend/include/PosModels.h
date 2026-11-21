@@ -136,6 +136,20 @@ struct StaffMember {
 };
 
 // ----------------------------------------------------------------------------
+// Customer Return Audit Record Model
+// ----------------------------------------------------------------------------
+struct ReturnRecord {
+    std::string returnId;
+    std::string timestamp;
+    std::string cashier;
+    std::string barcode;
+    std::string itemName;
+    int quantity = 0;
+    int refundAmount = 0;
+    std::string orderRef;
+};
+
+// ----------------------------------------------------------------------------
 // Activity Record Model (Audit Trail)
 // ----------------------------------------------------------------------------
 struct ActivityRecord {

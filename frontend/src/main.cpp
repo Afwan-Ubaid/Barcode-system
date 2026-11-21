@@ -25,7 +25,8 @@ static void enableHighDpi() {
 
 static void parseArgs(const char* cmd, bool& shot, bool& shotPaid, std::string& modal) {
     if (!cmd) return;
-    if (strstr(cmd, "--screenshot-quickcheck")) { shot = true; modal = "quickcheck"; }
+    if (strstr(cmd, "--screenshot-discount")) { shot = true; modal = "discount"; }
+    else if (strstr(cmd, "--screenshot-quickcheck")) { shot = true; modal = "quickcheck"; }
     else if (strstr(cmd, "--screenshot-spec")) { shot = true; modal = "spec"; }
     else if (strstr(cmd, "--screenshot-desc")) { shot = true; modal = "desc"; }
     else if (strstr(cmd, "--screenshot-addproduct")) { shot = true; modal = "addproduct"; }
@@ -36,6 +37,10 @@ static void parseArgs(const char* cmd, bool& shot, bool& shotPaid, std::string& 
     else if (strstr(cmd, "--screenshot-products")) { shot = true; modal = "products"; }
     else if (strstr(cmd, "--screenshot-cashier-inventory")) { shot = true; modal = "cashier_inventory"; }
     else if (strstr(cmd, "--screenshot-inventory")) { shot = true; modal = "inventory"; }
+    else if (strstr(cmd, "--screenshot-sales-returns")) { shot = true; modal = "sales_returns"; }
+    else if (strstr(cmd, "--screenshot-sales-employee")) { shot = true; modal = "sales_employee"; }
+    else if (strstr(cmd, "--screenshot-saledetail")) { shot = true; modal = "saledetail"; }
+    else if (strstr(cmd, "--screenshot-promo")) { shot = true; modal = "promo"; }
     else if (strstr(cmd, "--screenshot-sales")) { shot = true; modal = "sales"; }
     else if (strstr(cmd, "--screenshot-cashier-settings")) { shot = true; modal = "cashier_settings"; }
     else if (strstr(cmd, "--screenshot-settings")) { shot = true; modal = "settings"; }

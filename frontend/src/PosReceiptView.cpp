@@ -7,7 +7,8 @@ void PosReceiptView::drawReceiptDrawer(sf::RenderTarget& target, sf::Vector2f m,
                                       const std::vector<CartLine>& cart,
                                       const std::vector<ProductItem>& products,
                                       int subtotal, int discount, int total,
-                                      bool discountApplied, int paymentMethod, bool paymentDone,
+                                      bool discountApplied, const std::string& discountLabel,
+                                      int paymentMethod, bool paymentDone,
                                       float receiptScrollOffset,
                                       int draftsCount,
                                       const sf::Font& fontRegular, const sf::Font& fontMedium,
@@ -207,8 +208,8 @@ void PosReceiptView::drawReceiptDrawer(sf::RenderTarget& target, sf::Vector2f m,
     drawRounded(target, rpX, chipY, 210.f, 22.f, 6,
                 hovChip ? sf::Color(236, 227, 208) : sf::Color(238, 230, 213), ThemeColor::Edge, 1);
     drawSprite(target, getTexture("icons/tag.png"), rpX + 8, chipY + 5, 14, 14, ThemeColor::Ink);
-    std::string chipText = discountApplied ? "Applied Discounts (- Rs 120)" : "Apply discount (- Rs 120)";
-    drawText(target, fontMedium, chipText, 9, ThemeColor::Ink, rpX + 28, chipY + 12);
+    std::string chipText = discountApplied ? ("Discount: " + discountLabel) : "Apply discount (Click)...";
+    drawText(target, fontMedium, chipText, 8.5f, ThemeColor::Ink, rpX + 28, chipY + 12);
 
     // Totals Section
     auto drawSummaryRow = [&](const char* label, const std::string& val, float y) {

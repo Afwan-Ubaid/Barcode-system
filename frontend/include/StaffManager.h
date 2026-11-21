@@ -18,6 +18,9 @@ public:
     bool saveStaffFile();
 
     bool authenticateUser(const std::string& username, const std::string& password, const std::string& role);
+    bool authenticate(const std::string& username, const std::string& password, const std::string& role = "Employee") {
+        return authenticateUser(username, password, role);
+    }
     bool addStaffMember(const std::string& username, const std::string& password, const std::string& role);
     bool removeStaffMember(const std::string& username);
     bool resetStaffPassword(const std::string& username, const std::string& newPassword);

@@ -10,6 +10,22 @@
 // Module: Cart Management, Financial Calculations, Payment & Receipt Service
 // ============================================================================
 
+enum class DiscountCategory {
+    None,
+    Student,
+    Employee,
+    Promo
+};
+
+struct PromoRecord {
+    std::string code;
+    int percent = 0;
+    int flat = 0;
+    std::string targetType = "ALL";     // "ALL", "ITEM", "SUPPLIER"
+    std::string targetValue = "ALL";    // "ALL", barcode / item name, or supplier name
+    std::string description = "";
+};
+
 class CartService {
 public:
     CartService();
@@ -26,6 +42,9 @@ public:
 
     // Pricing & Tax Calculations
     int getSubtotal(const std::vector<ProductItem>& products) const;
+    int getDiscount(const std::vector<ProductItem>& products) const;
+    int getDiscount(const std::vector<ProductItem>& products,
+                    const std::vector<std::pair<std::string, std::string>>& barcodeSupplierMap) const;
     int getDiscount() const;
     int getTax() const;
     int getTotal(const std::vector<ProductItem>& products) const;
@@ -33,8 +52,32 @@ public:
     int getChangeAmount(const std::vector<ProductItem>& products) const;
 
     // Financial State Accessors
-    void setDiscountApplied(bool applied) { mDiscountApplied = applied; mPaymentDone = false; }
-    bool isDiscountApplied() const { return mDiscountApplied; }
+    void setDiscountApplied(bool applied);
+    bool isDiscountApplied() const;
+    void applyStudentDiscount();
+    void applyEmployeeDiscount(const std::string& username);
+    bool applyPromoCode(const std::string& code, std::string& outMessage);
+    void removeDiscount();
+    std::string getDiscountLabel() const;
+
+    DiscountCategory getDiscountCategory() const { return mDiscountCategory; }
+    int getStudentDiscountRate() const { return mStudentDiscountPercent; }
+    int getEmployeeDiscountRate() const { return mEmployeeDiscountPercent; }
+    void setStudentDiscountRate(int rate);
+    void setEmployeeDiscountRate(int rate);
+    int getPromoCodesCount() const;
+    bool loadDiscountSettings(const std::string& customPath = "");
+    bool saveDiscountSettings(const std::string& customPath = "");
+    bool loadPromoCodes(const std::string& customPath = "");
+    bool savePromoCodes(const std::string& customPath = "");
+    bool addPromoCode(const PromoRecord& rec);
+    bool deletePromoCode(const std::string& code);
+    const std::vector<PromoRecord>& getPromoCodes() const { return mPromoDatabase; }
+    std::vector<PromoRecord>& getPromoCodes() { return mPromoDatabase; }
+    const std::string& getAppliedPromoCode() const { return mAppliedPromoCode; }
+    const std::string& getAppliedPromoTargetType() const { return mAppliedPromoTargetType; }
+    const std::string& getAppliedPromoTargetValue() const { return mAppliedPromoTargetValue; }
+    const std::string& getAppliedEmployeeUser() const { return mAppliedEmployeeUser; }
 
     void setPaymentMethod(int method) { mPaymentMethod = method; }
     int getPaymentMethod() const { return mPaymentMethod; }
@@ -72,7 +115,17 @@ private:
     std::vector<CartLine> mCart;
     std::vector<DraftCart> mDraftCarts;
     std::vector<SaleRecord> mSalesHistory;
-    bool mDiscountApplied = true;
+    DiscountCategory mDiscountCategory = DiscountCategory::None;
+    int mStudentDiscountPercent = 10;
+    int mEmployeeDiscountPercent = 20;
+    int mPromoDiscountPercent = 0;
+    int mPromoDiscountFlat = 0;
+    std::string mAppliedPromoCode = "";
+    std::string mAppliedPromoTargetType = "ALL";
+    std::string mAppliedPromoTargetValue = "ALL";
+    std::string mAppliedEmployeeUser = "";
+    std::vector<PromoRecord> mPromoDatabase;
+    mutable int mLastCalculatedDiscount = 0;
     int mPaymentMethod = 0; // 0=Cash, 1=Card, 2=Wallet
     bool mPaymentDone = false;
     int mCashGiven = 0;
