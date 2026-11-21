@@ -1,0 +1,10 @@
+101 100003 Atel Atelier_Coffee weight 180 9 0 33 barcodes/100003.bmp #
+102 100006 Basm Basmati_Rice weight 540 27 0 83 barcodes/100006.bmp #
+103 234567 Cere Cereal_Box count 420 21 0 45 barcodes/234567.bmp #
+104 100001 Fres Fresh_Milk count 320 16 0 45 barcodes/100001.bmp #
+105 567890 Gree Green_Tea weight 260 13 0 50 barcodes/567890.bmp #
+106 100008 Lave Lavender_Deterg count 480 24 0 19 barcodes/100008.bmp #
+107 100005 Oran Orange_Juice count 290 14 0 21 barcodes/100005.bmp #
+108 100007 Pist Pistachio_Crunch weight 350 17 0 29 barcodes/100007.bmp #
+109 100004 Red_ Red_Apples weight 240 12 0 104 barcodes/100004.bmp #
+110 100002 Sour Sourdough_Bread count 180 9 0 21 barcodes/100002.bmp #

@@ -1,0 +1,3 @@
+# ScanIT Admin Discount Configuration
+student_discount=10
+employee_discount=20

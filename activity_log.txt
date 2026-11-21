@@ -1,0 +1,56 @@
+# ScanIT Activity Log & Audit Trail
+# Format: Timestamp|Category|User|Details
+2026-11-17 01:27:10|SALE|admin|Processed sale #1001 of Rs 1,090 (Cash)
+2026-11-17 01:27:11|SALE|admin|Processed sale #1001 of Rs 1,090 (Cash)
+2026-11-17 04:30:21|INVENTORY|admin|Restocked +50 units of Fresh Milk
+2026-11-17 04:30:23|INVENTORY|admin|Restocked +50 units of Fresh Milk
+2026-11-17 04:30:50|STAFF|admin|Added Employee ID: Afwan
+2026-11-17 11:55:35|SALE|admin|Processed sale #1001 of Rs 1,230 by Card
+2026-11-17 19:34:15|PRODUCT|admin|Deleted product: Green Tea
+2026-11-17 19:35:22|INVENTORY|admin|Restocked +50 units of Fresh Milk
+2026-11-17 19:35:23|INVENTORY|admin|Restocked +10 units of Fresh Milk
+2026-11-17 19:35:34|SALE|admin|Processed card sale of Rs 1,090
+2026-11-17 21:42:18|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-17 21:47:50|RETURN|admin|Customer returned 1x Fresh Milk (100001) - Refunded Rs 320 - Restocked in product.txt and inventory.txt
+2026-11-17 21:48:15|SALE|admin|Processed card sale of Rs 1,450
+2026-11-17 21:49:17|SALE|admin|Processed cash sale of Rs 60
+2026-11-17 21:57:55|SALE|admin|Processed card sale of Rs 2,460
+2026-11-17 22:10:40|INVENTORY|admin|Restocked +50 units of Red apples
+2026-11-17 22:27:18|INVENTORY|admin|Bought 30 units of wadood (100009) from Nestle Pakistan at Rs 250/unit on 2026-11-17
+2026-11-17 22:33:22|SALE|admin|Processed cash sale of Rs 420
+2026-11-17 22:36:35|RETURN|admin|Customer returned 1x Fresh Milk (100001) - Refunded Rs 320 - Restocked in product.txt and inventory.txt
+2026-11-17 22:37:30|LOGIN|admin|Operator logged out of terminal session
+2026-11-17 22:37:40|LOGIN|Afwan|Authenticated user session (Employee) via login terminal
+2026-11-18 00:30:50|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-18 00:36:58|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-18 02:00:33|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-18 02:11:18|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-18 02:15:09|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-18 02:57:01|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-18 03:14:19|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-18 03:22:18|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-18 03:24:41|LOGIN|admin|Operator logged out of terminal session
+2026-11-18 03:24:48|LOGIN|Afwan|Authenticated user session (Employee) via login terminal
+2026-11-17 01:00:00|LOGIN|admin|Administrator session authenticated
+2026-11-18 20:12:57|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-19 00:36:16|LOGIN|cashier1|Authenticated user session (Employee) via login terminal
+2026-11-19 00:38:30|SALE|cashier1|Processed cash sale of Rs 486
+2026-11-19 00:44:03|RETURN|cashier1|Customer returned 1x Basmati Rice (100006) - Refunded Rs 540 - Restocked in shop product.txt
+2026-11-19 00:47:08|LOGIN|cashier1|Authenticated user session (Employee) via login terminal
+2026-11-19 00:49:04|SALE|cashier1|Processed cash sale of Rs 486
+2026-11-19 00:49:26|SALE|cashier1|Processed cash sale of Rs 486
+2026-11-19 00:50:02|RETURN|cashier1|Customer returned 1x Basmati Rice (100006) - Refunded Rs 540 - Restocked in shop product.txt
+2026-11-19 00:50:47|RETURN|cashier1|Customer returned 1x Basmati Rice (100006) - Refunded Rs 540 - Restocked in shop product.txt
+2026-11-19 00:54:52|LOGIN|cashier1|Operator logged out of terminal session
+2026-11-19 00:55:07|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-19 00:55:24|PRODUCT|admin|Deleted product: wadood
+2026-11-19 01:02:21|STAFF|admin|Added Employee ID: wadood
+2026-11-19 01:02:58|STAFF|admin|Added Admin ID: awadood
+2026-11-19 01:04:06|SETTINGS|admin|Added promo voucher: CHAUDHARY
+2026-11-19 01:04:43|RETURN|admin|Customer returned 1x Basmati Rice (100006) - Refunded Rs 540 - Restocked in shop product.txt
+2026-11-19 01:04:57|RETURN|admin|Customer returned 1x Basmati Rice (100006) - Refunded Rs 540 - Restocked in shop product.txt
+2026-11-19 01:06:11|RETURN|admin|Customer returned 1x Basmati Rice (100006) - Refunded Rs 540 - Restocked in shop product.txt
+2026-11-19 01:10:26|LOGIN|admin|Operator logged out of terminal session
+2026-11-19 01:10:40|LOGIN|wadood|Authenticated user session (Employee) via login terminal
+2026-11-19 11:34:56|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-19 11:35:58|INVENTORY|admin|Bought 30 units of ahmad (100010) from Nestle Pakistan at Rs 250/unit into inventory.txt

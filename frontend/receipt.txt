@@ -1,0 +1,25 @@
+========================================================
+                   SCANIT POS RECEIPT                   
+                 Sales Counter / Register 04            
+========================================================
+Date:     2026-11-17 19:35:38
+Cashier:  Muya Khan
+Order ID: #1001
+--------------------------------------------------------
+PURCHASED ITEMS:
+--------------------------------------------------------
+Fresh Milk                 x1   @ Rs 320   = Rs 320
+Sourdough Bread            x2   @ Rs 180   = Rs 360
+Red Apples                 x1   @ Rs 240   = Rs 240
+Orange Juice               x1   @ Rs 290   = Rs 290
+--------------------------------------------------------
+Subtotal:                                  Rs 1,210
+Discount:                                 - Rs 120
+Taxes:                                     Rs 0 (Tax Free)
+--------------------------------------------------------
+TOTAL AMOUNT:                              Rs 1,090
+Payment Method:                            Card
+Card POS Auth:                             APPROVED #984321
+========================================================
+            THANK YOU FOR SHOPPING WITH SCANIT!         
+========================================================
