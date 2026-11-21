@@ -31,7 +31,7 @@ namespace ThemeColor {
 }
 
 // ----------------------------------------------------------------------------
-// Product Item Model
+// Product Item Model — D3: categoryId added (Req 2)
 // ----------------------------------------------------------------------------
 struct ProductItem {
     std::string id = "0";
@@ -47,6 +47,7 @@ struct ProductItem {
     std::string barcodePath = "barcodes/100001.bmp";
     std::string category = "Grocery";
     std::string iconKey = "milk";
+    std::string categoryId = "01";        // D3 Req 2: 2-digit category from PCategory.txt
     sf::Color cardTint = sf::Color(240, 230, 222);
 
     ProductItem() = default;
@@ -55,7 +56,8 @@ struct ProductItem {
                 const std::string& icon, const std::string& bc, int p, int st, sf::Color tint)
         : id(std::to_string(idNum)), barcode(bc), acronym(n.substr(0, std::min<size_t>(4, n.length()))),
           name(n), unit(u), price(p), unitPrice(p), tax(0), discount(0), stock(st),
-          barcodePath("barcodes/" + bc + ".bmp"), category(cat), iconKey(icon), cardTint(tint) {}
+          barcodePath("barcodes/" + bc + ".bmp"), category(cat), iconKey(icon),
+          categoryId("01"), cardTint(tint) {}
 };
 
 // ----------------------------------------------------------------------------
@@ -108,21 +110,53 @@ struct OrderRecord {
 };
 
 // ----------------------------------------------------------------------------
-// Bill Record Model (Itemized Receipt Line / Requirement 10)
+// Bill Record Model — D3 Req 8: 14 fields, one line per bill
 // ----------------------------------------------------------------------------
 struct BillRecord {
     std::string billId;
     std::string customerName;
     std::string orderId;
-    std::string productAcronym;
-    int unitPrice = 0;
-    int discountPerUnit = 0;
-    int quantity = 0;
     int totalWithoutTax = 0;
     int totalTax = 0;
     int totalDiscount = 0;
     int totalPayable = 0;
+    int amountReceived = 0;        // D3 Req 8
+    int balanceReturned = 0;       // D3 Req 8
     std::string paymentStatus;
+    int seasonalDiscount = 0;      // D3 Req 8
+    int specialDiscount = 0;       // D3 Req 8
+    std::string billDate;          // D3 Req 8
+    std::string billTime;          // D3 Req 8
+};
+
+// ----------------------------------------------------------------------------
+// D3 Req 9: Bill detail line (one row per product in a bill)
+// ----------------------------------------------------------------------------
+struct BillDetailRecord {
+    std::string billId;
+    std::string productAcronym;
+    int unitPrice = 0;
+    int quantity = 0;
+    int discountOnProduct = 0;
+};
+
+// ----------------------------------------------------------------------------
+// D3 Req 1: Product category (PCategory.txt)
+// ----------------------------------------------------------------------------
+struct ProductCategory {
+    std::string categoryId;   // "01", "02", ...
+    std::string name;         // "Dairy"
+    std::string acronym;      // "DAIRY"
+};
+
+// ----------------------------------------------------------------------------
+// D3 Req 13: Seasonal discount (Seasons.txt)
+// ----------------------------------------------------------------------------
+struct Season {
+    std::string startDate;    // "YYYY-MM-DD"
+    std::string endDate;      // "YYYY-MM-DD"
+    int discountPercent = 0;
+    bool isActive = false;
 };
 
 // ----------------------------------------------------------------------------
@@ -133,20 +167,6 @@ struct StaffMember {
     std::string password;
     std::string role; // "Admin" or "Employee"
     std::string createdDate;
-};
-
-// ----------------------------------------------------------------------------
-// Customer Return Audit Record Model
-// ----------------------------------------------------------------------------
-struct ReturnRecord {
-    std::string returnId;
-    std::string timestamp;
-    std::string cashier;
-    std::string barcode;
-    std::string itemName;
-    int quantity = 0;
-    int refundAmount = 0;
-    std::string orderRef;
 };
 
 // ----------------------------------------------------------------------------
