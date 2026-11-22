@@ -294,24 +294,40 @@ bool InventoryManager::updateItemStock(const std::string& barcode, int newStock)
 }
 
 std::string InventoryManager::generateUniqueBarcode() const {
-    // Generate sequential 6-digit numeric barcode starting at 100011
+    // Legacy: no category. Kept for backward compatibility.
     int candidate = 100001;
     while (true) {
         std::string candStr = std::to_string(candidate);
         bool used = false;
         for (const auto& it : mItems) {
-            if (it.barcode == candStr) {
-                used = true;
-                break;
-            }
+            if (it.barcode == candStr) { used = true; break; }
         }
-        if (!used) {
-            return candStr;
-        }
+        if (!used) return candStr;
         candidate++;
     }
 }
 
+// D3 Req 1: first 2 digits = categoryId, remaining 4 digits = unique counter within category
+std::string InventoryManager::generateUniqueBarcode(const std::string& categoryId) const {
+    std::string cat = categoryId;
+    if (cat.size() != 2 || cat[0] < '0' || cat[0] > '9' || cat[1] < '0' || cat[1] > '9') {
+        cat = "01";
+    }
+    // Find highest existing suffix among barcodes starting with this category
+    int maxSuffix = 0;
+    for (const auto& it : mItems) {
+        if (it.barcode.size() == 6 && it.barcode.substr(0, 2) == cat) {
+            try {
+                int suffix = std::stoi(it.barcode.substr(2, 4));
+                if (suffix > maxSuffix) maxSuffix = suffix;
+            } catch (...) {}
+        }
+    }
+    int next = maxSuffix + 1;
+    char buf[8];
+    std::snprintf(buf, sizeof(buf), "%04d", next);
+    return cat + std::string(buf);
+}
 const InventoryItem* InventoryManager::findByBarcode(const std::string& barcode) const {
     for (const auto& it : mItems) {
         if (it.barcode == barcode) return &it;
