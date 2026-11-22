@@ -81,5 +81,6 @@ const ProductItem* findProductByBarcode(const std::vector<ProductItem>& products
 const ProductItem* findProductById(const std::vector<ProductItem>& products, const std::string& id);
 
 void ensureAllBarcodesExist(const std::vector<ProductItem>& products);
-
+bool loadBillDetails(const std::string& path, std::vector<BillDetailRecord>& details);
+bool appendBillDetail(const std::string& path, const BillDetailRecord& detail);
 #endif // PRODUCT_MANAGER_H
