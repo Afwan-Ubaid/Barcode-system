@@ -28,7 +28,6 @@ static std::vector<std::string> splitSpaces(const std::string& str) {
 }
 
 static std::string sanitizeName(std::string name) {
-    // Replace spaces with underscores for space-separated file storage
     for (char& c : name) {
         if (c == ' ') c = '_';
     }
@@ -36,7 +35,6 @@ static std::string sanitizeName(std::string name) {
 }
 
 static std::string desanitizeName(std::string name) {
-    // Replace underscores with spaces for human display
     for (char& c : name) {
         if (c == '_') c = ' ';
     }
@@ -101,6 +99,10 @@ static void determineCategoryAndIcon(ProductItem& p) {
     }
 }
 
+// ============================================================================
+// D3 Req 4 (extended): Product.txt — 11 fields + #
+// Format: id barcode acronym name unit unitPrice tax discount stock barcodePath categoryId #
+// ============================================================================
 bool loadProducts(const std::string& path, std::vector<ProductItem>& products) {
     std::string actualPath = findDataFilePath(path);
     std::ifstream in(actualPath);
@@ -112,14 +114,13 @@ bool loadProducts(const std::string& path, std::vector<ProductItem>& products) {
         line = trim(line);
         if (line.empty() || line[0] == '/') continue;
 
-        // Strip end-of-line marker # if present
         if (!line.empty() && line.back() == '#') {
             line.pop_back();
             line = trim(line);
         }
 
         auto tokens = splitSpaces(line);
-        if (tokens.size() < 10) continue;
+        if (tokens.size() < 11) continue;
 
         ProductItem item;
         item.id = tokens[0];
@@ -129,16 +130,19 @@ bool loadProducts(const std::string& path, std::vector<ProductItem>& products) {
             item.acronym = item.acronym.substr(0, 8);
         }
 
-        item.barcodePath = tokens.back();
-        try { item.stock = std::stoi(tokens[tokens.size() - 2]); } catch (...) { item.stock = 0; }
-        try { item.discount = std::stoi(tokens[tokens.size() - 3]); } catch (...) { item.discount = 0; }
-        try { item.tax = std::stoi(tokens[tokens.size() - 4]); } catch (...) { item.tax = 0; }
-        try { item.unitPrice = std::stoi(tokens[tokens.size() - 5]); } catch (...) { item.unitPrice = 0; }
-        item.unit = tokens[tokens.size() - 6];
+        // D3: last token = categoryId, second-to-last = barcodePath
+        item.categoryId  = tokens.back();
+        item.barcodePath = tokens[tokens.size() - 2];
+        try { item.stock = std::stoi(tokens[tokens.size() - 3]); } catch (...) { item.stock = 0; }
+        try { item.discount = std::stoi(tokens[tokens.size() - 4]); } catch (...) { item.discount = 0; }
+        try { item.tax = std::stoi(tokens[tokens.size() - 5]); } catch (...) { item.tax = 0; }
+        try { item.unitPrice = std::stoi(tokens[tokens.size() - 6]); } catch (...) { item.unitPrice = 0; }
+        item.price = item.unitPrice;
+        item.unit = tokens[tokens.size() - 7];
 
         // Join tokens between acronym and unit as the product name
         std::string name;
-        for (size_t i = 3; i < tokens.size() - 6; i++) {
+        for (size_t i = 3; i < tokens.size() - 7; i++) {
             if (!name.empty()) name += " ";
             name += tokens[i];
         }
@@ -170,11 +174,12 @@ bool saveProducts(const std::string& path, const std::vector<ProductItem>& produ
             << p.tax << " "
             << p.discount << " "
             << p.stock << " "
-            << p.barcodePath << " #\n";
+            << p.barcodePath << " "
+            << (p.categoryId.empty() ? "01" : p.categoryId) << " #\n";
     }
     out.close();
 
-    // Also mirror to secondary locations if they exist
+    // Mirror to secondary locations
     std::vector<std::string> mirrors = {"Product.txt", "product.txt", "frontend/Product.txt", "frontend/product.txt"};
     for (const auto& m : mirrors) {
         if (m != actualPath && fs::exists(m)) {
@@ -191,7 +196,8 @@ bool saveProducts(const std::string& path, const std::vector<ProductItem>& produ
                          << p.tax << " "
                          << p.discount << " "
                          << p.stock << " "
-                         << p.barcodePath << " #\n";
+                         << p.barcodePath << " "
+                         << (p.categoryId.empty() ? "01" : p.categoryId) << " #\n";
                 }
                 mOut.close();
             }
@@ -200,6 +206,9 @@ bool saveProducts(const std::string& path, const std::vector<ProductItem>& produ
     return true;
 }
 
+// ============================================================================
+// Order.txt (unchanged from D2 — 9 fields + #)
+// ============================================================================
 bool loadOrders(const std::string& path, std::vector<OrderRecord>& orders) {
     std::string actualPath = findDataFilePath(path);
     std::ifstream in(actualPath);
@@ -254,6 +263,9 @@ bool appendOrder(const std::string& path, const OrderRecord& order) {
     return true;
 }
 
+// ============================================================================
+// OrderDetail.txt (unchanged from D2 — 4 fields + #)
+// ============================================================================
 bool loadOrderDetails(const std::string& path, std::vector<OrderDetailRecord>& details) {
     std::string actualPath = findDataFilePath(path);
     std::ifstream in(actualPath);
@@ -298,6 +310,12 @@ bool appendOrderDetail(const std::string& path, const OrderDetailRecord& detail)
     return true;
 }
 
+// ============================================================================
+// D3 Req 8: Bill.txt — 14 fields + #, ONE line per bill
+// Format: billId customer orderId totalWithoutTax totalTax totalDiscount
+//         totalPayable amountReceived balanceReturned status
+//         seasonalDiscount specialDiscount billDate billTime #
+// ============================================================================
 bool loadBills(const std::string& path, std::vector<BillRecord>& bills) {
     std::string actualPath = findDataFilePath(path);
     std::ifstream in(actualPath);
@@ -314,22 +332,24 @@ bool loadBills(const std::string& path, std::vector<BillRecord>& bills) {
             line = trim(line);
         }
 
-        auto tokens = splitSpaces(line);
-        if (tokens.size() < 12) continue;
+        auto t = splitSpaces(line);
+        if (t.size() < 14) continue;
 
         BillRecord b;
-        b.billId = tokens[0];
-        b.customerName = desanitizeName(tokens[1]);
-        b.orderId = tokens[2];
-        b.productAcronym = tokens[3];
-        try { b.unitPrice = std::stoi(tokens[4]); } catch (...) { b.unitPrice = 0; }
-        try { b.discountPerUnit = std::stoi(tokens[5]); } catch (...) { b.discountPerUnit = 0; }
-        try { b.quantity = std::stoi(tokens[6]); } catch (...) { b.quantity = 0; }
-        try { b.totalWithoutTax = std::stoi(tokens[7]); } catch (...) { b.totalWithoutTax = 0; }
-        try { b.totalTax = std::stoi(tokens[8]); } catch (...) { b.totalTax = 0; }
-        try { b.totalDiscount = std::stoi(tokens[9]); } catch (...) { b.totalDiscount = 0; }
-        try { b.totalPayable = std::stoi(tokens[10]); } catch (...) { b.totalPayable = 0; }
-        b.paymentStatus = tokens[11];
+        b.billId = t[0];
+        b.customerName = desanitizeName(t[1]);
+        b.orderId = t[2];
+        try { b.totalWithoutTax = std::stoi(t[3]); } catch (...) { b.totalWithoutTax = 0; }
+        try { b.totalTax       = std::stoi(t[4]); } catch (...) { b.totalTax = 0; }
+        try { b.totalDiscount  = std::stoi(t[5]); } catch (...) { b.totalDiscount = 0; }
+        try { b.totalPayable   = std::stoi(t[6]); } catch (...) { b.totalPayable = 0; }
+        try { b.amountReceived = std::stoi(t[7]); } catch (...) { b.amountReceived = 0; }
+        try { b.balanceReturned= std::stoi(t[8]); } catch (...) { b.balanceReturned = 0; }
+        b.paymentStatus = t[9];
+        try { b.seasonalDiscount = std::stoi(t[10]); } catch (...) { b.seasonalDiscount = 0; }
+        try { b.specialDiscount  = std::stoi(t[11]); } catch (...) { b.specialDiscount = 0; }
+        b.billDate = t[12];
+        b.billTime = t[13];
 
         bills.push_back(b);
     }
@@ -345,21 +365,75 @@ bool appendBill(const std::string& path, const BillRecord& bill) {
     out << bill.billId << " "
         << sanitizeName(bill.customerName) << " "
         << bill.orderId << " "
-        << bill.productAcronym << " "
-        << bill.unitPrice << " "
-        << bill.discountPerUnit << " "
-        << bill.quantity << " "
         << bill.totalWithoutTax << " "
         << bill.totalTax << " "
         << bill.totalDiscount << " "
         << bill.totalPayable << " "
-        << bill.paymentStatus << " #\n";
+        << bill.amountReceived << " "
+        << bill.balanceReturned << " "
+        << bill.paymentStatus << " "
+        << bill.seasonalDiscount << " "
+        << bill.specialDiscount << " "
+        << bill.billDate << " "
+        << bill.billTime << " #\n";
     out.close();
     return true;
 }
 
+// ============================================================================
+// D3 Req 9: BillDetail.txt — 5 fields + #, one line per product
+// Format: billId productAcronym unitPrice quantity discountOnProduct #
+// ============================================================================
+bool loadBillDetails(const std::string& path, std::vector<BillDetailRecord>& details) {
+    std::string actualPath = findDataFilePath(path);
+    std::ifstream in(actualPath);
+    if (!in.is_open()) return false;
+
+    details.clear();
+    std::string line;
+    while (std::getline(in, line)) {
+        line = trim(line);
+        if (line.empty()) continue;
+
+        if (!line.empty() && line.back() == '#') {
+            line.pop_back();
+            line = trim(line);
+        }
+
+        auto t = splitSpaces(line);
+        if (t.size() < 5) continue;
+
+        BillDetailRecord d;
+        d.billId = t[0];
+        d.productAcronym = t[1];
+        try { d.unitPrice = std::stoi(t[2]); } catch (...) { d.unitPrice = 0; }
+        try { d.quantity  = std::stoi(t[3]); } catch (...) { d.quantity = 0; }
+        try { d.discountOnProduct = std::stoi(t[4]); } catch (...) { d.discountOnProduct = 0; }
+
+        details.push_back(d);
+    }
+    in.close();
+    return true;
+}
+
+bool appendBillDetail(const std::string& path, const BillDetailRecord& d) {
+    std::string actualPath = findDataFilePath(path);
+    std::ofstream out(actualPath, std::ios::app);
+    if (!out.is_open()) return false;
+
+    out << d.billId << " "
+        << d.productAcronym << " "
+        << d.unitPrice << " "
+        << d.quantity << " "
+        << d.discountOnProduct << " #\n";
+    out.close();
+    return true;
+}
+
+// ============================================================================
+// Order/Bill ID generation (unchanged from D2)
+// ============================================================================
 std::string generateNextOrderId(int dayOfMonth, int existingCount) {
-    // 8-digit order ID where last 2 digits indicate date of order
     int prefix = 100000 + ((existingCount + 1) % 900000);
     int day = std::clamp(dayOfMonth, 1, 31);
     char buf[16];
@@ -368,7 +442,6 @@ std::string generateNextOrderId(int dayOfMonth, int existingCount) {
 }
 
 std::string generateNextBillId(int existingCount) {
-    // 9-digit bill ID
     long long base = 900000000LL + ((existingCount + 1) % 100000000LL);
     char buf[20];
     std::snprintf(buf, sizeof(buf), "%09lld", base);
