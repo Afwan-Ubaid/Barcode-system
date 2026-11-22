@@ -15,6 +15,8 @@
 #include "ProductCatalog.h"
 #include "InventoryManager.h"
 #include "CartService.h"
+#include "CategoryManager.h"
+#include "SeasonManager.h"
 #include "SplashScreen.h"
 #include "LoginScreen.h"
 #include "../../backend/include/CameraCapture.h"
@@ -67,7 +69,8 @@ private:
     ProductCatalog mProductCatalog;
     InventoryManager mInventoryManager;
     CartService mCartService;
-
+    CategoryManager mCategoryManager;   // D3 Req 1
+    SeasonManager   mSeasonManager;     // D3 Req 13
     // Window & Display Layout
     sf::RenderWindow mWindow;
     float mDesignWidth = 1280.f;
