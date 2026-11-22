@@ -667,7 +667,6 @@ void PosApp::processReturn() {
         " -> Rs " + std::to_string(refundTotal) + " refunded to customer. Stock restored.";
     showToast("Return Processed: Stock restored to shop shelves (product.txt)");
 }
-
 void PosApp::recordSaleToOutputFiles(const std::vector<CartLine>& cartItems, const std::string& cashierName, int paymentMethod) {
     std::vector<OrderRecord> orders;
     parseOrdersFile("Order.txt", orders);
@@ -694,10 +693,17 @@ void PosApp::recordSaleToOutputFiles(const std::vector<CartLine>& cartItems, con
     std::strftime(tBuf, sizeof(tBuf), "%H:%M:%S", &tmNow);
 
     auto& products = mProductCatalog.getProducts();
-    int totalWithoutTax = mCartService.getSubtotal(products);
-    int totalDiscount = mCartService.getDiscount(products);
-    int totalTax = 0; // Tax removed
-    int totalPayable = mCartService.getTotal(products);
+    int totalWithoutTax = 0;
+    int totalTax = 0;
+    int totalDiscount = 0;
+    for (const auto& item : cartItems) {
+        if (item.productId >= 0 && item.productId < (int)products.size()) {
+            const auto& p = products[item.productId];
+            totalWithoutTax += p.price * item.quantity;
+            totalDiscount += p.discount * item.quantity;
+        }
+    }
+    int totalPayable = totalWithoutTax - totalDiscount;
 
     std::string custName = cashierName.empty() ? "Store_Customer" : cashierName;
     for (char& c : custName) if (c == ' ') c = '_';
@@ -706,55 +712,72 @@ void PosApp::recordSaleToOutputFiles(const std::vector<CartLine>& cartItems, con
     std::string pMerchant = (paymentMethod == 0 ? "CashCounter" : "BankPOS");
 
     // 1. Append to Order.txt (Output file 1)
-    std::vector<std::string> ordPaths = {"Order.txt", "frontend/Order.txt"};
-    for (const auto& path : ordPaths) {
-        std::ofstream outOrd(path, std::ios::app);
-        if (outOrd.is_open()) {
-            outOrd << orderId << " " << dBuf << " " << tBuf << " "
-                   << custName << " " << custPhone << " paid "
-                   << totalPayable << " " << pMode << " " << pMerchant << " #\n";
-            outOrd.close();
-        }
+    std::ofstream outOrd("Order.txt", std::ios::app);
+    if (outOrd.is_open()) {
+        outOrd << orderId << " " << dBuf << " " << tBuf << " "
+               << custName << " " << custPhone << " paid "
+               << totalPayable << " " << pMode << " " << pMerchant << " #\n";
+        outOrd.close();
     }
 
     // 2. Append to OrderDetail.txt (Output file 2)
-    std::vector<std::string> detPaths = {"OrderDetail.txt", "frontend/OrderDetail.txt"};
-    for (const auto& path : detPaths) {
-        std::ofstream outDet(path, std::ios::app);
-        if (outDet.is_open()) {
-            for (const auto& item : cartItems) {
-                if (item.productId >= 0 && item.productId < (int)products.size()) {
-                    const auto& p = products[item.productId];
-                    outDet << orderId << " " << p.id << " " << p.barcode << " " << item.quantity << " #\n";
-                }
+    std::ofstream outDet("OrderDetail.txt", std::ios::app);
+    if (outDet.is_open()) {
+        for (const auto& item : cartItems) {
+            if (item.productId >= 0 && item.productId < (int)products.size()) {
+                const auto& p = products[item.productId];
+                outDet << orderId << " " << p.id << " " << p.barcode << " " << item.quantity << " #\n";
             }
-            outDet.close();
         }
+        outDet.close();
     }
 
-    // 3. Append to Bill.txt (Output file 3 with per-item discounted price)
-    std::vector<std::string> billPaths = {"Bill.txt", "frontend/Bill.txt"};
-    for (const auto& path : billPaths) {
-        std::ofstream outBill(path, std::ios::app);
-        if (outBill.is_open()) {
-            for (const auto& item : cartItems) {
-                if (item.productId >= 0 && item.productId < (int)products.size()) {
-                    const auto& p = products[item.productId];
-                    int itemDiscPerUnit = 0;
-                    if (totalWithoutTax > 0 && totalDiscount > 0) {
-                        itemDiscPerUnit = (p.price * totalDiscount) / totalWithoutTax;
-                    } else if (p.discount > 0) {
-                        itemDiscPerUnit = p.discount;
-                    }
-                    outBill << billId << " " << custName << " " << orderId << " "
-                            << (p.acronym.empty() ? p.name.substr(0, 8) : p.acronym) << " "
-                            << p.price << " " << itemDiscPerUnit << " " << item.quantity << " "
-                            << totalWithoutTax << " " << totalTax << " " << totalDiscount << " "
-                            << totalPayable << " paid #\n";
-                }
+    // 3. D3 Req 8: Bill.txt is ONE line per bill (14 fields)
+    int seasonalPct = mSeasonManager.getActiveDiscountForDate(dBuf);
+    int seasonalDiscount = (seasonalPct * totalPayable) / 100;
+    int finalPayable = totalPayable - seasonalDiscount;
+    int amountReceived = mCartService.parseCashGiven();
+    int balanceReturned = std::max(0, amountReceived - finalPayable);
+
+    BillRecord bill;
+    bill.billId = billId;
+    bill.customerName = custName;
+    bill.orderId = orderId;
+    bill.totalWithoutTax = totalWithoutTax;
+    bill.totalTax = totalTax;
+    bill.totalDiscount = totalDiscount;
+    bill.totalPayable = finalPayable;
+    bill.amountReceived = amountReceived;
+    bill.balanceReturned = balanceReturned;
+    bill.paymentStatus = "paid";
+    bill.seasonalDiscount = seasonalDiscount;
+    bill.specialDiscount = 0;
+    bill.billDate = dBuf;
+    bill.billTime = tBuf;
+
+    std::ofstream outBill("Bill.txt", std::ios::app);
+    if (outBill.is_open()) {
+        outBill << bill.billId << " " << bill.customerName << " " << bill.orderId << " "
+                << bill.totalWithoutTax << " " << bill.totalTax << " " << bill.totalDiscount << " "
+                << bill.totalPayable << " " << bill.amountReceived << " " << bill.balanceReturned << " "
+                << bill.paymentStatus << " " << bill.seasonalDiscount << " " << bill.specialDiscount << " "
+                << bill.billDate << " " << bill.billTime << " #\n";
+        outBill.close();
+    }
+
+    // 4. D3 Req 9: BillDetail.txt is one line per product
+    std::ofstream outBillDet("BillDetail.txt", std::ios::app);
+    if (outBillDet.is_open()) {
+        for (const auto& item : cartItems) {
+            if (item.productId >= 0 && item.productId < (int)products.size()) {
+                const auto& p = products[item.productId];
+                std::string acr = p.acronym.empty() ? p.name.substr(0, 8) : p.acronym;
+                outBillDet << billId << " " << acr << " "
+                           << p.price << " " << item.quantity << " "
+                           << (p.discount * item.quantity) << " #\n";
             }
-            outBill.close();
         }
+        outBillDet.close();
     }
 }
 
