@@ -19,16 +19,16 @@ bool ProductCatalog::saveDefaultProductFile(const std::string& path) {
     if (!out.is_open()) return false;
     out << "# ScanIT Point of Sale - Product Catalog Database\n"
         << "# Format: Barcode,Name,Price,Unit,Category,IconKey,Stock,CategoryId\n"
-        << "100001,Fresh Milk,320,1 L,Grocery,milk,24,01\n"
-        << "100002,Sourdough Bread,180,1 loaf,Grocery,bread,15,02\n"
-        << "100003,Atelier coffee,180,250 g,Drinks,coffee,32,03\n"
-        << "100004,Red apples,240,1 kg,Grocery,apple,40,06\n"
-        << "100005,Orange Juice,290,1 L,Drinks,juice,18,03\n"
-        << "100006,Basmati rice,540,1 kg,Grocery,rice,50,09\n"
-        << "100007,Pistachio Crunch,350,150 g,Snacks,coffee,20,04\n"
-        << "100008,Lavender Deterg.,480,1.5 L,Household,milk,12,05\n"
-        << "234567,Cereal Box,420,500 g,Grocery,bread,25,09\n"
-        << "567890,Green Tea,260,100 g,Drinks,juice,30,03\n";
+        << "010001,Fresh Milk,320,1 L,Dairy,milk,24,01\n"
+        << "020002,Sourdough Bread,180,1 loaf,Bakery,bread,15,02\n"
+        << "030003,Atelier coffee,180,250 g,Drinks,coffee,32,03\n"
+        << "060004,Red apples,240,1 kg,Fruits,apple,40,06\n"
+        << "030005,Orange Juice,290,1 L,Drinks,juice,18,03\n"
+        << "090006,Basmati rice,540,1 kg,Grocery,rice,50,09\n"
+        << "040007,Pistachio Crunch,350,150 g,Snacks,coffee,20,04\n"
+        << "050008,Lavender Deterg.,480,1.5 L,Household,milk,12,05\n"
+        << "090007,Cereal Box,420,500 g,Grocery,bread,25,09\n"
+        << "030006,Green Tea,260,100 g,Drinks,juice,30,03\n";
     out.close();
     return true;
 }
@@ -247,16 +247,16 @@ bool ProductCatalog::loadProductsFile(const std::string& customPath) {
     // Fallback defaults if the file was empty / unreadable
     if (mProducts.empty()) {
         mProducts = {
-            {0, "Atelier coffee",   "250 g",  "Drinks",    "coffee", "100003", 180, 32, sf::Color(232, 236, 230)},
-            {1, "Basmati rice",     "1 kg",   "Grocery",   "rice",   "100006", 540, 50, sf::Color(232, 236, 238)},
-            {2, "Fresh Milk",       "1 L",    "Grocery",   "milk",   "100001", 320, 24, sf::Color(240, 230, 222)},
-            {3, "Lavender Deterg.", "1.5 L",  "Household", "milk",   "100008", 480, 12, sf::Color(230, 234, 240)},
-            {4, "Orange Juice",     "1 L",    "Drinks",    "juice",  "100005", 290, 18, sf::Color(243, 236, 218)},
-            {5, "Pistachio Crunch", "150 g",  "Snacks",    "coffee", "100007", 350, 20, sf::Color(240, 236, 220)},
-            {6, "Red apples",       "1 kg",   "Grocery",   "apple",  "100004", 240, 40, sf::Color(242, 228, 222)},
-            {7, "Sourdough Bread",  "1 loaf", "Grocery",   "bread",  "100002", 180, 15, sf::Color(241, 236, 214)}
+            {0, "Atelier coffee",   "250 g",  "Drinks",    "coffee", "030003", 180, 32, sf::Color(232, 236, 230)},
+            {1, "Basmati rice",     "1 kg",   "Grocery",   "rice",   "090006", 540, 50, sf::Color(232, 236, 238)},
+            {2, "Fresh Milk",       "1 L",    "Dairy",     "milk",   "010001", 320, 24, sf::Color(240, 230, 222)},
+            {3, "Lavender Deterg.", "1.5 L",  "Household", "milk",   "050008", 480, 12, sf::Color(230, 234, 240)},
+            {4, "Orange Juice",     "1 L",    "Drinks",    "juice",  "030005", 290, 18, sf::Color(243, 236, 218)},
+            {5, "Pistachio Crunch", "150 g",  "Snacks",    "coffee", "040007", 350, 20, sf::Color(240, 236, 220)},
+            {6, "Red apples",       "1 kg",   "Fruits",    "apple",  "060004", 240, 40, sf::Color(242, 228, 222)},
+            {7, "Sourdough Bread",  "1 loaf", "Bakery",    "bread",  "020002", 180, 15, sf::Color(241, 236, 214)}
         };
-        for (auto& p : mProducts) p.categoryId = "01";
+        for (auto& p : mProducts) p.categoryId = p.barcode.substr(0, 2);
     }
 
     sortAlphabetically();

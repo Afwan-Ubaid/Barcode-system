@@ -1,6 +1,6 @@
 # ReturnID|Timestamp|Cashier|Barcode|ItemName|Quantity|RefundAmount|OrderRef
-RET-1001|2026-11-18 10:14:22|admin|100001|Whole Milk 1L|1|240|ORD-1001
-RET-1002|2026-11-18 12:45:10|cashier1|100004|Green Tea 250g|2|700|ORD-1002
-RET-1003|2026-11-18 15:30:05|admin|100005|Cooking Oil 1L|1|450|ORD-1003
-RET-1010|2026-11-23 17:45:40|admin|100001|Fresh Milk|1|320|10000117|Changed Mind|Cash|Ahmed Khan|Restocked
-RET-1011|2026-11-23 17:49:16|admin|100001|Fresh Milk|1|320|10000117|Changed Mind|Cash|Ahmed Khan|Restocked
+RET-1001|2026-11-18 10:14:22|admin|010001|Whole Milk 1L|1|240|ORD-1001
+RET-1002|2026-11-18 12:45:10|cashier1|060004|Green Tea 250g|2|700|ORD-1002
+RET-1003|2026-11-18 15:30:05|admin|030005|Cooking Oil 1L|1|450|ORD-1003
+RET-1010|2026-11-23 17:45:40|admin|010001|Fresh Milk|1|320|10000117|Changed Mind|Cash|Ahmed Khan|Restocked
+RET-1011|2026-11-23 17:49:16|admin|010001|Fresh Milk|1|320|10000117|Changed Mind|Cash|Ahmed Khan|Restocked

@@ -1301,7 +1301,7 @@ void PosModalsView::drawQuickCheckModal(sf::RenderTarget& target, sf::Vector2f m
              barcodeQuery.empty() ? ThemeColor::Mute : ThemeColor::Ink, rightX + 38, dy + 86);
 
     // Quick Test Demo Pills
-    const char* demoCodes[] = {"100001", "100002", "100004", "100006", "234567"};
+    const char* demoCodes[] = {"010001", "020002", "060004", "090006", "090007"};
     drawText(target, fontMedium, "Quick Test:", 8.5f, ThemeColor::Mute, rightX, dy + 118);
     float pillStartX = rightX + 62.f;
     float qPillW = (rightW - 62.f - 16.f) / 5.f;
@@ -2034,7 +2034,7 @@ void PosModalsView::drawPromoManagementModal(sf::RenderTarget& target, sf::Vecto
     } else {
         drawRounded(target, dx + 40, fTargY + 14, colW - 32, 32, 6, sf::Color(255, 255, 255),
                     (activeField == 2) ? ThemeColor::Blue : ThemeColor::Line, (activeField == 2) ? 1.5f : 1.f);
-        std::string placeholder = isItem ? "Enter SKU / Barcode (e.g. 100001)" : "Enter vendor (e.g. Nestle Pakistan)";
+        std::string placeholder = isItem ? "Enter SKU / Barcode (e.g. 010001)" : "Enter vendor (e.g. Nestle Pakistan)";
         std::string dispVal = newTargetValue.empty() ? (activeField == 2 ? "|" : placeholder)
                                                      : (newTargetValue + (activeField == 2 ? "|" : ""));
         drawText(target, fontRegular, dispVal, 9.f, newTargetValue.empty() ? ThemeColor::Mute : ThemeColor::Ink, dx + 50, fTargY + 29);

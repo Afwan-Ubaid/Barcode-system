@@ -44,7 +44,7 @@ struct ProductCategory {
 // ----------------------------------------------------------------------------
 struct ProductItem {
     std::string id = "0";
-    std::string barcode = "100001";
+    std::string barcode = "010001";
     std::string acronym = "MILK";
     std::string name = "Fresh Milk";
     std::string unit = "1 L";
@@ -53,7 +53,7 @@ struct ProductItem {
     int tax = 0;
     int discount = 0;
     int stock = 24;
-    std::string barcodePath = "barcodes/100001.bmp";
+    std::string barcodePath = "barcodes/010001.bmp";
     std::string categoryId = "01";
     std::string category = "Grocery";
     std::string iconKey = "milk";

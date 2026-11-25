@@ -1218,7 +1218,7 @@ void PosReportsView::drawReturnTab(sf::RenderTarget& target, sf::Vector2f mouse,
             break;
         }
     }
-    const char* demoCodes[] = {"100001", "100003", "100006", latestPaidId.c_str()};
+    const char* demoCodes[] = {"010001", "030003", "090006", latestPaidId.c_str()};
     float pX = mainX + 16;
     float pW = (paneW - 12.f) / 4.f;
     for (int p = 0; p < 4; p++) {
@@ -1407,7 +1407,7 @@ void PosReportsView::drawReturnTab(sf::RenderTarget& target, sf::Vector2f mouse,
         bool hovSpl = pointInRect(mouse, rX + 26, splBtnY, paneW - 20.f, 28.f);
         drawRounded(target, rX + 26, splBtnY, paneW - 20.f, 28.f, 5,
                     hovSpl ? ThemeColor::BlueHover : ThemeColor::Blue);
-        drawText(target, fontBold, "Load Sample Item (100001)", 9.f, ThemeColor::White, rX + 16 + paneW / 2.f, splBtnY + 14.f, TextAlignment::Center);
+        drawText(target, fontBold, "Load Sample Item (010001)", 9.f, ThemeColor::White, rX + 16 + paneW / 2.f, splBtnY + 14.f, TextAlignment::Center);
     }
 
     // Status Message Box at bottom (safely clipped so it never overflows box)

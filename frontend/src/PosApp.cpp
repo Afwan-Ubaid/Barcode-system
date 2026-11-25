@@ -311,11 +311,11 @@ bool PosApp::init(bool screenshotMode, bool paidMode, const std::string& modalSh
                 mActiveTab = 3;
             } else if (mModalShot == "return_slip") {
                 mActiveTab = 6;
-                lookupReturnItem("100001");
+                lookupReturnItem("010001");
                 processReturn();
             } else if (mModalShot == "return_item") {
                 mActiveTab = 6;
-                lookupReturnItem("100001");
+                lookupReturnItem("010001");
             } else if (mModalShot == "return") {
                 mActiveTab = 6;
                 mSelectedReturnProductIdx = -1;
@@ -324,15 +324,15 @@ bool PosApp::init(bool screenshotMode, bool paidMode, const std::string& modalSh
                 mDiscountModalOpen = true;
             } else if (mModalShot == "quickcheck") {
                 mQuickCheckModalOpen = true;
-                mQuickCheckBarcode = "100001";
-                mQuickCheckProductIdx = mProductCatalog.findProductByBarcode("100001");
+                mQuickCheckBarcode = "010001";
+                mQuickCheckProductIdx = mProductCatalog.findProductByBarcode("010001");
             } else if (mModalShot == "spec") {
                 mSpecModalOpen = true;
                 mSpecProductIdx = 0;
             } else if (mModalShot == "desc") {
                 mActiveTab = 1;
-                mDescItemName = "Whole Milk 1L";
-                mDescItemBarcode = "100001";
+                mDescItemName = "Fresh Milk 1L";
+                mDescItemBarcode = "010001";
                 mDescItemCategory = "Dairy";
                 mDescItemUnit = "1 L";
                 mDescItemPrice = 240;
@@ -2262,7 +2262,7 @@ void PosApp::handleClick(sf::Vector2f m) {
         }
 
         // Demo quick test pills
-        const char* demoCodes[] = {"100001", "100002", "100004", "100006", "234567"};
+        const char* demoCodes[] = {"010001", "020002", "060004", "090006", "090007"};
         float pillStartX = rightX + 62.f;
         float qPillW = (rightW - 62.f - 16.f) / 5.f;
         for (int i = 0; i < 5; ++i) {
@@ -3711,7 +3711,7 @@ void PosApp::handleClick(sf::Vector2f m) {
                     break;
                 }
             }
-            const char* demoCodes[] = {"100001", "100003", "100006", latestPaidId.c_str()};
+            const char* demoCodes[] = {"010001", "030003", "090006", latestPaidId.c_str()};
             float pX = mMainX + 16;
             float pW = (paneW - 12.f) / 4.f;
             for (int p = 0; p < 4; p++) {
@@ -3826,11 +3826,11 @@ void PosApp::handleClick(sf::Vector2f m) {
                     return;
                 }
             } else {
-                // "Load Sample Item (100001)" button in empty workflow guide
+                // "Load Sample Item (010001)" button in empty workflow guide
                 float guideY = ty + 40.f;
                 float splBtnY = guideY + 98.f;
                 if (pointInRect(m, rX + 26, splBtnY, paneW - 20.f, 28.f)) {
-                    lookupReturnItem("100001");
+                    lookupReturnItem("010001");
                     return;
                 }
             }
