@@ -57,6 +57,7 @@ struct ProductItem {
     std::string categoryId = "01";
     std::string category = "Grocery";
     std::string iconKey = "milk";
+    std::string categoryId = "01";        // D3 Req 2: 2-digit category from PCategory.txt
     sf::Color cardTint = sf::Color(240, 230, 222);
 
     ProductItem() = default;
@@ -147,10 +148,6 @@ struct BillRecord {
     std::string billId;
     std::string customerName;
     std::string orderId;
-    std::string productAcronym;
-    int unitPrice = 0;
-    int discountPerUnit = 0;
-    int quantity = 0;
     int totalWithoutTax = 0;
     int totalTax = 0;
     int totalDiscount = 0;
