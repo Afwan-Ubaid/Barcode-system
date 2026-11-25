@@ -17,7 +17,7 @@ namespace Layout {
     constexpr float PANEL_W = 336.f;
 
     constexpr float CARD_W = 175.f;
-    constexpr float CARD_H = 126.f;
+    constexpr float CARD_H = 135.f;
     constexpr float CARD_GAP = 10.f;
     constexpr float CARD_Y = 347.f;
 

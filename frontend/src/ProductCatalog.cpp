@@ -158,12 +158,13 @@ bool ProductCatalog::loadProductsFile(const std::string& customPath) {
             std::string barcode = tokens[1];
             std::string acronym = tokens[2];
 
-            // Minimum 11 tokens for D3. For older 10-token lines, fall back safely.
+            // Minimum 11 tokens for D3: id barcode acronym name unit price tax discount stock barcodePath categoryId
             bool hasCategoryId = (tokens.size() >= 11);
 
             // barcodePath index depends on whether categoryId is present
             size_t barcodePathIdx = hasCategoryId ? tokens.size() - 2 : tokens.size() - 1;
-            size_t nameEndIdx     = barcodePathIdx - 6;   // unit, price, tax, disc, stock, barcodePath
+            // Tokens before barcodePath: [barcodePathIdx-5]=unit, -4=price, -3=tax, -2=disc, -1=stock
+            size_t nameEndIdx     = (barcodePathIdx >= 5) ? (barcodePathIdx - 5) : 4;
 
             if (nameEndIdx <= 3) nameEndIdx = 4;
 
@@ -178,12 +179,13 @@ bool ProductCatalog::loadProductsFile(const std::string& customPath) {
             std::string unit = "count";
             int price = 100, stock = 20, tax = 0, discount = 0;
 
-            if (barcodePathIdx >= 6) {
-                unit     = tokens[barcodePathIdx - 6];
-                try { price    = std::stoi(tokens[barcodePathIdx - 5]); } catch (...) {}
-                try { tax      = std::stoi(tokens[barcodePathIdx - 4]); } catch (...) {}
-                try { discount = std::stoi(tokens[barcodePathIdx - 3]); } catch (...) {}
-                try { stock    = std::stoi(tokens[barcodePathIdx - 2]); } catch (...) {}
+            if (barcodePathIdx >= 5) {
+                unit     = tokens[barcodePathIdx - 5];
+                for (char& c : unit) if (c == '_') c = ' ';
+                try { price    = std::stoi(tokens[barcodePathIdx - 4]); } catch (...) {}
+                try { tax      = std::stoi(tokens[barcodePathIdx - 3]); } catch (...) {}
+                try { discount = std::stoi(tokens[barcodePathIdx - 2]); } catch (...) {}
+                try { stock    = std::stoi(tokens[barcodePathIdx - 1]); } catch (...) {}
             }
 
             std::string barcodePath = tokens[barcodePathIdx];
@@ -282,10 +284,25 @@ std::vector<int> ProductCatalog::getVisibleProducts(const std::string& searchQue
                                                     const std::string& activeCategory) const {
     std::vector<int> result;
     std::string q = toLowerStr(trimStr(searchQuery));
+    std::string actLower = toLowerStr(trimStr(activeCategory));
+
+    auto categoryMatches = [&](const std::string& prodCat) -> bool {
+        if (actLower.empty() || actLower == "all") return true;
+        std::string pc = toLowerStr(trimStr(prodCat));
+        if (pc == actLower) return true;
+        if ((actLower == "fruits" && pc.find("fruit") != std::string::npos) ||
+            (actLower == "vegetables" && pc.find("veg") != std::string::npos) ||
+            (actLower == "personal" && pc.find("personal") != std::string::npos) ||
+            (actLower == "fruits & veg" && (pc == "fruits" || pc == "vegetables")) ||
+            (actLower == "personal care" && pc == "personal")) {
+            return true;
+        }
+        return false;
+    };
 
     for (int i = 0; i < (int)mProducts.size(); i++) {
         const auto& p = mProducts[i];
-        if (q.empty() && activeCategory != "All" && p.category != activeCategory) {
+        if (q.empty() && !categoryMatches(p.category)) {
             continue;
         }
         if (!q.empty()) {
@@ -381,15 +398,36 @@ void ProductCatalog::addOrUpdateProduct(const ProductItem& item) {
         mProducts[idx].stock     += item.stock;
         mProducts[idx].price      = item.price;
         mProducts[idx].unitPrice  = item.price;
+        mProducts[idx].tax        = item.tax;
+        mProducts[idx].discount   = item.discount;
         mProducts[idx].name       = item.name;
         mProducts[idx].category   = item.category;
         mProducts[idx].unit       = item.unit;
+        if (!item.acronym.empty()) mProducts[idx].acronym = item.acronym;
+        if (!item.barcodePath.empty()) mProducts[idx].barcodePath = item.barcodePath;
         if (!item.categoryId.empty()) mProducts[idx].categoryId = item.categoryId;
     } else {
         ProductItem newItem = item;
         newItem.id = std::to_string(100 + (int)mProducts.size() + 1);
         mProducts.push_back(newItem);
     }
+    sortAlphabetically();
+    saveProductsFile();
+}
+
+void ProductCatalog::updateProduct(int index, const ProductItem& item) {
+    if (index < 0 || index >= (int)mProducts.size()) return;
+    mProducts[index].name       = item.name;
+    mProducts[index].price      = item.price;
+    mProducts[index].unitPrice  = item.price;
+    mProducts[index].tax        = item.tax;
+    mProducts[index].discount   = std::max(0, item.discount);
+    mProducts[index].stock      = std::max(0, item.stock);
+    mProducts[index].unit       = item.unit;
+    mProducts[index].category   = item.category;
+    if (!item.categoryId.empty()) mProducts[index].categoryId = item.categoryId;
+    if (!item.acronym.empty()) mProducts[index].acronym = item.acronym;
+    if (!item.barcodePath.empty()) mProducts[index].barcodePath = item.barcodePath;
     sortAlphabetically();
     saveProductsFile();
 }
@@ -403,70 +441,53 @@ bool ProductCatalog::saveProductsFile(const std::string& path) {
     std::string targetPath = path.empty() ? mProductFilePath : path;
     if (targetPath.empty()) targetPath = "product.txt";
 
+    auto writeAll = [&](std::ostream& os) {
+        for (size_t i = 0; i < mProducts.size(); ++i) {
+            const auto& p = mProducts[i];
+
+            std::string sName = p.name;
+            for (char& c : sName) if (c == ' ') c = '_';
+
+            std::string sUnit = p.unit.empty() ? "count" : p.unit;
+            for (char& c : sUnit) if (c == ' ') c = '_';
+
+            std::string acr = p.acronym.empty()
+                            ? p.name.substr(0, std::min<size_t>(8, p.name.length()))
+                            : p.acronym;
+            for (char& c : acr) if (c == ' ') c = '_';
+            if (acr.length() > 8) acr = acr.substr(0, 8);
+
+            std::string bcPath = p.barcodePath.empty()
+                               ? ("barcodes/barcode_" + p.barcode + ".bmp")
+                               : p.barcodePath;
+
+            int taxVal = p.tax;
+            os << (101 + (int)i) << " "
+               << p.barcode << " "
+               << acr << " "
+               << sName << " "
+               << sUnit << " "
+               << p.price << " "
+               << taxVal << " "
+               << std::max(0, p.discount) << " "
+               << std::max(0, p.stock) << " "
+               << bcPath << " "
+               << (p.categoryId.empty() ? "01" : p.categoryId) << " #\n";
+        }
+    };
+
     std::ofstream out(targetPath);
     if (!out.is_open()) return false;
-
-    for (size_t i = 0; i < mProducts.size(); ++i) {
-        const auto& p = mProducts[i];
-
-        std::string sName = p.name;
-        for (char& c : sName) if (c == ' ') c = '_';
-
-        std::string acr = p.acronym.empty()
-                        ? p.name.substr(0, std::min<size_t>(8, p.name.length()))
-                        : p.acronym;
-        for (char& c : acr) if (c == ' ') c = '_';
-        if (acr.length() > 8) acr = acr.substr(0, 8);
-
-        std::string bcPath = p.barcodePath.empty()
-                           ? ("barcodes/barcode_" + p.barcode + ".bmp")
-                           : p.barcodePath;
-
-        out << (101 + (int)i) << " "
-            << p.barcode << " "
-            << acr << " "
-            << sName << " "
-            << (p.unit.empty() ? "count" : p.unit) << " "
-            << p.price << " "
-            << (p.price / 20) << " "
-            << 0 << " "
-            << p.stock << " "
-            << bcPath << " "
-            << (p.categoryId.empty() ? "01" : p.categoryId) << " #\n";
-    }
+    writeAll(out);
     out.close();
 
-    // Mirror writes (D2 behavior preserved)
+    // Mirror writes
     std::vector<std::string> mirrors = {"product.txt", "frontend/product.txt"};
     for (const auto& m : mirrors) {
-        if (m != targetPath) {
+        if (m != targetPath && fs::exists(fs::path(m).parent_path().empty() ? fs::path(".") : fs::path(m).parent_path())) {
             std::ofstream mOut(m);
             if (mOut.is_open()) {
-                for (size_t i = 0; i < mProducts.size(); ++i) {
-                    const auto& p = mProducts[i];
-                    std::string sName = p.name;
-                    for (char& c : sName) if (c == ' ') c = '_';
-                    std::string acr = p.acronym.empty()
-                                    ? p.name.substr(0, std::min<size_t>(8, p.name.length()))
-                                    : p.acronym;
-                    for (char& c : acr) if (c == ' ') c = '_';
-                    if (acr.length() > 8) acr = acr.substr(0, 8);
-                    std::string bcPath = p.barcodePath.empty()
-                                       ? ("barcodes/barcode_" + p.barcode + ".bmp")
-                                       : p.barcodePath;
-
-                    mOut << (101 + (int)i) << " "
-                         << p.barcode << " "
-                         << acr << " "
-                         << sName << " "
-                         << (p.unit.empty() ? "count" : p.unit) << " "
-                         << p.price << " "
-                         << (p.price / 20) << " "
-                         << 0 << " "
-                         << p.stock << " "
-                         << bcPath << " "
-                         << (p.categoryId.empty() ? "01" : p.categoryId) << " #\n";
-                }
+                writeAll(mOut);
                 mOut.close();
             }
         }

@@ -11,11 +11,13 @@ struct ProductItem {
     std::string acronym;       // max 8 characters
     std::string name;          // product name
     std::string unit;          // measurement unit: "count" or "weight"
+    int price = 0;             // price
     int unitPrice = 0;         // unit price in PKR (without tax)
     int tax = 0;               // tax on product (amount in PKR)
     int discount = 0;          // discount on one unit of product (in PKR)
     int stock = 0;             // available quantity
     std::string barcodePath;   // barcode file name and path
+    std::string categoryId = "01"; // 2-digit category ID
 
     // UI categorization helpers
     std::string category = "Grocery";
@@ -43,20 +45,35 @@ struct OrderDetailRecord {
     int quantity = 0;           // quantity
 };
 
-// Bill Record matching Requirement 10
-struct BillRecord {
-    std::string billId;          // 9 digit id
-    std::string customerName;    // customer name
-    std::string orderId;         // Order Id from Order.txt file
+// Bill Detail Record matching Requirement 9
+struct BillDetailRecord {
+    std::string billId;          // 9 digit bill id
     std::string productAcronym;  // product acronym
     int unitPrice = 0;           // product unit price without tax
-    int discountPerUnit = 0;     // discount per unit (if applicable)
     int quantity = 0;            // product quantity
+    int discountOnProduct = 0;   // discount on bought product
+};
+
+// Bill Record matching Requirement 8 (14 fields)
+struct BillRecord {
+    std::string billId;          // 9 digit id unique
+    std::string customerName;    // customer name
+    std::string orderId;         // Order Id from Order.txt file
+    std::string productAcronym;  // product acronym (optional legacy)
+    int unitPrice = 0;           // unit price (optional legacy)
+    int discountPerUnit = 0;     // discount per unit (optional legacy)
+    int quantity = 0;            // product quantity (optional legacy)
     int totalWithoutTax = 0;     // total bill without tax
     int totalTax = 0;            // total tax
-    int totalDiscount = 0;       // total discount
+    int totalDiscount = 0;       // total applicable discount
     int totalPayable = 0;        // total payable bill
+    int amountReceived = 0;      // amount received
+    int balanceReturned = 0;     // balance returned
     std::string paymentStatus;   // bill payment status (order status from Order.txt)
+    int seasonalDiscount = 0;    // seasonal discount
+    int specialDiscount = 0;     // special discount (<= 8%)
+    std::string billDate;        // bill date
+    std::string billTime;        // bill time
 };
 
 // Manager Functions for Loading, Saving & Validating Database Files

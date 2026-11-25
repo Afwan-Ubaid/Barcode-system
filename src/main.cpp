@@ -43,6 +43,7 @@ static void parseArgs(const char* cmd, bool& shot, bool& shotPaid, std::string& 
     else if (strstr(cmd, "--screenshot-activity")) { shot = true; modal = "logs"; }
     else if (strstr(cmd, "--screenshot-addstaff")) { shot = true; modal = "addstaff"; }
     else if (strstr(cmd, "--screenshot-resetpass")) { shot = true; modal = "resetpass"; }
+    else if (strstr(cmd, "--screenshot-return-slip")) { shot = true; modal = "return_slip"; }
     else if (strstr(cmd, "--screenshot-return-item")) { shot = true; modal = "return_item"; }
     else if (strstr(cmd, "--screenshot-return")) { shot = true; modal = "return"; }
     else if (strstr(cmd, "--screenshot-add")) { shot = true; modal = "add"; }

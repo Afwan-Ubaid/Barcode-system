@@ -18,34 +18,34 @@ void PosNavigation::drawSidebar(sf::RenderTarget& target, sf::Vector2f m, float 
     target.draw(div);
 
     // ScanIT Logo
-    drawSprite(target, getTexture("icons/scan.png"), 22, 22, 24, 24, ThemeColor::Ink);
-    drawText(target, fontSemiBold, "ScanIT", 11, ThemeColor::Ink, 34, 58, TextAlignment::Center, 0.4f);
+    drawSprite(target, getTexture("icons/scan.png"), 24, 22, 24, 24, ThemeColor::Ink);
+    drawText(target, fontSemiBold, "ScanIT", 11, ThemeColor::Ink, 36, 58, TextAlignment::Center, 0.4f);
 
-    // Navigation Buttons (Admin: POS, Products, Inventory, Sales, Activity, Settings, Return; Employee: POS, Products, Sales, Return)
+    // Navigation Buttons (Admin: POS, Products, Inventory, Reports, Activity, Settings, Return; Employee: POS, Products, Return - ISE-105: Reports restricted from Cashier)
     bool isAdmin = (currentRole == "Admin");
-    std::vector<int> visibleTabs = isAdmin ? std::vector<int>{0, 1, 2, 3, 4, 5, 6} : std::vector<int>{0, 1, 3, 6};
+    std::vector<int> visibleTabs = isAdmin ? std::vector<int>{0, 1, 2, 3, 4, 5, 6} : std::vector<int>{0, 1, 6};
 
     for (size_t slot = 0; slot < visibleTabs.size(); slot++) {
         int i = visibleTabs[slot];
         float cy = Layout::NAV_Y[slot];
         bool selected = (activeTab == i);
-        bool hovered = pointInRect(m, 4, cy - 24, 60, 48);
+        bool hovered = pointInRect(m, 6, cy - 24, 60, 48);
 
         if (selected) {
-            drawRounded(target, 4, cy - 24, 60, 48, 12, sf::Color(228, 219, 200), sf::Color(214, 203, 182), 1.2f);
+            drawRounded(target, 6, cy - 24, 60, 48, 12, sf::Color(228, 219, 200), sf::Color(214, 203, 182), 1.2f);
         } else if (hovered) {
-            drawRounded(target, 4, cy - 24, 60, 48, 12, sf::Color(233, 225, 208));
+            drawRounded(target, 6, cy - 24, 60, 48, 12, sf::Color(233, 225, 208));
         }
 
-        drawSprite(target, getTexture("ui/pebble_" + std::string(Layout::NAV_ITEMS[i][1]) + ".png"), 16, cy - 22, 36, 36);
+        drawSprite(target, getTexture("ui/pebble_" + std::string(Layout::NAV_ITEMS[i][1]) + ".png"), 18, cy - 22, 36, 36);
         drawText(target, selected ? fontSemiBold : fontMedium, Layout::NAV_ITEMS[i][0], 8.5f,
-                 selected ? ThemeColor::Ink : ThemeColor::Mute, 34, cy + 17, TextAlignment::Center, 0.2f);
+                 selected ? ThemeColor::Ink : ThemeColor::Mute, 36.f, cy + 17, TextAlignment::Center, 0.2f);
     }
 
     // Role-Differentiated User Profile at bottom
     sf::CircleShape avatar(13, 32);
     avatar.setOrigin(13, 13);
-    avatar.setPosition(34, 664);
+    avatar.setPosition(36, 664);
     if (currentRole == "Admin") {
         avatar.setFillColor(sf::Color(155, 60, 50)); // Crimson/Burgundy badge for Admin
     } else {
@@ -62,14 +62,14 @@ void PosNavigation::drawSidebar(sf::RenderTarget& target, sf::Vector2f m, float 
             initials += (char)std::toupper((unsigned char)currentUserName[1]);
         }
     }
-    drawText(target, fontSemiBold, initials, 9, ThemeColor::White, 34, 664, TextAlignment::Center, 0.3f);
+    drawText(target, fontSemiBold, initials, 9, ThemeColor::White, 36, 664, TextAlignment::Center, 0.3f);
 
     std::string displayName = (currentRole == "Admin" ? "Administrator" : currentUserName);
     if (displayName.length() > 10) displayName = displayName.substr(0, 9) + "..";
-    drawText(target, fontSemiBold, displayName, 9, ThemeColor::Ink, 34, 688, TextAlignment::Center, 0.1f);
+    drawText(target, fontSemiBold, displayName, 9, ThemeColor::Ink, 36, 688, TextAlignment::Center, 0.1f);
 
     std::string roleSubtitle = (currentRole == "Admin" ? "System Admin" : "Cashier, 904");
-    drawText(target, fontRegular, roleSubtitle, 8, ThemeColor::Mute, 34, 700, TextAlignment::Center, 0.1f);
+    drawText(target, fontRegular, roleSubtitle, 8, ThemeColor::Mute, 36, 700, TextAlignment::Center, 0.1f);
 }
 
 void PosNavigation::drawHeader(sf::RenderTarget& target, sf::Vector2f mouse, float mainX,
@@ -83,25 +83,25 @@ void PosNavigation::drawHeader(sf::RenderTarget& target, sf::Vector2f mouse, flo
     }
     drawText(target, fontSerif, "Point of Sale", 28, ThemeColor::Ink, mainX, 62, TextAlignment::Left, 0.f);
 
-    // Quick Check Pill Button (ISE-56 Standalone Inspection Overlay)
-    float qcW = 112.f;
-    float qcH = 25.f;
-    float qcX = mainX + 230.f;
-    float qcY = 56.f;
+    // Quick Check Pill Button (Flush right with Layout::MAIN_W)
+    float qcW = 125.f;
+    float qcH = 28.f;
+    float qcX = mainX + Layout::MAIN_W - qcW;
+    float qcY = 46.f;
     bool hovQc = pointInRect(mouse, qcX, qcY, qcW, qcH);
-    drawRounded(target, qcX, qcY, qcW, qcH, 6,
+    drawRounded(target, qcX, qcY, qcW, qcH, 7,
                 hovQc ? ThemeColor::BlueHover : sf::Color(245, 238, 226),
                 hovQc ? ThemeColor::BlueHover : ThemeColor::Edge, 1.f);
-    drawText(target, fontSemiBold, "QUICK CHECK", 9.f,
-             hovQc ? ThemeColor::White : ThemeColor::Ink, qcX + qcW / 2.f, qcY + 12.5f, TextAlignment::Center);
+    drawText(target, fontSemiBold, "QUICK CHECK", 9.5f,
+             hovQc ? ThemeColor::White : ThemeColor::Ink, qcX + qcW / 2.f, qcY + qcH / 2.f, TextAlignment::Center);
 }
 
 void PosNavigation::drawSearch(sf::RenderTarget& target, sf::Vector2f m, float mainX,
                               const std::string& searchQuery, bool searchFocused,
                               const sf::Font& fontRegular, const sf::Font& fontSemiBold,
                               std::function<const sf::Texture&(const std::string&)> getTexture) {
-    sf::FloatRect searchBox{mainX, 82.f, 415.f, 39.f};
-    sf::FloatRect addBtn{mainX + 425.f, 82.f, 115.f, 39.f};
+    sf::FloatRect searchBox{mainX, 82.f, 410.f, 39.f};
+    sf::FloatRect addBtn{mainX + 420.f, 82.f, 125.f, 39.f};
 
     drawShadow(target, searchBox.left, searchBox.top, searchBox.width, searchBox.height, 10, 4, 6, 8, 2);
     drawRounded(target, searchBox.left, searchBox.top, searchBox.width, searchBox.height, 10,
@@ -123,6 +123,6 @@ void PosNavigation::drawSearch(sf::RenderTarget& target, sf::Vector2f m, float m
     bool hovAdd = pointInRect(m, addBtn.left, addBtn.top, addBtn.width, addBtn.height);
     drawRounded(target, addBtn.left, addBtn.top, addBtn.width, addBtn.height, 10,
                 hovAdd ? sf::Color(255, 253, 248) : ThemeColor::Paper, hovAdd ? ThemeColor::Ink : ThemeColor::Edge, 1);
-    drawSprite(target, getTexture("icons/plus.png"), addBtn.left + 14, addBtn.top + 11, 17, 17, ThemeColor::Ink);
-    drawText(target, fontSemiBold, "Add product", 12, ThemeColor::Ink, addBtn.left + 36, addBtn.top + 19.5f);
+    drawSprite(target, getTexture("icons/plus.png"), addBtn.left + 12, addBtn.top + 11, 16, 16, ThemeColor::Ink);
+    drawText(target, fontSemiBold, "Add product", 11.f, ThemeColor::Ink, addBtn.left + 34, addBtn.top + 19.5f);
 }

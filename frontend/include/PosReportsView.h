@@ -7,10 +7,14 @@
 #include <functional>
 #include "PosModels.h"
 #include "InventoryManager.h"
+#include "CategoryManager.h"
+#include "SeasonManager.h"
+#include "../../backend/include/Decoder.h"
 
 // ============================================================================
 // ISE SOFTWARE ENGINEERING PRINCIPLE: Separation of Concerns (SoC)
 // Module: Sales History Log, Security Activity Audit, Settings & Staff Access Views
+// Tabular Manager Reports (Requirement 11) & Category/Season Settings (1 & 14)
 // ============================================================================
 
 class PosReportsView {
@@ -23,6 +27,13 @@ public:
                              int salesSubTab,
                              const std::vector<ReturnRecord>& returnHistory,
                              int salesTimeFilter, float scrollOffset,
+                             const std::vector<OrderRecord>& orders,
+                             const std::vector<OrderDetailItem>& orderDetails,
+                             const std::vector<BillRecord>& bills,
+                             const std::vector<BillDetailRecord>& billDetails,
+                             const std::string& customStartDate,
+                             const std::string& customEndDate,
+                             int customActiveField,
                              const sf::Font& fontRegular, const sf::Font& fontMedium,
                              const sf::Font& fontSemiBold, const sf::Font& fontBold,
                              const sf::Font& fontSerif);
@@ -40,17 +51,29 @@ public:
                                 bool cameraRunning, bool soundEnabled,
                                 const std::string& cameraName, bool isExternalCam, int cameraCount,
                                 int studentDiscount, int employeeDiscount, int promoCount,
+                                int settingsSubTab,
+                                const CategoryManager& categoryMgr,
+                                const SeasonManager& seasonMgr,
+                                float scrollOffset,
                                 const sf::Font& fontRegular, const sf::Font& fontMedium,
                                 const sf::Font& fontSemiBold, const sf::Font& fontBold,
                                 const sf::Font& fontSerif);
 
     static void drawReturnTab(sf::RenderTarget& target, sf::Vector2f mouse, float mainX,
+                              const sf::Texture& cameraTexture,
+                              bool barcodeFound, const BarcodeBox& barcodeBox,
+                              int camWidth, int camHeight, const std::string& detectedBarcode,
+                              const std::string& cameraName, bool isExternalCam, int cameraCount,
                               const std::string& returnBarcode, bool returnBarcodeFocused,
                               int returnQty, int returnMaxQty, const ProductItem* foundProduct,
                               const std::string& saleInfo, int salePrice,
                               const std::string& saleOrderId, const std::string& saleCustomer,
                               const std::string& saleDate, bool returnSuccess,
-                              const std::string& statusMessage, const sf::Texture& cameraTexture,
+                              const std::string& statusMessage,
+                              int returnReasonIdx, int returnPaymentMethod, bool returnRestock,
+                              const std::vector<OrderRecord>& recentOrders,
+                              const std::vector<std::pair<std::string, std::string>>& orderItemPills,
+                              bool hasReturnSlip,
                               const sf::Font& fontRegular, const sf::Font& fontMedium,
                               const sf::Font& fontSemiBold, const sf::Font& fontBold,
                               const sf::Font& fontSerif,

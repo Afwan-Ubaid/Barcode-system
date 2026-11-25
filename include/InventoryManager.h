@@ -59,8 +59,8 @@ public:
     bool deductStock(const std::string& barcode, int qty);
     bool updateItemStock(const std::string& barcode, int newStock);
 
-    // Generates a unique, unused 6-digit numeric barcode (e.g., "100011")
-    std::string generateUniqueBarcode() const;
+    // Generates a unique, unused 6-digit barcode where first 2 digits are Category ID (Requirement 1)
+    std::string generateUniqueBarcode(const std::string& categoryId = "01") const;
 
     const InventoryItem* findByBarcode(const std::string& barcode) const;
     int findIndexByBarcode(const std::string& barcode) const;

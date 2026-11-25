@@ -267,12 +267,11 @@ void PosProductsView::drawProductsTab(sf::RenderTarget& target, sf::Vector2f /*m
 
     // Table Header
     drawText(target, fontSemiBold, "Barcode", 9.5f, ThemeColor::Mute, mainX + 15, ty + 14);
-    drawText(target, fontSemiBold, "Item Name", 9.5f, ThemeColor::Mute, mainX + 105, ty + 14);
-    drawText(target, fontSemiBold, "Category", 9.5f, ThemeColor::Mute, mainX + 225, ty + 14);
-    drawText(target, fontSemiBold, "Price", 9.5f, ThemeColor::Mute, mainX + 315, ty + 14);
-    drawText(target, fontSemiBold, "Stock", 9.5f, ThemeColor::Mute, mainX + 375, ty + 14);
-    drawText(target, fontSemiBold, "Detail", 9.5f, ThemeColor::Mute, mainX + 435, ty + 14);
-    drawText(target, fontSemiBold, "Action", 9.5f, ThemeColor::Mute, mainX + 495, ty + 14);
+    drawText(target, fontSemiBold, "Item Name", 9.5f, ThemeColor::Mute, mainX + 85, ty + 14);
+    drawText(target, fontSemiBold, "Category", 9.5f, ThemeColor::Mute, mainX + 215, ty + 14);
+    drawText(target, fontSemiBold, "Price", 9.5f, ThemeColor::Mute, mainX + 305, ty + 14);
+    drawText(target, fontSemiBold, "Stock", 9.5f, ThemeColor::Mute, mainX + 365, ty + 14);
+    drawText(target, fontSemiBold, "Actions", 9.5f, ThemeColor::Mute, mainX + 465, ty + 14, TextAlignment::Center);
 
     sf::RectangleShape hdrLine({Layout::MAIN_W - 30, 1});
     hdrLine.setPosition(mainX + 15, ty + 26);
@@ -309,25 +308,36 @@ void PosProductsView::drawProductsTab(sf::RenderTarget& target, sf::Vector2f /*m
 
         const auto& p = products[idx];
         drawText(target, fontMedium, p.barcode, 9.5f, ThemeColor::Ink, mainX + 15, rowY);
-        drawText(target, fontBold, p.name, 10.5f, ThemeColor::Ink, mainX + 105, rowY);
-        drawText(target, fontRegular, p.category, 9.5f, ThemeColor::Mute, mainX + 225, rowY);
-        drawText(target, fontBold, formatRs(p.price), 10.5f, ThemeColor::Ink, mainX + 315, rowY);
+        std::string dName = p.name;
+        if (dName.length() > 17) dName = dName.substr(0, 15) + "..";
+        drawText(target, fontBold, dName, 10.f, ThemeColor::Ink, mainX + 85, rowY);
+        drawText(target, fontRegular, p.category, 9.f, ThemeColor::Mute, mainX + 215, rowY);
+        drawText(target, fontBold, formatRs(p.price), 10.f, ThemeColor::Ink, mainX + 305, rowY);
 
         bool low = p.stock < 15;
         drawText(target, fontSemiBold, std::to_string(p.stock), 10.f,
                  p.stock == 0 ? ThemeColor::Red : (low ? ThemeColor::Amber : ThemeColor::Green),
-                 mainX + 375, rowY);
-
-        // [ Desc ] button
-        drawRounded(target, mainX + 420, rowY - 6, 50, 22, 4, sf::Color(240, 245, 250), ThemeColor::Blue, 1.f);
-        drawText(target, fontSemiBold, "Desc", 8.5f, ThemeColor::Blue, mainX + 445, rowY + 3, TextAlignment::Center);
+                 mainX + 365, rowY);
 
         if (currentRole == "Admin") {
-            drawRounded(target, mainX + 485, rowY - 6, 38, 22, 4, sf::Color(254, 226, 226), sf::Color(220, 80, 70), 1.f);
-            drawText(target, fontSemiBold, "Del", 8.5f, ThemeColor::Red, mainX + 504, rowY + 3, TextAlignment::Center);
+            // [ Specs ] button
+            drawRounded(target, mainX + 406, rowY - 6, 38, 22, 4, sf::Color(240, 245, 250), ThemeColor::Blue, 1.f);
+            drawText(target, fontSemiBold, "Specs", 8.f, ThemeColor::Blue, mainX + 425, rowY + 3, TextAlignment::Center);
+
+            // [ Edit ] button (Requirement 6: Manager can edit any product)
+            drawRounded(target, mainX + 448, rowY - 6, 38, 22, 4, sf::Color(220, 235, 250), sf::Color(37, 99, 235), 1.f);
+            drawText(target, fontSemiBold, "Edit", 8.f, sf::Color(29, 78, 216), mainX + 467, rowY + 3, TextAlignment::Center);
+
+            // [ Del ] button
+            drawRounded(target, mainX + 490, rowY - 6, 38, 22, 4, sf::Color(254, 226, 226), sf::Color(220, 80, 70), 1.f);
+            drawText(target, fontSemiBold, "Del", 8.f, ThemeColor::Red, mainX + 509, rowY + 3, TextAlignment::Center);
         } else {
-            drawRounded(target, mainX + 480, rowY - 6, 50, 22, 4, sf::Color(235, 230, 220));
-            drawText(target, fontRegular, "Locked", 8.f, ThemeColor::Mute, mainX + 505, rowY + 3, TextAlignment::Center);
+            // [ Specs ] button
+            drawRounded(target, mainX + 418, rowY - 6, 46, 22, 4, sf::Color(240, 245, 250), ThemeColor::Blue, 1.f);
+            drawText(target, fontSemiBold, "Specs", 8.5f, ThemeColor::Blue, mainX + 441, rowY + 3, TextAlignment::Center);
+
+            drawRounded(target, mainX + 470, rowY - 6, 52, 22, 4, sf::Color(235, 230, 220));
+            drawText(target, fontRegular, "Locked", 8.f, ThemeColor::Mute, mainX + 496, rowY + 3, TextAlignment::Center);
         }
 
         sf::RectangleShape sep({Layout::MAIN_W - 30, 1});

@@ -31,6 +31,15 @@ namespace ThemeColor {
 }
 
 // ----------------------------------------------------------------------------
+// Product Category Model (Requirement 1 & PCategory.txt)
+// ----------------------------------------------------------------------------
+struct ProductCategory {
+    std::string categoryId = "01"; // 2-digit category id
+    std::string name;              // Category name
+    std::string acronym;           // Category acronym (e.g. DAIRY, BAKE)
+};
+
+// ----------------------------------------------------------------------------
 // Product Item Model
 // ----------------------------------------------------------------------------
 struct ProductItem {
@@ -45,6 +54,7 @@ struct ProductItem {
     int discount = 0;
     int stock = 24;
     std::string barcodePath = "barcodes/100001.bmp";
+    std::string categoryId = "01";
     std::string category = "Grocery";
     std::string iconKey = "milk";
     sf::Color cardTint = sf::Color(240, 230, 222);
@@ -55,7 +65,7 @@ struct ProductItem {
                 const std::string& icon, const std::string& bc, int p, int st, sf::Color tint)
         : id(std::to_string(idNum)), barcode(bc), acronym(n.substr(0, std::min<size_t>(4, n.length()))),
           name(n), unit(u), price(p), unitPrice(p), tax(0), discount(0), stock(st),
-          barcodePath("barcodes/" + bc + ".bmp"), category(cat), iconKey(icon), cardTint(tint) {}
+          barcodePath("barcodes/" + bc + ".bmp"), categoryId("01"), category(cat), iconKey(icon), cardTint(tint) {}
 };
 
 // ----------------------------------------------------------------------------
@@ -75,7 +85,6 @@ struct DraftCart {
     std::string customerLabel;
     std::vector<CartLine> items;
     int totalAmount = 0;
-    std::string orderId = "";
 };
 
 // ----------------------------------------------------------------------------
@@ -109,7 +118,30 @@ struct OrderRecord {
 };
 
 // ----------------------------------------------------------------------------
-// Bill Record Model (Itemized Receipt Line / Requirement 10)
+// Order Detail Record Model (Audit / Requirements 8 & 9)
+// ----------------------------------------------------------------------------
+struct OrderDetailItem {
+    std::string orderId;
+    std::string productId;
+    std::string productBarcode;
+    int quantity = 1;
+};
+using ReturnOrderDetailItem = OrderDetailItem;
+
+// ----------------------------------------------------------------------------
+// Bill Detail Record Model (Requirement 9)
+// ----------------------------------------------------------------------------
+struct BillDetailRecord {
+    std::string billId;
+    std::string productAcronym;
+    int unitPrice = 0;
+    int quantity = 0;
+    int discountOnProduct = 0;
+    int productDiscount = 0;
+};
+
+// ----------------------------------------------------------------------------
+// Bill Record Model (Itemized Receipt Line / Requirement 8)
 // ----------------------------------------------------------------------------
 struct BillRecord {
     std::string billId;
@@ -123,7 +155,23 @@ struct BillRecord {
     int totalTax = 0;
     int totalDiscount = 0;
     int totalPayable = 0;
+    int amountReceived = 0;
+    int balanceReturned = 0;
     std::string paymentStatus;
+    int seasonalDiscount = 0;
+    int specialDiscount = 0;
+    std::string billDate;
+    std::string billTime;
+};
+
+// ----------------------------------------------------------------------------
+// Season Model (Requirement 13)
+// ----------------------------------------------------------------------------
+struct Season {
+    std::string startDate;
+    std::string endDate;
+    int discountPercent = 0;
+    bool isActive = false;
 };
 
 // ----------------------------------------------------------------------------
@@ -134,6 +182,24 @@ struct StaffMember {
     std::string password;
     std::string role; // "Admin" or "Employee"
     std::string createdDate;
+};
+
+// ----------------------------------------------------------------------------
+// Customer Return Audit Record Model
+// ----------------------------------------------------------------------------
+struct ReturnRecord {
+    std::string returnId;
+    std::string timestamp;
+    std::string cashier;
+    std::string barcode;
+    std::string itemName;
+    int quantity = 0;
+    int refundAmount = 0;
+    std::string orderRef;
+    std::string reason = "Customer Changed Mind";
+    std::string refundMethod = "Cash";
+    std::string customer = "Customer";
+    std::string condition = "Restocked";
 };
 
 // ----------------------------------------------------------------------------

@@ -17,9 +17,11 @@ public:
     bool saveSeasons(const std::string& path = "Seasons.txt") const;
 
     const std::vector<Season>& getSeasons() const { return mSeasons; }
+    std::vector<Season>& getSeasons() { return mSeasons; }
 
     bool addSeason(const Season& s);
     bool toggleActive(int index);
+    bool deleteSeason(int index);
 
     // Returns the discount percent that applies on todayYYYYMMDD,
     // or 0 if no active season covers that date.

@@ -31,6 +31,7 @@ public:
     void addStock(int index, int amount);
     void deductStock(int index, int amount);
     void addOrUpdateProduct(const ProductItem& item);
+    void updateProduct(int index, const ProductItem& item);
     void addProduct(const ProductItem& item) { addOrUpdateProduct(item); }
     bool saveToFile() { return saveProductsFile(); }
 

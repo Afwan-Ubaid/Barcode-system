@@ -177,6 +177,9 @@
     <ClCompile Include="src\PosModalsView.cpp" />
     <ClCompile Include="src\SplashScreen.cpp" />
     <ClCompile Include="src\LoginScreen.cpp" />
+    <ClCompile Include="src\CategoryManager.cpp" />
+    <ClCompile Include="src\SeasonManager.cpp" />
+    <ClCompile Include="src\PdfGenerator.cpp" />
     <!-- Backend sources: given extra include dir so bare #include "X.h" resolves -->
     <ClCompile Include="..\backend\src\Generator.cpp">
       <AdditionalIncludeDirectories>$(ProjectDir)..\backend\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>

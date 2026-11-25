@@ -7,6 +7,7 @@
 void PosModalsView::drawReceiptModal(sf::RenderTarget& target, sf::Vector2f m,
                                      float currentWidth, float designHeight,
                                      const CartService& cartService,
+                                     const BillSummary& summary,
                                      const std::vector<ProductItem>& products,
                                      const std::string& cashierName,
                                      const sf::Font& fontRegular, const sf::Font& fontMedium,
@@ -20,9 +21,9 @@ void PosModalsView::drawReceiptModal(sf::RenderTarget& target, sf::Vector2f m,
 
     // 2. Paper Geometry
     float rw = 440.f;
-    float rh = 600.f;
+    float rh = 618.f;
     float rx = (currentWidth - rw) / 2.f;
-    float ry = (designHeight - (rh + 52.f)) / 2.f;
+    float ry = (designHeight - (rh + 48.f)) / 2.f;
 
     // 3. Deep Soft Paper Shadow
     drawShadow(target, rx, ry, rw, rh, 26, 10, 24, 90, 5);
@@ -106,7 +107,7 @@ void PosModalsView::drawReceiptModal(sf::RenderTarget& target, sf::Vector2f m,
     // 9. Render Purchased Cart Items
     float itemY = ry + 190.f;
     const auto& cart = cartService.getCart();
-    int maxShow = 6;
+    int maxShow = 5;
     int shown = 0;
     for (size_t i = 0; i < cart.size(); ++i) {
         if (shown >= maxShow) break;
@@ -122,32 +123,47 @@ void PosModalsView::drawReceiptModal(sf::RenderTarget& target, sf::Vector2f m,
         drawText(target, fontRegular, "Rs " + std::to_string(p.price), 9.5f, sf::Color(35, 30, 25), rx + 315.f, itemY, TextAlignment::Right);
         drawText(target, fontMedium, "Rs " + std::to_string(p.price * line.quantity), 9.5f, sf::Color(35, 30, 25), rx + rw - 22.f, itemY, TextAlignment::Right);
 
-        itemY += 17.f;
+        itemY += 16.f;
         shown++;
     }
     if ((int)cart.size() > maxShow) {
         drawText(target, fontRegular, "... and " + std::to_string(cart.size() - maxShow) + " more item(s)", 8.5f, sf::Color(120, 115, 110), rx + 22.f, itemY);
-        itemY += 15.f;
+        itemY += 14.f;
     }
 
     // Dashed divider line
     for (float cx = rx + 20.f; cx < rx + rw - 20.f; cx += 8.f) {
         sf::RectangleShape dash({5.f, 1.f});
-        dash.setPosition(cx, itemY + 4.f);
+        dash.setPosition(cx, itemY + 3.f);
         dash.setFillColor(sf::Color(195, 190, 185));
         target.draw(dash);
     }
-    itemY += 14.f;
+    itemY += 12.f;
 
-    // 10. Financial Summary
-    drawText(target, fontRegular, "Subtotal", 9.5f, sf::Color(80, 75, 70), rx + 22.f, itemY);
-    drawText(target, fontMedium, formatRs(cartService.getSubtotal(products)), 9.5f, sf::Color(35, 30, 25), rx + rw - 22.f, itemY, TextAlignment::Right);
-    itemY += 16.f;
+    // 10. Financial Summary (Complete Tax, Discounts, Seasonal & Special Breakdown)
+    drawText(target, fontRegular, "Subtotal (Excl. Tax)", 9.f, sf::Color(80, 75, 70), rx + 22.f, itemY);
+    drawText(target, fontMedium, formatRs(summary.subtotalWithoutTax), 9.f, sf::Color(35, 30, 25), rx + rw - 22.f, itemY, TextAlignment::Right);
+    itemY += 14.5f;
 
-    if (cartService.getDiscount() > 0) {
-        drawText(target, fontRegular, "Store Promo Discount (Applied)", 9.5f, sf::Color(170, 70, 50), rx + 22.f, itemY);
-        drawText(target, fontMedium, "- " + formatRs(cartService.getDiscount()), 9.5f, sf::Color(170, 70, 50), rx + rw - 22.f, itemY, TextAlignment::Right);
-        itemY += 16.f;
+    if (summary.totalTax > 0) {
+        drawText(target, fontRegular, "Applicable Tax", 9.f, sf::Color(80, 75, 70), rx + 22.f, itemY);
+        drawText(target, fontMedium, "+ " + formatRs(summary.totalTax), 9.f, sf::Color(35, 30, 25), rx + rw - 22.f, itemY, TextAlignment::Right);
+        itemY += 14.5f;
+    }
+    if (summary.totalApplicableDiscount > 0) {
+        drawText(target, fontRegular, "Product & Promo Discount", 9.f, sf::Color(170, 70, 50), rx + 22.f, itemY);
+        drawText(target, fontMedium, "- " + formatRs(summary.totalApplicableDiscount), 9.f, sf::Color(170, 70, 50), rx + rw - 22.f, itemY, TextAlignment::Right);
+        itemY += 14.5f;
+    }
+    if (summary.seasonalDiscount > 0) {
+        drawText(target, fontRegular, "Seasonal Discount (" + std::to_string(summary.seasonalPercent) + "%)", 9.f, sf::Color(170, 70, 50), rx + 22.f, itemY);
+        drawText(target, fontMedium, "- " + formatRs(summary.seasonalDiscount), 9.f, sf::Color(170, 70, 50), rx + rw - 22.f, itemY, TextAlignment::Right);
+        itemY += 14.5f;
+    }
+    if (summary.specialDiscount > 0) {
+        drawText(target, fontRegular, "Special Discount (" + std::to_string(summary.specialPercent) + "%)", 9.f, sf::Color(170, 70, 50), rx + 22.f, itemY);
+        drawText(target, fontMedium, "- " + formatRs(summary.specialDiscount), 9.f, sf::Color(170, 70, 50), rx + rw - 22.f, itemY, TextAlignment::Right);
+        itemY += 14.5f;
     }
 
     // Double Horizontal Divider
@@ -164,9 +180,9 @@ void PosModalsView::drawReceiptModal(sf::RenderTarget& target, sf::Vector2f m,
     itemY += 7.f;
 
     // Grand Total
-    drawText(target, fontBold, "TOTAL AMOUNT:", 13.f, sf::Color(25, 20, 15), rx + 22.f, itemY);
-    drawText(target, fontBold, formatRs(cartService.getTotal(products)), 14.5f, sf::Color(20, 18, 15), rx + rw - 22.f, itemY, TextAlignment::Right);
-    itemY += 21.f;
+    drawText(target, fontBold, "TOTAL PAYABLE:", 12.5f, sf::Color(25, 20, 15), rx + 22.f, itemY);
+    drawText(target, fontBold, formatRs(summary.totalPayable), 14.f, sf::Color(20, 18, 15), rx + rw - 22.f, itemY, TextAlignment::Right);
+    itemY += 20.f;
 
     sf::RectangleShape d3({rw - 44.f, 1.f});
     d3.setPosition(rx + 22.f, itemY);
@@ -178,20 +194,23 @@ void PosModalsView::drawReceiptModal(sf::RenderTarget& target, sf::Vector2f m,
     std::string payModeStr = (cartService.getPaymentMethod() == 0 ? "CASH" : "CARD (VISA/MASTERCARD)");
     drawText(target, fontRegular, "Payment Mode", 9.f, sf::Color(85, 80, 75), rx + 22.f, itemY);
     drawText(target, fontSemiBold, payModeStr, 9.f, sf::Color(35, 30, 25), rx + rw - 22.f, itemY, TextAlignment::Right);
-    itemY += 15.f;
+    itemY += 14.5f;
 
     if (cartService.getPaymentMethod() == 0) {
+        int tendered = cartService.parseCashGiven();
+        if (tendered < summary.totalPayable) tendered = summary.totalPayable;
+        int change = std::max(0, tendered - summary.totalPayable);
         drawText(target, fontRegular, "Cash Tendered", 9.f, sf::Color(85, 80, 75), rx + 22.f, itemY);
-        drawText(target, fontMedium, formatRs(cartService.parseCashGiven()), 9.f, sf::Color(35, 30, 25), rx + rw - 22.f, itemY, TextAlignment::Right);
-        itemY += 15.f;
+        drawText(target, fontMedium, formatRs(tendered), 9.f, sf::Color(35, 30, 25), rx + rw - 22.f, itemY, TextAlignment::Right);
+        itemY += 14.5f;
 
         drawText(target, fontRegular, "Change Returned", 9.f, sf::Color(85, 80, 75), rx + 22.f, itemY);
-        drawText(target, fontBold, formatRs(cartService.getChangeAmount(products)), 9.5f, sf::Color(35, 120, 50), rx + rw - 22.f, itemY, TextAlignment::Right);
-        itemY += 16.f;
+        drawText(target, fontBold, formatRs(change), 9.5f, sf::Color(35, 120, 50), rx + rw - 22.f, itemY, TextAlignment::Right);
+        itemY += 15.f;
     } else {
         drawText(target, fontRegular, "POS Auth Code", 9.f, sf::Color(85, 80, 75), rx + 22.f, itemY);
         drawText(target, fontMedium, "AUTH #984321 - APPROVED", 9.f, sf::Color(35, 120, 50), rx + rw - 22.f, itemY, TextAlignment::Right);
-        itemY += 16.f;
+        itemY += 15.f;
     }
 
     // Dashed divider line
@@ -234,124 +253,248 @@ void PosModalsView::drawReceiptModal(sf::RenderTarget& target, sf::Vector2f m,
     drawText(target, fontRegular, "Customer Care: info@scanit-pos.com", 7.5f, sf::Color(135, 130, 125), rx + rw / 2.f, itemY, TextAlignment::Center);
 
     // 14. Action Buttons Below the Floating White Paper Slip
-    float btnY = ry + rh + 12.f;
+    float btnY = ry + rh + 10.f;
 
     // Close Button
-    bool hovClose = pointInRect(m, rx, btnY, 210.f, 38.f);
-    drawShadow(target, rx, btnY, 210.f, 38.f, 8, 4, 8, 30, 2);
-    drawRounded(target, rx, btnY, 210.f, 38.f, 8,
+    bool hovClose = pointInRect(m, rx, btnY, 135.f, 38.f);
+    drawShadow(target, rx, btnY, 135.f, 38.f, 8, 4, 8, 30, 2);
+    drawRounded(target, rx, btnY, 135.f, 38.f, 8,
                 hovClose ? sf::Color(245, 238, 228) : sf::Color(255, 255, 255), ThemeColor::Edge, 1.2f);
-    drawText(target, fontSemiBold, "Close Slip", 11.5f, ThemeColor::Ink, rx + 105.f, btnY + 19.f, TextAlignment::Center);
+    drawText(target, fontSemiBold, "Close Slip", 10.5f, ThemeColor::Ink, rx + 67.f, btnY + 19.f, TextAlignment::Center);
+
+    // Print PDF Button (Requirement 7)
+    bool hovPdf = pointInRect(m, rx + 145.f, btnY, 145.f, 38.f);
+    drawShadow(target, rx + 145.f, btnY, 145.f, 38.f, 8, 4, 8, 30, 2);
+    drawRounded(target, rx + 145.f, btnY, 145.f, 38.f, 8,
+                hovPdf ? sf::Color(22, 101, 52) : sf::Color(34, 197, 94));
+    drawText(target, fontBold, "Print PDF", 11.f, ThemeColor::White, rx + 145.f + 72.f, btnY + 19.f, TextAlignment::Center);
 
     // Start New Sale Button
-    bool hovNew = pointInRect(m, rx + 230.f, btnY, 210.f, 38.f);
-    drawShadow(target, rx + 230.f, btnY, 210.f, 38.f, 8, 4, 8, 30, 2);
-    drawRounded(target, rx + 230.f, btnY, 210.f, 38.f, 8,
+    bool hovNew = pointInRect(m, rx + 300.f, btnY, 140.f, 38.f);
+    drawShadow(target, rx + 300.f, btnY, 140.f, 38.f, 8, 4, 8, 30, 2);
+    drawRounded(target, rx + 300.f, btnY, 140.f, 38.f, 8,
                 hovNew ? ThemeColor::BlueHover : ThemeColor::Blue);
-    drawText(target, fontSemiBold, "+  Start New Sale", 11.5f, ThemeColor::White, rx + 230.f + 105.f, btnY + 19.f, TextAlignment::Center);
+    drawText(target, fontSemiBold, "+ New Sale", 11.f, ThemeColor::White, rx + 300.f + 70.f, btnY + 19.f, TextAlignment::Center);
 }
 
 void PosModalsView::drawEnlargeCartModal(sf::RenderTarget& target, sf::Vector2f m,
                                         float currentWidth, float designHeight,
                                         const std::vector<CartLine>& cart,
                                         const std::vector<ProductItem>& products,
-                                        int subtotal, int total, float scrollOffset,
+                                        const BillSummary& summary, float scrollOffset,
+                                        const sf::Texture& cameraTexture,
+                                        const std::string& barcodeQuery,
+                                        bool scannerInputFocused,
+                                        const std::string& lastScannedInfo,
+                                        const std::string& activeCameraName,
                                         const sf::Font& fontRegular, const sf::Font& fontSemiBold,
                                         const sf::Font& fontBold, const sf::Font& fontSerif,
                                         std::function<const sf::Texture&(const std::string&)> getTexture) {
     sf::RectangleShape dim({currentWidth, designHeight});
-    dim.setFillColor(sf::Color(0, 0, 0, 140));
+    dim.setFillColor(sf::Color(0, 0, 0, 145));
     target.draw(dim);
 
-    float dw = 840.f, dh = 580.f;
+    float dw = 1040.f, dh = 590.f;
     float dx = (currentWidth - dw) / 2.f, dy = (designHeight - dh) / 2.f;
 
     drawShadow(target, dx, dy, dw, dh, 18, 10, 18, 22, 6);
     drawRounded(target, dx, dy, dw, dh, 16, ThemeColor::Paper, ThemeColor::Line, 1.2f);
 
-    drawText(target, fontSerif, "Full Cart Inspection", 24, ThemeColor::Ink, dx + 30, dy + 42);
-    drawText(target, fontRegular, "Cashier Operator - Total " + std::to_string(cart.size()) + " unique items in current order",
-             11, ThemeColor::Mute, dx + 30, dy + 68);
+    // ─────────────────────────────────────────────────────────────────────
+    // LEFT SIDE: Live Camera Barcode Scanner Console
+    // ─────────────────────────────────────────────────────────────────────
+    float scanX = dx + 20.f, scanY = dy + 20.f, scanW = 286.f, scanH = dh - 40.f;
+    drawRounded(target, scanX, scanY, scanW, scanH, 12, sf::Color(18, 18, 22), sf::Color(45, 45, 55), 1.2f);
+
+    // Header badge + Switch (C)
+    drawRounded(target, scanX + 12.f, scanY + 11.f, scanW - 102.f, 22.f, 5, sf::Color(15, 45, 25), sf::Color(34, 197, 94), 1.f);
+    sf::CircleShape liveDot(3.5f, 14);
+    liveDot.setOrigin(3.5f, 3.5f);
+    liveDot.setPosition(scanX + 23.f, scanY + 22.f);
+    liveDot.setFillColor(sf::Color(34, 197, 94));
+    target.draw(liveDot);
+    std::string camLabel = activeCameraName.empty() ? "LIVE CAMERA" : activeCameraName;
+    if (camLabel.length() > 16) camLabel = camLabel.substr(0, 14) + "..";
+    drawText(target, fontSemiBold, camLabel, 8.f, sf::Color(220, 252, 231), scanX + 32.f, scanY + 22.f);
+
+    bool hovSwitch = pointInRect(m, scanX + scanW - 86.f, scanY + 11.f, 74.f, 22.f);
+    drawRounded(target, scanX + scanW - 86.f, scanY + 11.f, 74.f, 22.f, 5,
+                hovSwitch ? sf::Color(55, 65, 80) : sf::Color(36, 40, 50), sf::Color(90, 95, 110), 1.f);
+    drawText(target, fontSemiBold, "Switch (C)", 8.f, ThemeColor::White, scanX + scanW - 49.f, scanY + 22.f, TextAlignment::Center);
+
+    // Live camera feed viewport
+    float paneX = scanX + 12.f, paneY = scanY + 44.f, paneW = scanW - 24.f, paneH = 200.f;
+    drawRounded(target, paneX, paneY, paneW, paneH, 8, sf::Color(10, 10, 14));
+    if (cameraTexture.getSize().x > 0) {
+        sf::Sprite camSprite(cameraTexture);
+        float srcW = (float)cameraTexture.getSize().x;
+        float srcH = (float)cameraTexture.getSize().y;
+        float targetAspect = paneW / paneH;
+        float cropH = srcW / targetAspect;
+        if (cropH <= srcH) {
+            float cropY = (srcH - cropH) / 2.f;
+            camSprite.setTextureRect(sf::IntRect(0, (int)cropY, (int)srcW, (int)cropH));
+        } else {
+            float cropW = srcH * targetAspect;
+            float cropX = (srcW - cropW) / 2.f;
+            camSprite.setTextureRect(sf::IntRect((int)cropX, 0, (int)cropW, (int)srcH));
+        }
+        camSprite.setPosition(paneX, paneY);
+        camSprite.setScale(paneW / camSprite.getTextureRect().width, paneH / camSprite.getTextureRect().height);
+        target.draw(camSprite);
+    } else {
+        drawSprite(target, getTexture("icons/scan.png"), paneX + paneW / 2.f - 22.f, paneY + paneH / 2.f - 26.f, 44.f, 44.f, sf::Color(180, 180, 195, 180));
+        drawText(target, fontSemiBold, "Barcode Camera Active", 10.f, sf::Color(220, 220, 230), paneX + paneW / 2.f, paneY + paneH / 2.f + 24.f, TextAlignment::Center);
+    }
+
+    // 4 Corner Reticles & Laser Sweep
+    float retSize = 15.f, retThick = 2.5f, retPad = 8.f;
+    sf::Color retCol(34, 197, 94, 230);
+    sf::RectangleShape eTL1({retSize, retThick}); eTL1.setPosition(paneX + retPad, paneY + retPad); eTL1.setFillColor(retCol); target.draw(eTL1);
+    sf::RectangleShape eTL2({retThick, retSize}); eTL2.setPosition(paneX + retPad, paneY + retPad); eTL2.setFillColor(retCol); target.draw(eTL2);
+    sf::RectangleShape eTR1({retSize, retThick}); eTR1.setPosition(paneX + paneW - retPad - retSize, paneY + retPad); eTR1.setFillColor(retCol); target.draw(eTR1);
+    sf::RectangleShape eTR2({retThick, retSize}); eTR2.setPosition(paneX + paneW - retPad - retThick, paneY + retPad); eTR2.setFillColor(retCol); target.draw(eTR2);
+    sf::RectangleShape eBL1({retSize, retThick}); eBL1.setPosition(paneX + retPad, paneY + paneH - retPad - retThick); eBL1.setFillColor(retCol); target.draw(eBL1);
+    sf::RectangleShape eBL2({retThick, retSize}); eBL2.setPosition(paneX + retPad, paneY + paneH - retPad - retSize); eBL2.setFillColor(retCol); target.draw(eBL2);
+    sf::RectangleShape eBR1({retSize, retThick}); eBR1.setPosition(paneX + paneW - retPad - retSize, paneY + paneH - retPad - retThick); eBR1.setFillColor(retCol); target.draw(eBR1);
+    sf::RectangleShape eBR2({retThick, retSize}); eBR2.setPosition(paneX + paneW - retPad - retThick, paneY + paneH - retPad - retSize); eBR2.setFillColor(retCol); target.draw(eBR2);
+
+    float sweep = 0.5f + 0.5f * std::sin((float)clock() / CLOCKS_PER_SEC * 3.5f);
+    sf::RectangleShape laser({paneW, 2.5f});
+    laser.setPosition(paneX, paneY + 8.f + sweep * (paneH - 16.f));
+    laser.setFillColor(sf::Color(240, 50, 40, 225));
+    target.draw(laser);
+
+    // Barcode Quick Entry Box inside camera console
+    float bcBoxY = paneY + paneH + 14.f;
+    drawRounded(target, scanX + 12.f, bcBoxY, paneW, 34.f, 6, sf::Color(28, 30, 38),
+                scannerInputFocused ? sf::Color(34, 197, 94) : sf::Color(65, 68, 82), scannerInputFocused ? 1.5f : 1.f);
+    std::string bcDisp = barcodeQuery.empty() ? (scannerInputFocused ? "|" : "Scan barcode or type SKU...") : (barcodeQuery + (scannerInputFocused ? "|" : ""));
+    drawText(target, fontSemiBold, bcDisp, 9.5f, barcodeQuery.empty() ? sf::Color(150, 155, 165) : sf::Color(235, 245, 240), scanX + 22.f, bcBoxY + 17.f);
+
+    // Last scanned status card
+    float stY = bcBoxY + 46.f;
+    drawRounded(target, scanX + 12.f, stY, paneW, 114.f, 6, sf::Color(26, 26, 34), sf::Color(52, 54, 66), 1.f);
+    drawText(target, fontSemiBold, "LIVE ADD TO CART", 8.5f, sf::Color(52, 211, 153), scanX + 22.f, stY + 16.f);
+    std::string infoLine = lastScannedInfo.empty() ? "Aim product barcode at camera." : lastScannedInfo;
+    if (infoLine.length() > 36) infoLine = infoLine.substr(0, 34) + "..";
+    drawText(target, fontRegular, infoLine, 9.f, sf::Color(225, 225, 232), scanX + 22.f, stY + 40.f);
+    drawText(target, fontRegular, "Scanned products append automatically.", 8.f, sf::Color(145, 150, 162), scanX + 22.f, stY + 64.f);
+    drawText(target, fontRegular, "Or type barcode above & press Enter.", 8.f, sf::Color(145, 150, 162), scanX + 22.f, stY + 84.f);
+
+    // Scanner console action buttons
+    bool hovCamBtn = pointInRect(m, scanX + 12.f, scanY + scanH - 86.f, paneW, 34.f);
+    drawRounded(target, scanX + 12.f, scanY + scanH - 86.f, paneW, 34.f, 6,
+                hovCamBtn ? sf::Color(48, 54, 70) : sf::Color(35, 40, 52), sf::Color(80, 90, 110), 1.f);
+    drawText(target, fontSemiBold, "Switch Camera Source (C)", 9.5f, ThemeColor::White, scanX + scanW / 2.f, scanY + scanH - 69.f, TextAlignment::Center);
+
+    bool hovQcBtn = pointInRect(m, scanX + 12.f, scanY + scanH - 44.f, paneW, 34.f);
+    drawRounded(target, scanX + 12.f, scanY + scanH - 44.f, paneW, 34.f, 6,
+                hovQcBtn ? ThemeColor::BlueHover : ThemeColor::Blue);
+    drawText(target, fontSemiBold, "Add by Typed Barcode / Quick Check", 9.f, ThemeColor::White, scanX + scanW / 2.f, scanY + scanH - 27.f, TextAlignment::Center);
+
+    // ─────────────────────────────────────────────────────────────────────
+    // RIGHT SIDE: Full Cart Inspection Table & Summary
+    // ─────────────────────────────────────────────────────────────────────
+    float cartX = scanX + scanW + 22.f;
+    float cartW = dw - (scanW + 64.f);
+
+    drawText(target, fontSerif, "Full Cart Inspection", 23, ThemeColor::Ink, cartX, dy + 36);
+    drawText(target, fontRegular, "Cashier Checkout - " + std::to_string(cart.size()) + " unique item(s) | Live Camera Scanner Active on Left",
+             10.5f, ThemeColor::Mute, cartX, dy + 60);
 
     bool hovClose = pointInRect(m, dx + dw - 44, dy + 20, 28, 28);
     drawRounded(target, dx + dw - 44, dy + 20, 28, 28, 6,
                 hovClose ? sf::Color(230, 220, 206) : ThemeColor::None);
     drawText(target, fontBold, "X", 13, ThemeColor::Ink, dx + dw - 30, dy + 34, TextAlignment::Center);
 
-    float tableY = dy + 88.f;
-    drawRounded(target, dx + 25, tableY, dw - 50, 32, 6, sf::Color(238, 230, 214));
-    drawText(target, fontSemiBold, "PRODUCT ITEM", 10.5f, ThemeColor::Mute, dx + 45, tableY + 16);
-    drawText(target, fontSemiBold, "CATEGORY", 10.5f, ThemeColor::Mute, dx + 280, tableY + 16);
-    drawText(target, fontSemiBold, "UNIT PRICE", 10.5f, ThemeColor::Mute, dx + 400, tableY + 16);
-    drawText(target, fontSemiBold, "QUANTITY", 10.5f, ThemeColor::Mute, dx + 520, tableY + 16);
-    drawText(target, fontSemiBold, "LINE TOTAL", 10.5f, ThemeColor::Mute, dx + 650, tableY + 16);
-    drawText(target, fontSemiBold, "ACTION", 10.5f, ThemeColor::Mute, dx + dw - 65, tableY + 16, TextAlignment::Center);
+    float tableY = dy + 82.f;
+    drawRounded(target, cartX, tableY, cartW, 32, 6, sf::Color(238, 230, 214));
+    drawText(target, fontSemiBold, "PRODUCT ITEM", 10.f, ThemeColor::Mute, cartX + 16, tableY + 16);
+    drawText(target, fontSemiBold, "CATEGORY", 10.f, ThemeColor::Mute, cartX + 218, tableY + 16);
+    drawText(target, fontSemiBold, "UNIT PRICE", 10.f, ThemeColor::Mute, cartX + 312, tableY + 16);
+    drawText(target, fontSemiBold, "QUANTITY", 10.f, ThemeColor::Mute, cartX + 412, tableY + 16);
+    drawText(target, fontSemiBold, "LINE TOTAL", 10.f, ThemeColor::Mute, cartX + 528, tableY + 16);
+    drawText(target, fontSemiBold, "ACTION", 10.f, ThemeColor::Mute, cartX + cartW - 38, tableY + 16, TextAlignment::Center);
 
-    float rowStartY = tableY + 36.f;
+    float rowStartY = tableY + 38.f;
+    if (cart.empty()) {
+        drawRounded(target, cartX, rowStartY + 10.f, cartW, 56.f, 8, sf::Color(246, 241, 233), ThemeColor::Line, 1.f);
+        drawText(target, fontSemiBold, "Cart is currently empty - aim a product barcode at the camera on the left to start billing.",
+                 10.5f, ThemeColor::Mute, cartX + 18.f, rowStartY + 38.f);
+    }
+
     for (int i = 0; i < (int)cart.size(); i++) {
         const auto& item = cart[i];
         if (item.productId < 0 || item.productId >= (int)products.size()) continue;
         const auto& p = products[item.productId];
-        float rowY = rowStartY + i * 56.f - scrollOffset;
+        float rowY = rowStartY + i * 54.f - scrollOffset;
 
-        if (rowY < rowStartY - 10.f || rowY > rowStartY + 330.f) continue;
+        if (rowY < rowStartY - 8.f || rowY > rowStartY + 324.f) continue;
 
-        drawRounded(target, dx + 36, rowY + 6, 40, 40, 6, p.cardTint);
-        drawSprite(target, getTexture("products/" + p.iconKey + ".png"), dx + 42, rowY + 12, 28, 28);
+        drawRounded(target, cartX + 8, rowY + 6, 38, 38, 6, p.cardTint);
+        drawSprite(target, getTexture("products/" + p.iconKey + ".png"), cartX + 13, rowY + 11, 28, 28);
 
-        drawText(target, fontSemiBold, p.name, 12.5f, ThemeColor::Ink, dx + 86, rowY + 18);
-        drawText(target, fontRegular, p.barcode, 9.5f, ThemeColor::Mute, dx + 86, rowY + 34);
+        std::string pname = p.name;
+        if (pname.length() > 19) pname = pname.substr(0, 17) + "..";
+        drawText(target, fontSemiBold, pname, 11.5f, ThemeColor::Ink, cartX + 54, rowY + 17);
+        drawText(target, fontRegular, p.barcode, 9.f, ThemeColor::Mute, cartX + 54, rowY + 33);
 
-        drawText(target, fontRegular, p.category, 11, ThemeColor::Ink, dx + 280, rowY + 26);
-        drawText(target, fontRegular, formatRs(p.price) + " / " + p.unit, 11, ThemeColor::Ink, dx + 400, rowY + 26);
+        std::string pcat = p.category;
+        if (pcat.length() > 13) pcat = pcat.substr(0, 11) + "..";
+        drawText(target, fontRegular, pcat, 10.f, ThemeColor::Ink, cartX + 218, rowY + 25);
+        drawText(target, fontRegular, formatRs(p.price) + "/" + p.unit, 10.f, ThemeColor::Ink, cartX + 312, rowY + 25);
 
-        bool hovMinus = pointInRect(m, dx + 510, rowY + 14, 24, 24);
-        drawRounded(target, dx + 510, rowY + 14, 24, 24, 4,
+        bool hovMinus = pointInRect(m, cartX + 410, rowY + 14, 24, 24);
+        drawRounded(target, cartX + 410, rowY + 14, 24, 24, 4,
                     hovMinus ? sf::Color(230, 220, 206) : ThemeColor::Paper, ThemeColor::Edge, 1);
-        drawText(target, fontBold, "-", 12, ThemeColor::Ink, dx + 522, rowY + 26, TextAlignment::Center);
+        drawText(target, fontBold, "-", 12, ThemeColor::Ink, cartX + 422, rowY + 26, TextAlignment::Center);
 
-        drawRounded(target, dx + 538, rowY + 14, 38, 24, 4, ThemeColor::Paper, ThemeColor::Edge, 1);
-        drawText(target, fontBold, std::to_string(item.quantity), 11.5f, ThemeColor::Ink, dx + 557, rowY + 26, TextAlignment::Center);
+        drawRounded(target, cartX + 438, rowY + 14, 36, 24, 4, ThemeColor::Paper, ThemeColor::Edge, 1);
+        drawText(target, fontBold, std::to_string(item.quantity), 11.f, ThemeColor::Ink, cartX + 456, rowY + 26, TextAlignment::Center);
 
-        bool hovPlus = pointInRect(m, dx + 580, rowY + 14, 24, 24);
-        drawRounded(target, dx + 580, rowY + 14, 24, 24, 4,
+        bool hovPlus = pointInRect(m, cartX + 478, rowY + 14, 24, 24);
+        drawRounded(target, cartX + 478, rowY + 14, 24, 24, 4,
                     hovPlus ? sf::Color(230, 220, 206) : ThemeColor::Paper, ThemeColor::Edge, 1);
-        drawText(target, fontBold, "+", 12, ThemeColor::Ink, dx + 592, rowY + 26, TextAlignment::Center);
+        drawText(target, fontBold, "+", 12, ThemeColor::Ink, cartX + 490, rowY + 26, TextAlignment::Center);
 
-        drawText(target, fontBold, formatRs(p.price * item.quantity), 12.5f, ThemeColor::Ink, dx + 650, rowY + 26);
+        drawText(target, fontBold, formatRs(p.price * item.quantity), 11.5f, ThemeColor::Ink, cartX + 528, rowY + 25);
 
-        bool hovDel = pointInRect(m, dx + dw - 95, rowY + 14, 60, 24);
-        drawRounded(target, dx + dw - 95, rowY + 14, 60, 24, 4,
+        bool hovDel = pointInRect(m, cartX + cartW - 68, rowY + 14, 58, 24);
+        drawRounded(target, cartX + cartW - 68, rowY + 14, 58, 24, 4,
                     hovDel ? sf::Color(254, 226, 226) : sf::Color(246, 240, 234),
                     hovDel ? ThemeColor::Red : ThemeColor::Edge, 1);
         drawText(target, fontSemiBold, "Delete", 9.5f,
-                 hovDel ? ThemeColor::Red : ThemeColor::Mute, dx + dw - 65, rowY + 26, TextAlignment::Center);
+                 hovDel ? ThemeColor::Red : ThemeColor::Mute, cartX + cartW - 39, rowY + 26, TextAlignment::Center);
 
-        sf::RectangleShape sep({dw - 60.f, 1});
-        sep.setPosition(dx + 30, rowY + 54);
+        sf::RectangleShape sep({cartW - 16.f, 1});
+        sep.setPosition(cartX + 8, rowY + 52);
         sep.setFillColor(ThemeColor::Line);
         target.draw(sep);
     }
 
-    float botY = dy + dh - 60.f;
-    drawText(target, fontSemiBold, "Subtotal: " + formatRs(subtotal), 12, ThemeColor::Ink, dx + 30, botY - 14);
-    drawText(target, fontBold, "Grand Total: " + formatRs(total), 15, ThemeColor::Ink, dx + 30, botY + 10);
+    float botY = dy + dh - 64.f;
+    int allDisc = summary.totalApplicableDiscount + summary.seasonalDiscount + summary.specialDiscount;
+    drawText(target, fontSemiBold, "Subtotal: " + formatRs(summary.subtotalWithoutTax) + "  |  Tax: +" + formatRs(summary.totalTax) + "  |  Disc: -" + formatRs(allDisc),
+             10.f, ThemeColor::Mute, cartX, botY - 10);
+    drawText(target, fontBold, "Total Payable: " + formatRs(summary.totalPayable), 15.f, ThemeColor::Ink, cartX, botY + 14);
 
-    bool hovBack = pointInRect(m, dx + dw - 440, botY - 8, 180, 40);
-    drawRounded(target, dx + dw - 440, botY - 8, 180, 40, 7,
+    bool hovBack = pointInRect(m, dx + dw - 406, botY - 8, 160, 40);
+    drawRounded(target, dx + dw - 406, botY - 8, 160, 40, 7,
                 hovBack ? sf::Color(230, 220, 206) : sf::Color(238, 230, 216), ThemeColor::Edge, 1);
-    drawText(target, fontSemiBold, "Back to Register", 11.5f, ThemeColor::Ink, dx + dw - 350, botY + 12, TextAlignment::Center);
+    drawText(target, fontSemiBold, "Back to Register", 11.f, ThemeColor::Ink, dx + dw - 326, botY + 12, TextAlignment::Center);
 
-    bool hovPay = pointInRect(m, dx + dw - 240, botY - 8, 210, 40);
-    drawRounded(target, dx + dw - 240, botY - 8, 210, 40, 7,
+    bool hovPay = pointInRect(m, dx + dw - 234, botY - 8, 212, 40);
+    drawRounded(target, dx + dw - 234, botY - 8, 212, 40, 7,
                 hovPay ? ThemeColor::BlueHover : ThemeColor::Blue);
-    drawText(target, fontSemiBold, "Proceed to Pay (" + formatRs(total) + ")", 12.f, ThemeColor::White, dx + dw - 135, botY + 12, TextAlignment::Center);
+    drawText(target, fontSemiBold, "Proceed to Pay (" + formatRs(summary.totalPayable) + ")", 11.5f, ThemeColor::White, dx + dw - 128, botY + 12, TextAlignment::Center);
 }
 
 void PosModalsView::drawCashModal(sf::RenderTarget& target, sf::Vector2f m,
                                  float currentWidth, float designHeight,
-                                 int total, int cashGiven, const std::string& cashGivenStr,
+                                 const BillSummary& summary, int cashGiven, const std::string& cashGivenStr,
                                  bool inputFocused,
+                                 const std::string& specialDiscountStr, bool specialDiscountFocused,
                                  const sf::Font& fontRegular, const sf::Font& fontSemiBold,
                                  const sf::Font& fontBold, const sf::Font& fontSerif,
                                  std::function<const sf::Texture&(const std::string&)> getTexture) {
@@ -359,68 +502,86 @@ void PosModalsView::drawCashModal(sf::RenderTarget& target, sf::Vector2f m,
     dim.setFillColor(sf::Color(0, 0, 0, 140));
     target.draw(dim);
 
-    float dw = 480.f, dh = 400.f;
+    float dw = 500.f, dh = 468.f;
     float dx = (currentWidth - dw) / 2.f, dy = (designHeight - dh) / 2.f;
 
     drawShadow(target, dx, dy, dw, dh, 18, 10, 18, 22, 6);
     drawRounded(target, dx, dy, dw, dh, 16, ThemeColor::Paper, ThemeColor::Line, 1.2f);
 
-    drawSprite(target, getTexture("icons/cash.png"), dx + 30, dy + 28, 26, 26, ThemeColor::Ink);
-    drawText(target, fontSerif, "Cash Payment & Change", 22, ThemeColor::Ink, dx + 65, dy + 38);
-    drawText(target, fontRegular, "Enter amount received from customer", 10.5f, ThemeColor::Mute, dx + 65, dy + 62);
+    drawSprite(target, getTexture("icons/cash.png"), dx + 30, dy + 22, 26, 26, ThemeColor::Ink);
+    drawText(target, fontSerif, "Cash Payment & Checkout", 20, ThemeColor::Ink, dx + 65, dy + 30);
+    drawText(target, fontRegular, "Enter cash received and optional special discount (max 8%)", 9.5f, ThemeColor::Mute, dx + 65, dy + 51);
 
-    drawRounded(target, dx + 30, dy + 82, dw - 60, 48, 8, sf::Color(238, 230, 214));
-    drawText(target, fontSemiBold, "Total Amount Due:", 12, ThemeColor::Ink, dx + 45, dy + 106);
-    drawText(target, fontBold, formatRs(total), 16, ThemeColor::Ink, dx + dw - 45, dy + 106, TextAlignment::Right);
+    bool hovX = pointInRect(m, dx + dw - 42, dy + 18, 26, 26);
+    drawRounded(target, dx + dw - 42, dy + 18, 26, 26, 5, hovX ? sf::Color(230, 220, 206) : ThemeColor::None);
+    drawText(target, fontBold, "X", 12, ThemeColor::Ink, dx + dw - 29, dy + 31, TextAlignment::Center);
 
-    drawText(target, fontSemiBold, "Cash Tendered:", 11, ThemeColor::Ink, dx + 30, dy + 160);
-    drawRounded(target, dx + 150, dy + 144, 180, 34, 6,
+    int total = summary.totalPayable;
+    drawRounded(target, dx + 30, dy + 68, dw - 60, 62, 8, sf::Color(238, 230, 214));
+    drawText(target, fontSemiBold, "Total Amount Due:", 11.5f, ThemeColor::Ink, dx + 45, dy + 88);
+    drawText(target, fontBold, formatRs(total), 16, ThemeColor::Ink, dx + dw - 45, dy + 88, TextAlignment::Right);
+    int allDisc = summary.totalApplicableDiscount + summary.seasonalDiscount + summary.specialDiscount;
+    drawText(target, fontRegular,
+             "Base: " + formatRs(summary.subtotalWithoutTax) + " | Tax: +" + formatRs(summary.totalTax) +
+             " | Season(" + std::to_string(summary.seasonalPercent) + "%)/Disc: -" + formatRs(allDisc),
+             8.5f, ThemeColor::Mute, dx + 45, dy + 114);
+
+    // Special Discount (<= 8% Requirement 8)
+    drawText(target, fontSemiBold, "Special Discount (max 8%):", 10.5f, ThemeColor::Ink, dx + 30, dy + 154);
+    drawRounded(target, dx + 225, dy + 140, 115, 28, 4,
+                specialDiscountFocused ? sf::Color(255, 255, 255) : sf::Color(246, 241, 233),
+                specialDiscountFocused ? ThemeColor::Blue : ThemeColor::Edge, 1.2f);
+    std::string dispDisc = specialDiscountStr.empty() ? "0" : specialDiscountStr;
+    drawText(target, fontBold, dispDisc + " %" + (specialDiscountFocused ? "|" : ""), 11, sf::Color(220, 70, 60), dx + 282, dy + 154, TextAlignment::Center);
+    drawText(target, fontRegular, "(Cap 8%)", 8.5f, ThemeColor::Mute, dx + 350, dy + 154);
+
+    drawText(target, fontSemiBold, "Cash Tendered:", 11, ThemeColor::Ink, dx + 30, dy + 196);
+    drawRounded(target, dx + 160, dy + 180, 180, 32, 6,
                 inputFocused ? sf::Color(255, 255, 255) : sf::Color(246, 241, 233),
-                inputFocused ? ThemeColor::Ink : ThemeColor::Edge, 1.5f);
+                inputFocused ? ThemeColor::Blue : ThemeColor::Edge, 1.5f);
 
     std::string dispCash = cashGivenStr.empty() ? (cashGiven > 0 ? std::to_string(cashGiven) : "0") : cashGivenStr;
     bool showCaret = inputFocused && (std::fmod((float)clock() / CLOCKS_PER_SEC, 1.f) < 0.5f);
-    drawText(target, fontBold, "Rs " + dispCash + (showCaret ? "|" : ""), 13, ThemeColor::Ink, dx + 165, dy + 161);
+    drawText(target, fontBold, "Rs " + dispCash + (showCaret ? "|" : ""), 12.5f, ThemeColor::Ink, dx + 174, dy + 196);
 
-    bool hovExact = pointInRect(m, dx + 340, dy + 144, 56, 34);
-    drawRounded(target, dx + 340, dy + 144, 56, 34, 6,
+    bool hovExact = pointInRect(m, dx + 348, dy + 180, 56, 32);
+    drawRounded(target, dx + 348, dy + 180, 56, 32, 6,
                 hovExact ? sf::Color(228, 219, 203) : sf::Color(238, 230, 216), ThemeColor::Edge, 1);
-    drawText(target, fontSemiBold, "Exact", 10.5f, ThemeColor::Ink, dx + 368, dy + 161, TextAlignment::Center);
+    drawText(target, fontSemiBold, "Exact", 10.f, ThemeColor::Ink, dx + 376, dy + 196, TextAlignment::Center);
 
-    bool hovClr = pointInRect(m, dx + 404, dy + 144, 48, 34);
-    drawRounded(target, dx + 404, dy + 144, 48, 34, 6,
+    bool hovClr = pointInRect(m, dx + 412, dy + 180, 58, 32);
+    drawRounded(target, dx + 412, dy + 180, 58, 32, 6,
                 hovClr ? sf::Color(228, 219, 203) : sf::Color(238, 230, 216), ThemeColor::Edge, 1);
-    drawText(target, fontSemiBold, "Clr", 10.5f, ThemeColor::Ink, dx + 428, dy + 161, TextAlignment::Center);
+    drawText(target, fontSemiBold, "Clr", 10.f, ThemeColor::Ink, dx + 441, dy + 196, TextAlignment::Center);
 
-    const int chipVals[] = {100, 500, 1000, 5000};
     const char* chipLbls[] = {"+100", "+500", "+1,000", "+5,000"};
     for (int i = 0; i < 4; i++) {
-        float cx = dx + 30 + i * 105;
-        float cy = dy + 195;
-        bool hov = pointInRect(m, cx, cy, 95, 32);
-        drawRounded(target, cx, cy, 95, 32, 5,
+        float cx = dx + 30 + i * 112.f;
+        float cy = dy + 226.f;
+        bool hov = pointInRect(m, cx, cy, 102, 28);
+        drawRounded(target, cx, cy, 102, 28, 5,
                     hov ? sf::Color(230, 220, 204) : sf::Color(242, 234, 220), ThemeColor::Edge, 1);
-        drawText(target, fontSemiBold, chipLbls[i], 10, ThemeColor::Ink, cx + 47.5f, cy + 16, TextAlignment::Center);
+        drawText(target, fontSemiBold, chipLbls[i], 9.5f, ThemeColor::Ink, cx + 51.f, cy + 14.f, TextAlignment::Center);
     }
 
     int change = cashGiven - total;
-    float resY = dy + 245.f;
+    float resY = dy + 272.f;
 
-    if (cashGiven >= total) {
+    if (cashGiven >= total && total > 0) {
         drawRounded(target, dx + 30, resY, dw - 60, 52, 8, sf::Color(220, 252, 231), sf::Color(110, 168, 110), 1.2f);
-        drawText(target, fontSemiBold, "Give Back Change:", 13, sf::Color(22, 101, 52), dx + 45, resY + 26);
-        drawText(target, fontBold, formatRs(change), 16, sf::Color(22, 101, 52), dx + dw - 45, resY + 26, TextAlignment::Right);
+        drawText(target, fontSemiBold, "Give Back Change:", 12, sf::Color(22, 101, 52), dx + 45, resY + 26);
+        drawText(target, fontBold, formatRs(change), 15, sf::Color(22, 101, 52), dx + dw - 45, resY + 26, TextAlignment::Right);
     } else {
         drawRounded(target, dx + 30, resY, dw - 60, 52, 8, sf::Color(254, 226, 226), ThemeColor::Red, 1.2f);
-        drawText(target, fontSemiBold, "Remaining Cash Due:", 13, ThemeColor::Red, dx + 45, resY + 26);
-        drawText(target, fontBold, "Need " + formatRs(total - cashGiven), 15, ThemeColor::Red, dx + dw - 45, resY + 26, TextAlignment::Right);
+        drawText(target, fontSemiBold, "Remaining Cash Due:", 12, ThemeColor::Red, dx + 45, resY + 26);
+        drawText(target, fontBold, "Need " + formatRs(std::max(0, total - cashGiven)), 14, ThemeColor::Red, dx + dw - 45, resY + 26, TextAlignment::Right);
     }
 
     bool canConfirm = (cashGiven >= total && total > 0);
-    bool hovConfirm = canConfirm && pointInRect(m, dx + 30, dy + dh - 56, 250, 42);
-    drawRounded(target, dx + 30, dy + dh - 56, 250, 42, 8,
+    bool hovConfirm = canConfirm && pointInRect(m, dx + 30, dy + dh - 56, 270, 42);
+    drawRounded(target, dx + 30, dy + dh - 56, 270, 42, 8,
                 !canConfirm ? ThemeColor::BlueDisabled : (hovConfirm ? sf::Color(35, 75, 50) : sf::Color(44, 95, 63)));
-    drawText(target, fontSemiBold, "Confirm Cash Payment", 12.f, ThemeColor::White, dx + 155, dy + dh - 35, TextAlignment::Center);
+    drawText(target, fontSemiBold, "Confirm Cash Payment", 12.f, ThemeColor::White, dx + 165, dy + dh - 35, TextAlignment::Center);
 
     bool hovCancel = pointInRect(m, dx + dw - 150, dy + dh - 56, 120, 42);
     drawRounded(target, dx + dw - 150, dy + dh - 56, 120, 42, 8,
@@ -429,7 +590,8 @@ void PosModalsView::drawCashModal(sf::RenderTarget& target, sf::Vector2f m,
 }
 
 void PosModalsView::drawCardModal(sf::RenderTarget& target, sf::Vector2f m,
-                                 float currentWidth, float designHeight, int total,
+                                 float currentWidth, float designHeight, const BillSummary& summary,
+                                 const std::string& specialDiscountStr, bool specialDiscountFocused,
                                  const sf::Font& fontRegular, const sf::Font& fontSemiBold,
                                  const sf::Font& fontBold, const sf::Font& fontSerif,
                                  std::function<const sf::Texture&(const std::string&)> getTexture) {
@@ -437,31 +599,50 @@ void PosModalsView::drawCardModal(sf::RenderTarget& target, sf::Vector2f m,
     dim.setFillColor(sf::Color(0, 0, 0, 140));
     target.draw(dim);
 
-    float dw = 460.f, dh = 360.f;
+    float dw = 480.f, dh = 415.f;
     float dx = (currentWidth - dw) / 2.f, dy = (designHeight - dh) / 2.f;
 
     drawShadow(target, dx, dy, dw, dh, 18, 10, 18, 22, 6);
     drawRounded(target, dx, dy, dw, dh, 16, ThemeColor::Paper, ThemeColor::Line, 1.2f);
 
-    drawSprite(target, getTexture("icons/card.png"), dx + 30, dy + 28, 28, 28, ThemeColor::Ink);
-    drawText(target, fontSerif, "Card POS Terminal Ready", 22, ThemeColor::Ink, dx + 68, dy + 38);
-    drawText(target, fontRegular, "Tap, Insert Chip, or Swipe Customer Card", 10.5f, ThemeColor::Mute, dx + 68, dy + 62);
+    drawSprite(target, getTexture("icons/card.png"), dx + 30, dy + 22, 28, 28, ThemeColor::Ink);
+    drawText(target, fontSerif, "Card POS Terminal Ready", 20, ThemeColor::Ink, dx + 68, dy + 30);
+    drawText(target, fontRegular, "Tap, Insert Chip, or Swipe Customer Card", 9.5f, ThemeColor::Mute, dx + 68, dy + 51);
 
-    drawRounded(target, dx + 30, dy + 90, dw - 60, 68, 8, sf::Color(238, 230, 214));
-    drawText(target, fontSemiBold, "Amount to Charge:", 12, ThemeColor::Ink, dx + 45, dy + 114);
-    drawText(target, fontBold, formatRs(total), 18, ThemeColor::Ink, dx + dw - 45, dy + 114, TextAlignment::Right);
-    drawText(target, fontRegular, "Terminal: POS-9842 | Contactless NFC / EMV Chip Enabled", 9.5f, ThemeColor::Mute, dx + 45, dy + 138);
+    bool hovX = pointInRect(m, dx + dw - 42, dy + 18, 26, 26);
+    drawRounded(target, dx + dw - 42, dy + 18, 26, 26, 5, hovX ? sf::Color(230, 220, 206) : ThemeColor::None);
+    drawText(target, fontBold, "X", 12, ThemeColor::Ink, dx + dw - 29, dy + 31, TextAlignment::Center);
 
-    drawRounded(target, dx + 30, dy + 172, dw - 60, 56, 8, sf::Color(246, 241, 233), ThemeColor::Edge, 1);
-    drawSprite(target, getTexture("icons/scan.png"), dx + 45, dy + 188, 24, 24, ThemeColor::Green);
-    drawText(target, fontSemiBold, "Waiting for customer card action...", 11.5f, ThemeColor::Ink, dx + 78, dy + 194);
-    drawText(target, fontRegular, "Customer may tap device or insert chip now", 9.5f, ThemeColor::Mute, dx + 78, dy + 210);
+    int total = summary.totalPayable;
+    drawRounded(target, dx + 30, dy + 72, dw - 60, 72, 8, sf::Color(238, 230, 214));
+    drawText(target, fontSemiBold, "Amount to Charge:", 12, ThemeColor::Ink, dx + 45, dy + 92);
+    drawText(target, fontBold, formatRs(total), 17, ThemeColor::Ink, dx + dw - 45, dy + 92, TextAlignment::Right);
+    int allDisc = summary.totalApplicableDiscount + summary.seasonalDiscount + summary.specialDiscount;
+    drawText(target, fontRegular,
+             "Base: " + formatRs(summary.subtotalWithoutTax) + " | Tax: +" + formatRs(summary.totalTax) +
+             " | Season(" + std::to_string(summary.seasonalPercent) + "%)/Disc: -" + formatRs(allDisc),
+             8.5f, ThemeColor::Mute, dx + 45, dy + 115);
+    drawText(target, fontRegular, "Terminal: POS-9842 | Contactless NFC / EMV Chip Enabled", 8.f, ThemeColor::Mute, dx + 45, dy + 131);
+
+    // Special Discount (<= 8%)
+    drawText(target, fontSemiBold, "Special Discount (max 8%):", 10.5f, ThemeColor::Ink, dx + 30, dy + 172);
+    drawRounded(target, dx + 220, dy + 158, 115, 28, 4,
+                specialDiscountFocused ? sf::Color(255, 255, 255) : sf::Color(246, 241, 233),
+                specialDiscountFocused ? ThemeColor::Blue : ThemeColor::Edge, 1.2f);
+    std::string dispDisc = specialDiscountStr.empty() ? "0" : specialDiscountStr;
+    drawText(target, fontBold, dispDisc + " %" + (specialDiscountFocused ? "|" : ""), 11, sf::Color(220, 70, 60), dx + 277, dy + 172, TextAlignment::Center);
+    drawText(target, fontRegular, "(Cap 8%)", 8.5f, ThemeColor::Mute, dx + 345, dy + 172);
+
+    drawRounded(target, dx + 30, dy + 202, dw - 60, 56, 8, sf::Color(246, 241, 233), ThemeColor::Edge, 1);
+    drawSprite(target, getTexture("icons/scan.png"), dx + 45, dy + 219, 22, 22, ThemeColor::Green);
+    drawText(target, fontSemiBold, "Waiting for customer card action...", 11.f, ThemeColor::Ink, dx + 78, dy + 221);
+    drawText(target, fontRegular, "Customer may tap device or insert chip now", 9.f, ThemeColor::Mute, dx + 78, dy + 239);
 
     bool canConfirm = (total > 0);
-    bool hovConfirm = canConfirm && pointInRect(m, dx + 30, dy + dh - 56, 250, 42);
-    drawRounded(target, dx + 30, dy + dh - 56, 250, 42, 8,
+    bool hovConfirm = canConfirm && pointInRect(m, dx + 30, dy + dh - 56, 260, 42);
+    drawRounded(target, dx + 30, dy + dh - 56, 260, 42, 8,
                 !canConfirm ? ThemeColor::BlueDisabled : (hovConfirm ? sf::Color(35, 75, 50) : sf::Color(44, 95, 63)));
-    drawText(target, fontSemiBold, "Complete Card Payment", 12.f, ThemeColor::White, dx + 155, dy + dh - 35, TextAlignment::Center);
+    drawText(target, fontSemiBold, "Complete Card Payment", 12.f, ThemeColor::White, dx + 160, dy + dh - 35, TextAlignment::Center);
 
     bool hovCancel = pointInRect(m, dx + dw - 150, dy + dh - 56, 120, 42);
     drawRounded(target, dx + dw - 150, dy + dh - 56, 120, 42, 8,
@@ -601,6 +782,7 @@ void PosModalsView::drawAddInventoryModal(sf::RenderTarget& target, sf::Vector2f
                                           const std::string& supplier,
                                           const std::string& desc,
                                           const std::string& category,
+                                          const std::vector<ProductCategory>& categories,
                                           const std::string& unit,
                                           const std::string& retailPriceStr,
                                           const std::string& costPriceStr,
@@ -612,6 +794,8 @@ void PosModalsView::drawAddInventoryModal(sf::RenderTarget& target, sf::Vector2f
                                           const std::vector<std::string>& previousVendors,
                                           bool vendorDropdownOpen,
                                           bool scanningUniversal,
+                                          bool alsoAddToCatalog,
+                                          const std::string& activeCameraName,
                                           const sf::Font& fontRegular, const sf::Font& fontMedium,
                                           const sf::Font& fontSemiBold, const sf::Font& fontBold,
                                           const sf::Font& fontSerif,
@@ -637,17 +821,23 @@ void PosModalsView::drawAddInventoryModal(sf::RenderTarget& target, sf::Vector2f
 
     drawRounded(target, scanX, scanY, scanW, scanH, 10, sf::Color(18, 18, 22), sf::Color(45, 45, 55), 1.2f);
 
-    // Live continuous status badge at top
+    // Live continuous status badge + camera switch
     sf::Color badgeBg = scanningUniversal ? sf::Color(15, 45, 25) : sf::Color(32, 32, 38);
     sf::Color badgeBorder = scanningUniversal ? sf::Color(34, 197, 94) : sf::Color(90, 90, 100);
-    drawRounded(target, scanX + 12.f, scanY + 12.f, scanW - 24.f, 24.f, 5, badgeBg, badgeBorder, 1.f);
+    drawRounded(target, scanX + 12.f, scanY + 12.f, scanW - 102.f, 24.f, 5, badgeBg, badgeBorder, 1.f);
     sf::CircleShape liveDot(3.5f, 16);
     liveDot.setOrigin(3.5f, 3.5f);
     liveDot.setPosition(scanX + 24.f, scanY + 24.f);
     liveDot.setFillColor(scanningUniversal ? sf::Color(34, 197, 94) : sf::Color(180, 180, 190));
     target.draw(liveDot);
-    std::string badgeTxt = scanningUniversal ? "LIVE SCANNER ACTIVE" : "SCANNER STANDBY";
-    drawText(target, fontSemiBold, badgeTxt, 8.5f, scanningUniversal ? sf::Color(220, 252, 231) : sf::Color(200, 200, 210), scanX + 34.f, scanY + 24.f);
+    std::string badgeTxt = scanningUniversal ? "SCANNING" : (activeCameraName.empty() ? "STANDBY" : activeCameraName);
+    if (badgeTxt.length() > 14) badgeTxt = badgeTxt.substr(0, 12) + "..";
+    drawText(target, fontSemiBold, badgeTxt, 8.f, scanningUniversal ? sf::Color(220, 252, 231) : sf::Color(200, 200, 210), scanX + 34.f, scanY + 24.f);
+
+    bool hovCamSw = pointInRect(mouse, scanX + scanW - 86.f, scanY + 12.f, 74.f, 24.f);
+    drawRounded(target, scanX + scanW - 86.f, scanY + 12.f, 74.f, 24.f, 5,
+                hovCamSw ? sf::Color(55, 65, 80) : sf::Color(36, 40, 50), sf::Color(90, 95, 110), 1.f);
+    drawText(target, fontSemiBold, "Switch (C)", 8.f, ThemeColor::White, scanX + scanW - 49.f, scanY + 24.f, TextAlignment::Center);
 
     // Camera Viewfinder Box
     float paneX = scanX + 12.f;
@@ -743,21 +933,24 @@ void PosModalsView::drawAddInventoryModal(sf::RenderTarget& target, sf::Vector2f
     float formX = scanX + scanW + 24.f;
     float formW = dw - (scanW + 48.f) - 24.f;
 
-    // Header
-    drawText(target, fontSerif, "Add Supplier & Inventory Item", 20, ThemeColor::Ink, formX, dy + 24);
-    drawText(target, fontRegular, "Log supplier procurement batch, purchase price, scan or auto-generate barcode", 9.5f, ThemeColor::Mute, formX, dy + 44);
+    // Header + Close X
+    drawText(target, fontSerif, "Add Product / Inventory Batch", 20, ThemeColor::Ink, formX, dy + 24);
+    drawText(target, fontRegular, "Configure category, log procurement batch, scan or generate category-prefixed barcode", 9.5f, ThemeColor::Mute, formX, dy + 44);
+
+    bool hovX = pointInRect(mouse, dx + dw - 42, dy + 18, 26, 26);
+    drawRounded(target, dx + dw - 42, dy + 18, 26, 26, 5, hovX ? sf::Color(230, 220, 206) : ThemeColor::None);
+    drawText(target, fontBold, "X", 12, ThemeColor::Ink, dx + dw - 29, dy + 31, TextAlignment::Center);
 
     auto drawFieldBox = [&](const std::string& label, const std::string& val, float x, float y, float w, int fieldIdx, const std::string& ph) {
         drawText(target, fontSemiBold, label, 9.5f, ThemeColor::Ink, x, y);
         bool focused = (activeField == fieldIdx);
         drawRounded(target, x, y + 16.f, w, 32.f, 6, ThemeColor::White, focused ? ThemeColor::Blue : ThemeColor::Line, focused ? 1.5f : 1.f);
-        std::string disp = val.empty() ? ph : val;
-        drawText(target, fontRegular, disp, 10.f, val.empty() ? ThemeColor::Mute : ThemeColor::Ink, x + 10.f, y + 32.f);
+        std::string disp = val.empty() ? (focused ? "|" : ph) : (val + (focused ? "|" : ""));
+        drawText(target, fontRegular, disp, 10.f, val.empty() && !focused ? ThemeColor::Mute : ThemeColor::Ink, x + 10.f, y + 32.f);
     };
 
     // Row 1: Supplier Name (Field 0) with Dropdown chevron & Arrival Date (Field 5)
     drawFieldBox("Supplier / Vendor Name:", supplier, formX, dy + 68, 320, 0, "Select or enter vendor");
-    // Dropdown chevron button
     bool hovDrop = pointInRect(mouse, formX + 320 - 28, dy + 68 + 16, 26, 32);
     drawRounded(target, formX + 320 - 28, dy + 68 + 16, 26, 32, 4, hovDrop ? sf::Color(230, 222, 210) : ThemeColor::None);
     drawText(target, fontBold, vendorDropdownOpen ? "^" : "v", 9.f, ThemeColor::Ink, formX + 320 - 15, dy + 68 + 32, TextAlignment::Center);
@@ -768,73 +961,87 @@ void PosModalsView::drawAddInventoryModal(sf::RenderTarget& target, sf::Vector2f
     drawFieldBox("Item Description / Name:", desc, formX, dy + 125, 360, 1, "e.g. Almond Milk 1L");
     drawFieldBox("Unit:", unit, formX + 378, dy + 125, formW - 378, 7, "e.g. 1 L, 1 kg, 1 pc");
 
-    // Row 3: Supermarket Category Pills (2 rows of 4)
-    drawText(target, fontSemiBold, "Department / Category:", 9.5f, ThemeColor::Ink, formX, dy + 180);
-    const char* cats[] = {"Grocery", "Dairy", "Drinks", "Bakery", "Snacks", "Fruits & Veg", "Household", "Personal Care"};
-    float pillW = (formW - 24.f) / 4.f;
-    for (int c = 0; c < 8; c++) {
-        float cx = formX + (c % 4) * (pillW + 8.f);
-        float cy = dy + 198 + (c / 4) * 26;
-        bool sel = (category == cats[c]);
+    // Row 3: Dynamic Category Pills from PCategory.txt (up to 10 shown in 2 rows of 5)
+    drawText(target, fontSemiBold, "Department / Category (PCategory.txt - 2-digit prefix):", 9.5f, ThemeColor::Ink, formX, dy + 180);
+    float pillW = (formW - 32.f) / 5.f;
+    size_t catCount = std::min<size_t>(10, categories.size());
+    for (size_t c = 0; c < catCount; c++) {
+        float cx = formX + (c % 5) * (pillW + 8.f);
+        float cy = dy + 198 + (c / 5) * 26;
+        std::string catLabel = categories[c].categoryId + ":" + categories[c].name;
+        if (catLabel.length() > 12) catLabel = catLabel.substr(0, 10) + "..";
+        bool sel = (category == categories[c].name);
         bool hov = pointInRect(mouse, cx, cy, pillW, 22);
         drawRounded(target, cx, cy, pillW, 22, 11, sel ? ThemeColor::Dark : (hov ? sf::Color(232, 224, 208) : sf::Color(242, 235, 222)), ThemeColor::Line, 1);
-        drawText(target, fontSemiBold, cats[c], 8.5f, sel ? ThemeColor::White : ThemeColor::Ink, cx + pillW / 2.f, cy + 11, TextAlignment::Center);
+        drawText(target, fontSemiBold, catLabel, 7.8f, sel ? ThemeColor::White : ThemeColor::Ink, cx + pillW / 2.f, cy + 11, TextAlignment::Center);
     }
 
-    // Row 4: Pricing & Quantity: Retail Price (Field 2), Cost Price (Field 3), Quantity (Field 4)
+    // Row 4: Pricing & Quantity
     float col3W = (formW - 20.f) / 3.f;
     drawFieldBox("Selling Price (PKR):", retailPriceStr, formX, dy + 256, col3W, 2, "Retail Price");
     drawFieldBox("Supplier Cost (PKR):", costPriceStr, formX + col3W + 10.f, dy + 256, col3W, 3, "Cost Price");
     drawFieldBox("Purchase Qty:", qtyStr, formX + (col3W + 10.f) * 2.f, dy + 256, col3W, 4, "Units bought");
 
     // Row 5: Barcode, Generate & Live Scanner Options
-    drawText(target, fontSemiBold, "Barcode (Universal / Code 39 Numeric):", 9.5f, ThemeColor::Ink, formX, dy + 316);
+    drawText(target, fontSemiBold, "Barcode (First 2 digits = Category ID):", 9.5f, ThemeColor::Ink, formX, dy + 314);
     bool bcFocused = (activeField == 6);
     float bcInputW = formW - 310.f;
-    drawRounded(target, formX, dy + 332, bcInputW, 34, 6, ThemeColor::White, bcFocused ? ThemeColor::Blue : ThemeColor::Line, bcFocused ? 1.5f : 1.f);
-    std::string bcDisp = barcodeStr.empty() ? (scanningUniversal ? "Aim at camera on left..." : "Enter or scan barcode") : barcodeStr;
-    drawText(target, fontBold, bcDisp, 11.f, barcodeStr.empty() ? ThemeColor::Mute : ThemeColor::Ink, formX + 10, dy + 349);
+    drawRounded(target, formX, dy + 330, bcInputW, 34, 6, ThemeColor::White, bcFocused ? ThemeColor::Blue : ThemeColor::Line, bcFocused ? 1.5f : 1.f);
+    std::string bcDisp = barcodeStr.empty() ? (bcFocused ? "|" : (scanningUniversal ? "Aim at camera on left..." : "Enter or auto-generate")) : (barcodeStr + (bcFocused ? "|" : ""));
+    drawText(target, fontBold, bcDisp, 10.5f, barcodeStr.empty() && !bcFocused ? ThemeColor::Mute : ThemeColor::Ink, formX + 10, dy + 347);
 
     // Button 1: + Auto Barcode
-    bool hovGen = pointInRect(mouse, formX + bcInputW + 10.f, dy + 332, 135, 34);
-    drawRounded(target, formX + bcInputW + 10.f, dy + 332, 135, 34, 6, hovGen ? ThemeColor::BlueHover : ThemeColor::Blue);
-    drawText(target, fontSemiBold, "+ Auto Barcode", 9.5f, ThemeColor::White, formX + bcInputW + 10.f + 67.f, dy + 349, TextAlignment::Center);
+    bool hovGen = pointInRect(mouse, formX + bcInputW + 10.f, dy + 330, 135, 34);
+    drawRounded(target, formX + bcInputW + 10.f, dy + 330, 135, 34, 6, hovGen ? ThemeColor::BlueHover : ThemeColor::Blue);
+    drawText(target, fontSemiBold, "+ Auto Barcode", 9.5f, ThemeColor::White, formX + bcInputW + 10.f + 67.f, dy + 347, TextAlignment::Center);
 
-    // Button 2: Scan Barcode Option (Universal Manufacturer Barcode)
+    // Button 2: Scan Barcode
     float scanBtnW = formW - (bcInputW + 155.f);
-    bool hovScan = pointInRect(mouse, formX + bcInputW + 155.f, dy + 332, scanBtnW, 34);
-    drawRounded(target, formX + bcInputW + 155.f, dy + 332, scanBtnW, 34, 6,
+    bool hovScan = pointInRect(mouse, formX + bcInputW + 155.f, dy + 330, scanBtnW, 34);
+    drawRounded(target, formX + bcInputW + 155.f, dy + 330, scanBtnW, 34, 6,
                 scanningUniversal ? sf::Color(34, 197, 94) : (hovScan ? sf::Color(30, 70, 110) : sf::Color(40, 90, 140)));
-    drawText(target, fontSemiBold, scanningUniversal ? "[OK] Scanning..." : "[*] Scan Barcode", 9.5f, ThemeColor::White, formX + bcInputW + 155.f + scanBtnW / 2.f, dy + 349, TextAlignment::Center);
+    drawText(target, fontSemiBold, scanningUniversal ? "[OK] Scanning..." : "[*] Scan Barcode", 9.5f, ThemeColor::White, formX + bcInputW + 155.f + scanBtnW / 2.f, dy + 347, TextAlignment::Center);
 
-    // Visual Barcode Preview Container
-    drawRounded(target, formX, dy + 376, formW, 112, 8, sf::Color(245, 242, 235), ThemeColor::Line, 1.2f);
+    // Visual Barcode Preview Container (tighter to leave space for Catalog toggle)
+    drawRounded(target, formX, dy + 374, formW, 92, 8, sf::Color(245, 242, 235), ThemeColor::Line, 1.2f);
     if (!barcodeStr.empty()) {
-        drawText(target, fontBold, barcodeStr, 12.f, ThemeColor::Ink, formX + 16, dy + 392);
-        drawText(target, fontRegular, "Universal / Code 39 Barcode", 8.5f, ThemeColor::Mute, formX + 16, dy + 407);
+        drawText(target, fontBold, barcodeStr, 11.5f, ThemeColor::Ink, formX + 16, dy + 388);
+        drawText(target, fontRegular, "Category Prefix: " + barcodeStr.substr(0, std::min<size_t>(2, barcodeStr.size())), 8.5f, ThemeColor::Mute, formX + 16, dy + 403);
 
         std::string bcPath = "barcodes/barcode_" + barcodeStr + ".bmp";
-        drawSprite(target, getTexture(bcPath), formX + 16, dy + 420, 220, 52);
+        drawSprite(target, getTexture(bcPath), formX + 16, dy + 414, 210, 44);
 
         int qVal = 0, cVal = 0;
         try { qVal = std::stoi(qtyStr); } catch (...) {}
         try { cVal = std::stoi(costPriceStr); } catch (...) {}
         int invoiceTot = qVal * cVal;
 
-        drawText(target, fontSemiBold, "Supplier Invoice Summary:", 9.5f, ThemeColor::Ink, formX + 260, dy + 398);
-        drawText(target, fontRegular, "Bought: " + std::to_string(qVal) + " units  *  Rs " + std::to_string(cVal) + "/unit", 9.f, ThemeColor::Mute, formX + 260, dy + 418);
-        drawText(target, fontBold, "Total Procurement: Rs " + std::to_string(invoiceTot), 10.5f, ThemeColor::Blue, formX + 260, dy + 440);
+        drawText(target, fontSemiBold, "Supplier Invoice Summary:", 9.5f, ThemeColor::Ink, formX + 250, dy + 394);
+        drawText(target, fontRegular, "Bought: " + std::to_string(qVal) + " units  *  Rs " + std::to_string(cVal) + "/unit", 9.f, ThemeColor::Mute, formX + 250, dy + 414);
+        drawText(target, fontBold, "Total Procurement: Rs " + std::to_string(invoiceTot), 10.5f, ThemeColor::Blue, formX + 250, dy + 436);
     } else {
         std::string guide = scanningUniversal
-            ? "Optical webcam scanner is active on the left! Hold item in front of camera or scan SKU."
-            : "Use the optical scanner on the left, click [Scan Barcode], or [+ Auto Barcode] to generate a code.";
-        drawText(target, fontRegular, guide, 9.5f, ThemeColor::Mute, formX + 16, dy + 424);
+            ? "Optical webcam scanner is active on the left! Hold item in front of camera."
+            : "Click [+ Auto Barcode] to generate a category-prefixed code, or scan with camera.";
+        drawText(target, fontRegular, guide, 9.5f, ThemeColor::Mute, formX + 16, dy + 420);
     }
+
+    // Checkbox: Also add directly to Product.txt
+    float chkY = dy + 474.f;
+    bool hovChk = pointInRect(mouse, formX, chkY, 330, 22);
+    drawRounded(target, formX, chkY + 2.f, 18.f, 18.f, 4,
+                alsoAddToCatalog ? ThemeColor::Blue : ThemeColor::White,
+                hovChk ? ThemeColor::Blue : ThemeColor::Edge, 1.2f);
+    if (alsoAddToCatalog) {
+        drawSprite(target, getTexture("icons/check.png"), formX + 3.f, chkY + 5.f, 12.f, 12.f, ThemeColor::White);
+    }
+    drawText(target, fontSemiBold, "Also list directly in POS Product Catalog (Product.txt)", 9.5f, ThemeColor::Ink, formX + 26.f, chkY + 11.f);
 
     // Action Buttons
     bool hovSave = pointInRect(mouse, formX, dy + dh - 52, 260, 38);
     drawRounded(target, formX, dy + dh - 52, 260, 38, 6, hovSave ? ThemeColor::BlueHover : ThemeColor::Blue);
-    drawText(target, fontBold, "Save to Inventory & Catalog", 11.f, ThemeColor::White, formX + 130, dy + dh - 33, TextAlignment::Center);
+    drawText(target, fontBold, alsoAddToCatalog ? "Save to Inventory & Catalog" : "Save to Warehouse Inventory",
+             11.f, ThemeColor::White, formX + 130, dy + dh - 33, TextAlignment::Center);
 
     bool hovCancel = pointInRect(mouse, formX + formW - 130, dy + dh - 52, 130, 38);
     drawRounded(target, formX + formW - 130, dy + dh - 52, 130, 38, 6, hovCancel ? sf::Color(228, 218, 204) : sf::Color(235, 226, 212), ThemeColor::Edge, 1);
@@ -945,7 +1152,7 @@ void PosModalsView::drawProductSpecModal(sf::RenderTarget& target, sf::Vector2f 
     drawRow("Universal Barcode", p.barcode, ry0 + 26);
     drawRow("Product Acronym", p.acronym, ry0 + 52, true);
     drawRow("Official Name", p.name, ry0 + 78);
-    drawRow("Category", p.category, ry0 + 104);
+    drawRow("Category", "[" + p.categoryId + "] " + p.category, ry0 + 104);
     drawRow("Measurement Unit", p.unit, ry0 + 130);
     drawRow("Unit Price (PKR)", "Rs " + std::to_string(p.price), ry0 + 156);
     drawRow("Unit Discount", "Rs " + std::to_string(p.discount), ry0 + 182);
@@ -1152,13 +1359,13 @@ void PosModalsView::drawQuickCheckModal(sf::RenderTarget& target, sf::Vector2f m
         drawText(target, fontBold, std::to_string(p.stock) + " " + p.unit + " (" + (inStk ? "Available" : "Empty") + ")", 9.f, stkCol, rightX + 90, sy + 40);
 
         drawText(target, fontMedium, "Category:", 8.5f, ThemeColor::Mute, rightX + 14 + halfW, sy);
-        drawText(target, fontSemiBold, p.category, 9.f, ThemeColor::Ink, rightX + 80 + halfW, sy);
+        drawText(target, fontSemiBold, p.category, 9.f, ThemeColor::Ink, rightX + 98 + halfW, sy);
 
         drawText(target, fontMedium, "Discount:", 8.5f, ThemeColor::Mute, rightX + 14 + halfW, sy + 20);
-        drawText(target, fontSemiBold, p.discount > 0 ? ("Rs " + std::to_string(p.discount)) : "None (0)", 9.f, p.discount > 0 ? ThemeColor::Green : ThemeColor::Mute, rightX + 80 + halfW, sy + 20);
+        drawText(target, fontSemiBold, p.discount > 0 ? ("Rs " + std::to_string(p.discount)) : "None (0)", 9.f, p.discount > 0 ? ThemeColor::Green : ThemeColor::Mute, rightX + 98 + halfW, sy + 20);
 
         drawText(target, fontMedium, "Catalog Status:", 8.5f, ThemeColor::Mute, rightX + 14 + halfW, sy + 40);
-        drawText(target, fontSemiBold, inStk ? "Active Catalog" : "Out of Stock", 9.f, inStk ? ThemeColor::Green : ThemeColor::Red, rightX + 80 + halfW, sy + 40);
+        drawText(target, fontSemiBold, inStk ? "Active Catalog" : "Out of Stock", 9.f, inStk ? ThemeColor::Green : ThemeColor::Red, rightX + 98 + halfW, sy + 40);
 
         // BMP Barcode Image Preview
         std::string bcImg = p.barcodePath.empty() ? ("barcodes/barcode_" + p.barcode + ".bmp") : p.barcodePath;
@@ -1291,10 +1498,14 @@ void PosModalsView::drawAddProductFromInventoryModal(sf::RenderTarget& target, s
     drawText(target, fontBold, "X", 12, ThemeColor::Ink, dx + dw - 29, dy + 33, TextAlignment::Center);
 
     // Search Box
-    float sBoxX = dx + 28.f, sBoxY = dy + 70.f, sBoxW = 340.f, sBoxH = 32.f;
+    float sBoxX = dx + 28.f, sBoxY = dy + 70.f, sBoxW = 470.f, sBoxH = 32.f;
     drawRounded(target, sBoxX, sBoxY, sBoxW, sBoxH, 6, ThemeColor::White, searchFocused ? ThemeColor::Blue : ThemeColor::Line, searchFocused ? 1.5f : 1.f);
-    std::string sDisp = searchQuery.empty() ? "Search inventory by name, barcode, vendor..." : searchQuery;
-    drawText(target, fontRegular, sDisp, 9.5f, searchQuery.empty() ? ThemeColor::Mute : ThemeColor::Ink, sBoxX + 10, sBoxY + 16);
+    std::string sDisp = searchQuery.empty() ? (searchFocused ? "|" : "Search inventory by name, barcode, vendor...") : (searchQuery + (searchFocused ? "|" : ""));
+    drawText(target, fontRegular, sDisp, 9.5f, searchQuery.empty() && !searchFocused ? ThemeColor::Mute : ThemeColor::Ink, sBoxX + 10, sBoxY + 16);
+
+    bool hovCreateNew = pointInRect(mouse, dx + dw - 242.f, sBoxY, 214.f, sBoxH);
+    drawRounded(target, dx + dw - 242.f, sBoxY, 214.f, sBoxH, 6, hovCreateNew ? ThemeColor::BlueHover : ThemeColor::Blue);
+    drawText(target, fontSemiBold, "+ New Product & Barcode", 9.5f, ThemeColor::White, dx + dw - 135.f, sBoxY + 16, TextAlignment::Center);
 
     // Table Header
     float ty = dy + 112.f;
@@ -1442,7 +1653,7 @@ void PosModalsView::drawHeldDraftsModal(sf::RenderTarget& target, sf::Vector2f m
 void PosModalsView::drawDiscountModal(sf::RenderTarget& target, sf::Vector2f mouse,
                                      float currentWidth, float designHeight,
                                      const CartService& cartService,
-                                     int studentRate, int employeeRate,
+                                     int studentRate, int employeeRate, int activeSeasonalPct,
                                      const std::string& empUser, const std::string& empPass, int activeField,
                                      const std::string& promoInput,
                                      const std::string& errorMessage,
@@ -1463,6 +1674,11 @@ void PosModalsView::drawDiscountModal(sf::RenderTarget& target, sf::Vector2f mou
     // Header
     drawText(target, fontSerif, "APPLY DISCOUNT", 20.f, ThemeColor::Ink, dx + 28, dy + 32);
     drawText(target, fontRegular, "Choose an eligible discount: Student, Employee, or Promo voucher", 9.5f, ThemeColor::Mute, dx + 28, dy + 52);
+
+    if (activeSeasonalPct > 0) {
+        drawRounded(target, dx + dw - 240.f, dy + 22.f, 186.f, 24.f, 12.f, sf::Color(254, 243, 199), sf::Color(217, 119, 6), 1.f);
+        drawText(target, fontBold, "Active Season: -" + std::to_string(activeSeasonalPct) + "% Auto", 8.5f, sf::Color(180, 83, 9), dx + dw - 147.f, dy + 34.f, TextAlignment::Center);
+    }
 
     // Close button [X]
     bool hovX = pointInRect(mouse, dx + dw - 44, dy + 20, 28, 28);
@@ -1910,3 +2126,333 @@ void PosModalsView::drawPromoManagementModal(sf::RenderTarget& target, sf::Vecto
                 hovClose ? sf::Color(228, 218, 204) : sf::Color(235, 226, 212), ThemeColor::Edge, 1);
     drawText(target, fontSemiBold, "Close", 10.5f, ThemeColor::Ink, dx + dw - 86, botY + 15, TextAlignment::Center);
 }
+
+// ============================================================================
+// REQUIREMENT 6: EDIT ANY PRODUCT MODAL (Manager Capability)
+// ============================================================================
+void PosModalsView::drawEditProductModal(sf::RenderTarget& target, sf::Vector2f mouse,
+                                         float currentWidth, float designHeight,
+                                         const std::string& name, const std::string& priceStr,
+                                         const std::string& unit, const std::string& stockStr,
+                                         const std::string& category, const std::string& catId,
+                                         const std::string& discountStr, int activeField,
+                                         const std::vector<ProductCategory>& categories,
+                                         const sf::Font& fontRegular, const sf::Font& fontMedium,
+                                         const sf::Font& fontSemiBold, const sf::Font& fontBold,
+                                         const sf::Font& fontSerif) {
+    sf::RectangleShape dim({currentWidth, designHeight});
+    dim.setFillColor(sf::Color(0, 0, 0, 140));
+    target.draw(dim);
+
+    float dw = 540.f, dh = 500.f;
+    float dx = (currentWidth - dw) / 2.f, dy = (designHeight - dh) / 2.f;
+
+    drawShadow(target, dx, dy, dw, dh, 18, 10, 18, 22, 6);
+    drawRounded(target, dx, dy, dw, dh, 14, ThemeColor::Paper, ThemeColor::Line, 1.2f);
+
+    drawText(target, fontSerif, "Edit Product Information", 20, ThemeColor::Ink, dx + 30, dy + 28);
+    drawText(target, fontRegular, "Modify catalog specification, price, unit & category (Product.txt)", 9.5f, ThemeColor::Mute, dx + 30, dy + 48);
+
+    bool hovX = pointInRect(mouse, dx + dw - 42, dy + 18, 26, 26);
+    drawRounded(target, dx + dw - 42, dy + 18, 26, 26, 5, hovX ? sf::Color(230, 220, 206) : ThemeColor::None);
+    drawText(target, fontBold, "X", 12, ThemeColor::Ink, dx + dw - 29, dy + 31, TextAlignment::Center);
+
+    auto drawField = [&](const std::string& label, const std::string& val, int fieldIdx, float y, float w) {
+        drawText(target, fontSemiBold, label, 10.f, ThemeColor::Ink, dx + 30, y + 16);
+        bool focused = (activeField == fieldIdx);
+        drawRounded(target, dx + 165, y, w, 32, 6,
+                    focused ? sf::Color(255, 255, 255) : sf::Color(246, 241, 233),
+                    focused ? ThemeColor::Blue : ThemeColor::Line, 1.2f);
+        drawText(target, fontMedium, val + (focused ? "|" : ""), 10.5f, ThemeColor::Ink, dx + 175, y + 16);
+    };
+
+    drawField("Product Name:", name, 0, dy + 72.f, 345.f);
+    drawField("Retail Price (PKR):", priceStr, 1, dy + 112.f, 180.f);
+    drawField("Unit (e.g. 1 L, 1 kg):", unit, 2, dy + 152.f, 180.f);
+    drawField("Available Stock:", stockStr, 3, dy + 192.f, 180.f);
+    drawField("Unit Discount (PKR):", discountStr, 4, dy + 232.f, 180.f);
+
+    // Category Selector
+    drawText(target, fontSemiBold, "Category & ID:", 10.f, ThemeColor::Ink, dx + 30, dy + 286);
+    drawRounded(target, dx + 165, dy + 272, 180, 28, 4, sf::Color(220, 235, 250));
+    drawText(target, fontBold, "[" + catId + "] " + category, 9.5f, sf::Color(29, 78, 216), dx + 255, dy + 286, TextAlignment::Center);
+
+    // Category pills for quick choice (up to 10 in 2 rows of 5)
+    float pillY0 = dy + 312.f;
+    float pw = 91.f;
+    for (size_t ci = 0; ci < categories.size() && ci < 10; ci++) {
+        const auto& cat = categories[ci];
+        float px = dx + 30.f + static_cast<float>(ci % 5) * (pw + 6.f);
+        float pillY = pillY0 + static_cast<float>(ci / 5) * 28.f;
+        bool selected = (cat.categoryId == catId);
+        bool hov = pointInRect(mouse, px, pillY, pw, 22.f);
+        drawRounded(target, px, pillY, pw, 22.f, 4,
+                    selected ? ThemeColor::Dark : (hov ? sf::Color(228, 220, 206) : sf::Color(238, 230, 216)),
+                    ThemeColor::Line, 1.f);
+        std::string cn = cat.name;
+        if (cn.length() > 11) cn = cn.substr(0, 9) + "..";
+        drawText(target, fontSemiBold, cn, 8.f, selected ? ThemeColor::White : ThemeColor::Ink, px + pw / 2.f, pillY + 11.f, TextAlignment::Center);
+    }
+
+    // Buttons
+    float btnY = dy + dh - 56.f;
+    bool hovSave = pointInRect(mouse, dx + 30, btnY, 220, 40);
+    drawRounded(target, dx + 30, btnY, 220, 40, 8, hovSave ? ThemeColor::BlueHover : ThemeColor::Blue);
+    drawText(target, fontBold, "Save Product Changes", 11.5f, ThemeColor::White, dx + 140, btnY + 20, TextAlignment::Center);
+
+    bool hovCancel = pointInRect(mouse, dx + dw - 150, btnY, 120, 40);
+    drawRounded(target, dx + dw - 150, btnY, 120, 40, 8, hovCancel ? sf::Color(230, 220, 206) : sf::Color(238, 230, 216), ThemeColor::Edge, 1);
+    drawText(target, fontSemiBold, "Cancel", 11.5f, ThemeColor::Ink, dx + dw - 90, btnY + 20, TextAlignment::Center);
+}
+
+// ============================================================================
+// REQUIREMENT 3: OPEN & EDIT ORDER MODAL (7-Day Check + Approval)
+// ============================================================================
+void PosModalsView::drawEditOrderModal(sf::RenderTarget& target, sf::Vector2f mouse,
+                                       float currentWidth, float designHeight,
+                                       const std::vector<OrderRecord>& orders,
+                                       const std::string& searchOrderId, bool searchFocused,
+                                       const std::string& statusMessage,
+                                       float scrollOffset,
+                                       const sf::Font& fontRegular, const sf::Font& fontMedium,
+                                       const sf::Font& fontSemiBold, const sf::Font& fontBold,
+                                       const sf::Font& fontSerif) {
+    sf::RectangleShape dim({currentWidth, designHeight});
+    dim.setFillColor(sf::Color(0, 0, 0, 140));
+    target.draw(dim);
+
+    float dw = 680.f, dh = 520.f;
+    float dx = (currentWidth - dw) / 2.f, dy = (designHeight - dh) / 2.f;
+
+    drawShadow(target, dx, dy, dw, dh, 18, 10, 18, 22, 6);
+    drawRounded(target, dx, dy, dw, dh, 14, ThemeColor::Paper, ThemeColor::Line, 1.2f);
+
+    drawText(target, fontSerif, "Open & Edit Existing Order", 20, ThemeColor::Ink, dx + 30, dy + 28);
+    drawText(target, fontRegular, "Paid orders within 7 days require Manager Approval. On-hold orders open immediately.", 9.5f, ThemeColor::Mute, dx + 30, dy + 48);
+
+    bool hovX = pointInRect(mouse, dx + dw - 42, dy + 18, 26, 26);
+    drawRounded(target, dx + dw - 42, dy + 18, 26, 26, 5, hovX ? sf::Color(230, 220, 206) : ThemeColor::None);
+    drawText(target, fontBold, "X", 12, ThemeColor::Ink, dx + dw - 29, dy + 31, TextAlignment::Center);
+
+    // Search bar
+    float inY = dy + 68.f;
+    drawText(target, fontSemiBold, "Order ID:", 10.f, ThemeColor::Ink, dx + 30, inY + 16);
+    drawRounded(target, dx + 95, inY, 260, 32, 6,
+                searchFocused ? sf::Color(255, 255, 255) : sf::Color(246, 241, 233),
+                searchFocused ? ThemeColor::Blue : ThemeColor::Line, 1.2f);
+    std::string dispSearch = searchOrderId.empty() ? (searchFocused ? "|" : "Enter 8-digit Order ID...") : (searchOrderId + (searchFocused ? "|" : ""));
+    drawText(target, fontMedium, dispSearch, 10.f, searchOrderId.empty() && !searchFocused ? ThemeColor::Mute : ThemeColor::Ink, dx + 105, inY + 16);
+
+    // Action button to load
+    bool hovOpen = pointInRect(mouse, dx + 365, inY, 110, 32);
+    drawRounded(target, dx + 365, inY, 110, 32, 6, hovOpen ? ThemeColor::BlueHover : ThemeColor::Blue);
+    drawText(target, fontBold, "Open Order", 10.f, ThemeColor::White, dx + 420, inY + 16, TextAlignment::Center);
+
+    // Status message
+    if (!statusMessage.empty()) {
+        drawRounded(target, dx + 30, inY + 38, dw - 60, 26, 4, sf::Color(254, 243, 199), sf::Color(217, 119, 6), 1.f);
+        drawText(target, fontSemiBold, statusMessage, 9.f, sf::Color(180, 83, 9), dx + 40, inY + 51);
+    }
+
+    // Orders Table
+    float ty = inY + 72.f;
+    drawRounded(target, dx + 30, ty, dw - 60, 275, 8, sf::Color(255, 255, 255), ThemeColor::Line, 1);
+    drawText(target, fontSemiBold, "Order ID", 9.f, ThemeColor::Mute, dx + 45, ty + 14);
+    drawText(target, fontSemiBold, "Date", 9.f, ThemeColor::Mute, dx + 130, ty + 14);
+    drawText(target, fontSemiBold, "Customer", 9.f, ThemeColor::Mute, dx + 225, ty + 14);
+    drawText(target, fontSemiBold, "Status", 9.f, ThemeColor::Mute, dx + 345, ty + 14);
+    drawText(target, fontSemiBold, "Amount", 9.f, ThemeColor::Mute, dx + 435, ty + 14);
+    drawText(target, fontSemiBold, "Action", 9.f, ThemeColor::Mute, dx + dw - 75, ty + 14, TextAlignment::Center);
+
+    sf::RectangleShape sep({dw - 80.f, 1.f});
+    sep.setPosition(dx + 40, ty + 28);
+    sep.setFillColor(ThemeColor::Line);
+    target.draw(sep);
+
+    int visIdx = 0;
+    for (int i = (int)orders.size() - 1; i >= 0; i--) {
+        const auto& o = orders[i];
+        if (!searchOrderId.empty()) {
+            std::string q = searchOrderId;
+            std::string oid = o.orderId;
+            if (oid.find(q) == std::string::npos) continue;
+        }
+        float rowY = ty + 36.f + static_cast<float>(visIdx) * 32.f - scrollOffset;
+        visIdx++;
+        if (rowY < ty + 30.f || rowY > ty + 245.f) continue;
+
+        drawText(target, fontBold, o.orderId, 9.5f, ThemeColor::Ink, dx + 45, rowY + 10);
+        drawText(target, fontRegular, o.orderDate, 8.5f, ThemeColor::Mute, dx + 130, rowY + 10);
+        std::string cust = o.customerName;
+        for (char& ch : cust) if (ch == '_') ch = ' ';
+        drawText(target, fontMedium, cust, 9.f, ThemeColor::Ink, dx + 225, rowY + 10);
+
+        bool isPaid = (o.orderStatus == "paid");
+        drawRounded(target, dx + 340, rowY, 60, 20, 4, isPaid ? sf::Color(220, 252, 231) : sf::Color(254, 243, 199));
+        drawText(target, fontBold, o.orderStatus, 8.f, isPaid ? sf::Color(35, 120, 50) : sf::Color(180, 83, 9), dx + 370, rowY + 10, TextAlignment::Center);
+
+        drawText(target, fontBold, formatRs(o.paymentAmount), 9.5f, ThemeColor::Ink, dx + 435, rowY + 10);
+
+        // Edit row button
+        bool hovRow = pointInRect(mouse, dx + dw - 105, rowY, 60, 20);
+        drawRounded(target, dx + dw - 105, rowY, 60, 20, 4,
+                    hovRow ? ThemeColor::Blue : sf::Color(230, 238, 248), ThemeColor::Blue, 1.f);
+        drawText(target, fontSemiBold, "Edit", 8.5f, hovRow ? ThemeColor::White : ThemeColor::Blue, dx + dw - 75, rowY + 10, TextAlignment::Center);
+    }
+
+    // Close button
+    float botY = dy + dh - 48.f;
+    bool hovClose = pointInRect(mouse, dx + dw - 150, botY, 120, 34);
+    drawRounded(target, dx + dw - 150, botY, 120, 34, 6, hovClose ? sf::Color(228, 218, 204) : sf::Color(235, 226, 212), ThemeColor::Edge, 1);
+    drawText(target, fontSemiBold, "Close", 10.5f, ThemeColor::Ink, dx + dw - 90, botY + 17, TextAlignment::Center);
+}
+
+// ============================================================================
+// REQUIREMENT 3: MANAGER APPROVAL MODAL (For Paid Orders <= 7 Days)
+// ============================================================================
+void PosModalsView::drawManagerApprovalModal(sf::RenderTarget& target, sf::Vector2f mouse,
+                                             float currentWidth, float designHeight,
+                                             const std::string& orderId, const std::string& orderDate,
+                                             const std::string& passInput, const std::string& errorMessage,
+                                             const sf::Font& fontRegular, const sf::Font& fontMedium,
+                                             const sf::Font& fontSemiBold, const sf::Font& fontBold,
+                                             const sf::Font& fontSerif) {
+    sf::RectangleShape dim({currentWidth, designHeight});
+    dim.setFillColor(sf::Color(0, 0, 0, 150));
+    target.draw(dim);
+
+    float dw = 460.f, dh = 300.f;
+    float dx = (currentWidth - dw) / 2.f, dy = (designHeight - dh) / 2.f;
+
+    drawShadow(target, dx, dy, dw, dh, 18, 10, 18, 22, 6);
+    drawRounded(target, dx, dy, dw, dh, 14, ThemeColor::Paper, ThemeColor::Line, 1.2f);
+
+    drawText(target, fontSerif, "Manager Approval Required", 19, ThemeColor::Ink, dx + 30, dy + 28);
+    drawText(target, fontRegular, "Order #" + orderId + " is marked PAID (" + orderDate + ")", 9.5f, ThemeColor::Mute, dx + 30, dy + 50);
+    drawText(target, fontRegular, "Paid orders within 7 days require Manager Authorization.", 9.5f, ThemeColor::Mute, dx + 30, dy + 65);
+
+    bool hovX = pointInRect(mouse, dx + dw - 42, dy + 18, 26, 26);
+    drawRounded(target, dx + dw - 42, dy + 18, 26, 26, 5, hovX ? sf::Color(230, 220, 206) : ThemeColor::None);
+    drawText(target, fontBold, "X", 12, ThemeColor::Ink, dx + dw - 29, dy + 31, TextAlignment::Center);
+
+    float inY = dy + 100.f;
+    drawText(target, fontSemiBold, "Enter Manager Password / PIN:", 10.5f, ThemeColor::Ink, dx + 30, inY);
+    drawRounded(target, dx + 30, inY + 18, dw - 60, 36, 6, sf::Color(255, 255, 255), ThemeColor::Blue, 1.5f);
+
+    std::string masked(passInput.size(), '*');
+    drawText(target, fontBold, masked + "|", 13, ThemeColor::Ink, dx + 45, inY + 36);
+
+    if (!errorMessage.empty()) {
+        drawText(target, fontSemiBold, errorMessage, 9.f, ThemeColor::Red, dx + 30, inY + 68);
+    }
+
+    float btnY = dy + dh - 56.f;
+    bool hovApprove = pointInRect(mouse, dx + 30, btnY, 220, 38);
+    drawRounded(target, dx + 30, btnY, 220, 38, 8, hovApprove ? sf::Color(22, 101, 52) : sf::Color(34, 197, 94));
+    drawText(target, fontBold, "Authorize & Edit Order", 11.f, ThemeColor::White, dx + 140, btnY + 19, TextAlignment::Center);
+
+    bool hovCancel = pointInRect(mouse, dx + dw - 150, btnY, 120, 38);
+    drawRounded(target, dx + dw - 150, btnY, 120, 38, 8, hovCancel ? sf::Color(230, 220, 206) : sf::Color(238, 230, 216), ThemeColor::Edge, 1);
+    drawText(target, fontSemiBold, "Cancel", 11.f, ThemeColor::Ink, dx + dw - 90, btnY + 19, TextAlignment::Center);
+}
+
+// ============================================================================
+// REQUIREMENT 1: ADD / CONFIGURE CATEGORY MODAL (PCategory.txt)
+// ============================================================================
+void PosModalsView::drawAddCategoryModal(sf::RenderTarget& target, sf::Vector2f mouse,
+                                         float currentWidth, float designHeight,
+                                         const std::string& catId, const std::string& catName,
+                                         const std::string& catAcr, int activeField,
+                                         const sf::Font& fontRegular, const sf::Font& fontMedium,
+                                         const sf::Font& fontSemiBold, const sf::Font& fontBold,
+                                         const sf::Font& fontSerif) {
+    sf::RectangleShape dim({currentWidth, designHeight});
+    dim.setFillColor(sf::Color(0, 0, 0, 140));
+    target.draw(dim);
+
+    float dw = 460.f, dh = 320.f;
+    float dx = (currentWidth - dw) / 2.f, dy = (designHeight - dh) / 2.f;
+
+    drawShadow(target, dx, dy, dw, dh, 18, 10, 18, 22, 6);
+    drawRounded(target, dx, dy, dw, dh, 14, ThemeColor::Paper, ThemeColor::Line, 1.2f);
+
+    drawText(target, fontSerif, "Add Product Category (PCategory.txt)", 18, ThemeColor::Ink, dx + 30, dy + 28);
+    drawText(target, fontRegular, "First 2 digits of generated barcodes represent Category ID (Req 1)", 9.5f, ThemeColor::Mute, dx + 30, dy + 48);
+
+    bool hovX = pointInRect(mouse, dx + dw - 42, dy + 18, 26, 26);
+    drawRounded(target, dx + dw - 42, dy + 18, 26, 26, 5, hovX ? sf::Color(230, 220, 206) : ThemeColor::None);
+    drawText(target, fontBold, "X", 12, ThemeColor::Ink, dx + dw - 29, dy + 31, TextAlignment::Center);
+
+    auto drawField = [&](const std::string& lbl, const std::string& val, int fIdx, float y) {
+        drawText(target, fontSemiBold, lbl, 10.f, ThemeColor::Ink, dx + 30, y + 15);
+        bool focused = (activeField == fIdx);
+        drawRounded(target, dx + 180, y, 220, 30, 6,
+                    focused ? sf::Color(255, 255, 255) : sf::Color(246, 241, 233),
+                    focused ? ThemeColor::Blue : ThemeColor::Line, 1.2f);
+        drawText(target, fontMedium, val + (focused ? "|" : ""), 10.5f, ThemeColor::Ink, dx + 190, y + 15);
+    };
+
+    drawField("Category ID (2 digits):", catId, 0, dy + 80.f);
+    drawField("Category Name:", catName, 1, dy + 120.f);
+    drawField("Category Acronym:", catAcr, 2, dy + 160.f);
+
+    float btnY = dy + dh - 52.f;
+    bool hovSave = pointInRect(mouse, dx + 30, btnY, 200, 36);
+    drawRounded(target, dx + 30, btnY, 200, 36, 6, hovSave ? ThemeColor::BlueHover : ThemeColor::Blue);
+    drawText(target, fontBold, "Save Category", 11.f, ThemeColor::White, dx + 130, btnY + 18, TextAlignment::Center);
+
+    bool hovCancel = pointInRect(mouse, dx + dw - 140, btnY, 110, 36);
+    drawRounded(target, dx + dw - 140, btnY, 110, 36, 6, hovCancel ? sf::Color(230, 220, 206) : sf::Color(238, 230, 216), ThemeColor::Edge, 1);
+    drawText(target, fontSemiBold, "Cancel", 11.f, ThemeColor::Ink, dx + dw - 85, btnY + 18, TextAlignment::Center);
+}
+
+// ============================================================================
+// REQUIREMENT 13 & 14: ADD SEASONAL DISCOUNT MODAL (Seasons.txt)
+// ============================================================================
+void PosModalsView::drawAddSeasonModal(sf::RenderTarget& target, sf::Vector2f mouse,
+                                       float currentWidth, float designHeight,
+                                       const std::string& startDate, const std::string& endDate,
+                                       const std::string& pctStr, int activeField,
+                                       const sf::Font& fontRegular, const sf::Font& fontMedium,
+                                       const sf::Font& fontSemiBold, const sf::Font& fontBold,
+                                       const sf::Font& fontSerif) {
+    sf::RectangleShape dim({currentWidth, designHeight});
+    dim.setFillColor(sf::Color(0, 0, 0, 140));
+    target.draw(dim);
+
+    float dw = 460.f, dh = 320.f;
+    float dx = (currentWidth - dw) / 2.f, dy = (designHeight - dh) / 2.f;
+
+    drawShadow(target, dx, dy, dw, dh, 18, 10, 18, 22, 6);
+    drawRounded(target, dx, dy, dw, dh, 14, ThemeColor::Paper, ThemeColor::Line, 1.2f);
+
+    drawText(target, fontSerif, "Add Seasonal Discount (Seasons.txt)", 18, ThemeColor::Ink, dx + 30, dy + 28);
+    drawText(target, fontRegular, "Set promotional date range and discount percentage (Req 13, 14, 15)", 9.5f, ThemeColor::Mute, dx + 30, dy + 48);
+
+    bool hovX = pointInRect(mouse, dx + dw - 42, dy + 18, 26, 26);
+    drawRounded(target, dx + dw - 42, dy + 18, 26, 26, 5, hovX ? sf::Color(230, 220, 206) : ThemeColor::None);
+    drawText(target, fontBold, "X", 12, ThemeColor::Ink, dx + dw - 29, dy + 31, TextAlignment::Center);
+
+    auto drawField = [&](const std::string& lbl, const std::string& val, int fIdx, float y) {
+        drawText(target, fontSemiBold, lbl, 10.f, ThemeColor::Ink, dx + 30, y + 15);
+        bool focused = (activeField == fIdx);
+        drawRounded(target, dx + 190, y, 210, 30, 6,
+                    focused ? sf::Color(255, 255, 255) : sf::Color(246, 241, 233),
+                    focused ? ThemeColor::Blue : ThemeColor::Line, 1.2f);
+        drawText(target, fontMedium, val + (focused ? "|" : ""), 10.5f, ThemeColor::Ink, dx + 200, y + 15);
+    };
+
+    drawField("Start Date (YYYY-MM-DD):", startDate, 0, dy + 80.f);
+    drawField("End Date (YYYY-MM-DD):", endDate, 1, dy + 120.f);
+    drawField("Discount Percentage (%):", pctStr, 2, dy + 160.f);
+
+    float btnY = dy + dh - 52.f;
+    bool hovSave = pointInRect(mouse, dx + 30, btnY, 200, 36);
+    drawRounded(target, dx + 30, btnY, 200, 36, 6, hovSave ? ThemeColor::BlueHover : ThemeColor::Blue);
+    drawText(target, fontBold, "Save Season", 11.f, ThemeColor::White, dx + 130, btnY + 18, TextAlignment::Center);
+
+    bool hovCancel = pointInRect(mouse, dx + dw - 140, btnY, 110, 36);
+    drawRounded(target, dx + dw - 140, btnY, 110, 36, 6, hovCancel ? sf::Color(230, 220, 206) : sf::Color(238, 230, 216), ThemeColor::Edge, 1);
+    drawText(target, fontSemiBold, "Cancel", 11.f, ThemeColor::Ink, dx + dw - 85, btnY + 18, TextAlignment::Center);
+}
+

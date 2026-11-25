@@ -130,12 +130,53 @@ int CartService::getDiscount() const {
     return mLastCalculatedDiscount;
 }
 
+int CartService::getTax(const std::vector<ProductItem>& products) const {
+    int t = 0;
+    for (const auto& line : mCart) {
+        if (line.productId >= 0 && line.productId < (int)products.size()) {
+            t += products[line.productId].tax * line.quantity;
+        }
+    }
+    return t;
+}
+
 int CartService::getTax() const {
-    return 0; // Tax free
+    return 0;
 }
 
 int CartService::getTotal(const std::vector<ProductItem>& products) const {
     return std::max(0, getSubtotal(products) - getDiscount(products));
+}
+
+BillSummary CartService::computeBillSummary(const std::vector<ProductItem>& products,
+                                            int seasonalPercent,
+                                            int specialPercent,
+                                            const std::vector<std::pair<std::string, std::string>>& barcodeSupplierMap) const {
+    BillSummary s;
+    for (const auto& line : mCart) {
+        if (line.productId >= 0 && line.productId < (int)products.size()) {
+            const auto& p = products[line.productId];
+            s.subtotalWithoutTax += p.price * line.quantity;
+            s.totalTax           += p.tax * line.quantity;
+            s.productDiscount    += p.discount * line.quantity;
+        }
+    }
+    s.promoDiscount = getDiscount(products, barcodeSupplierMap);
+    s.totalApplicableDiscount = std::min(s.subtotalWithoutTax, s.productDiscount + s.promoDiscount);
+
+    int afterProdDisc = std::max(0, s.subtotalWithoutTax - s.totalApplicableDiscount);
+    s.seasonalPercent = std::clamp(seasonalPercent, 0, 100);
+    s.seasonalDiscount = (afterProdDisc * s.seasonalPercent) / 100;
+
+    int afterSeasonal = std::max(0, afterProdDisc - s.seasonalDiscount);
+    s.specialPercent = std::clamp(specialPercent, 0, 8);
+    s.specialDiscount = (afterSeasonal * s.specialPercent) / 100;
+
+    s.totalPayable = std::max(0, s.subtotalWithoutTax + s.totalTax
+                                 - s.totalApplicableDiscount
+                                 - s.seasonalDiscount
+                                 - s.specialDiscount);
+    return s;
 }
 
 void CartService::setDiscountApplied(bool applied) {
@@ -405,13 +446,17 @@ void CartService::setCashGivenStr(const std::string& str) {
     mCashGiven = parseCashGiven();
 }
 
-bool CartService::chargeSale(std::vector<ProductItem>& products, const std::string& userName, std::string& outMessage) {
+bool CartService::chargeSale(std::vector<ProductItem>& products, const std::string& userName, std::string& outMessage,
+                             const BillSummary* summaryOverride, const std::string& orderIdOverride) {
     if (mCart.empty()) {
         outMessage = "Cannot charge: receipt is empty";
         return false;
     }
 
-    int total = getTotal(products);
+    BillSummary summary = summaryOverride ? *summaryOverride : computeBillSummary(products, 0, 0);
+    mLastBillSummary = summary;
+
+    int total = summary.totalPayable;
     int given = parseCashGiven();
     if (mPaymentMethod == 0 && given < total) {
         outMessage = "Cash given (" + formatRs(given) + ") is less than total (" + formatRs(total) + ")!";
@@ -428,7 +473,7 @@ bool CartService::chargeSale(std::vector<ProductItem>& products, const std::stri
     std::strftime(fullDateBuf, sizeof(fullDateBuf), "%Y-%m-%d %H:%M:%S", &tmNow);
 
     mLastDateStr = fullDateBuf;
-    mLastOrderId = "ORD-" + std::to_string(1001 + mSalesHistory.size());
+    mLastOrderId = !orderIdOverride.empty() ? orderIdOverride : ("ORD-" + std::to_string(1001 + mSalesHistory.size()));
     mLastCashier = userName.empty() ? "System Admin" : userName;
 
     rec.timestamp = buf;
@@ -442,10 +487,12 @@ bool CartService::chargeSale(std::vector<ProductItem>& products, const std::stri
     rec.cashier = mLastCashier;
     mSalesHistory.push_back(rec);
 
-    // Decrement stock levels
-    for (const auto& line : mCart) {
-        if (line.productId >= 0 && line.productId < (int)products.size()) {
-            products[line.productId].stock = std::max(0, products[line.productId].stock - line.quantity);
+    // Note: stock deduction is managed cleanly by PosApp (supporting edits without double-deduct)
+    if (!summaryOverride) {
+        for (const auto& line : mCart) {
+            if (line.productId >= 0 && line.productId < (int)products.size()) {
+                products[line.productId].stock = std::max(0, products[line.productId].stock - line.quantity);
+            }
         }
     }
 
@@ -454,7 +501,8 @@ bool CartService::chargeSale(std::vector<ProductItem>& products, const std::stri
     return true;
 }
 
-std::string CartService::printReceipt(const std::vector<ProductItem>& products, const std::string& cashierName, bool& outSuccess) {
+std::string CartService::printReceipt(const std::vector<ProductItem>& products, const std::string& cashierName, bool& outSuccess,
+                                      const BillSummary* summaryOverride) {
     if (!mPaymentDone) {
         outSuccess = false;
         return "";
@@ -462,6 +510,11 @@ std::string CartService::printReceipt(const std::vector<ProductItem>& products, 
 
     if (!cashierName.empty()) {
         mLastCashier = cashierName;
+    }
+
+    BillSummary summary = summaryOverride ? *summaryOverride : mLastBillSummary;
+    if (summary.subtotalWithoutTax == 0 && !mCart.empty()) {
+        summary = computeBillSummary(products, 0, 0);
     }
 
     std::time_t now = std::time(nullptr);
@@ -505,20 +558,28 @@ std::string CartService::printReceipt(const std::vector<ProductItem>& products, 
     }
 
     ss << "--------------------------------------------------------\n";
-    ss << "Subtotal:                                  " << formatRs(getSubtotal(products)) << "\n";
-    if (getDiscount(products) > 0) {
-        std::string dLabel = "Discount (" + getDiscountLabel() + "):";
-        std::string pad(std::max<int>(1, 43 - (int)dLabel.length()), ' ');
-        ss << dLabel << pad << formatRs(-getDiscount(products)) << "\n";
+    ss << "Subtotal (No Tax):                         " << formatRs(summary.subtotalWithoutTax) << "\n";
+    if (summary.totalTax > 0) {
+        ss << "Sales Tax:                                 " << formatRs(summary.totalTax) << "\n";
+    }
+    if (summary.totalApplicableDiscount > 0) {
+        ss << "Product / Promo Discount:                  " << formatRs(-summary.totalApplicableDiscount) << "\n";
+    }
+    if (summary.seasonalDiscount > 0) {
+        ss << "Seasonal Discount (" << summary.seasonalPercent << "%):                   " << formatRs(-summary.seasonalDiscount) << "\n";
+    }
+    if (summary.specialDiscount > 0) {
+        ss << "Special Discount (" << summary.specialPercent << "%):                    " << formatRs(-summary.specialDiscount) << "\n";
     }
     ss << "========================================================\n";
-    ss << "TOTAL AMOUNT:                              " << formatRs(getTotal(products)) << "\n";
+    ss << "TOTAL PAYABLE AMOUNT:                      " << formatRs(summary.totalPayable) << "\n";
     ss << "========================================================\n";
     ss << "Payment Method:                            " << (mPaymentMethod == 0 ? "CASH" : "CARD (VISA/MC)") << "\n";
 
     if (mPaymentMethod == 0) {
-        ss << "Cash Tendered:                             " << formatRs(parseCashGiven()) << "\n";
-        ss << "Change Returned:                           " << formatRs(getChangeAmount(products)) << "\n";
+        int given = parseCashGiven();
+        ss << "Cash Tendered:                             " << formatRs(given) << "\n";
+        ss << "Change Returned:                           " << formatRs(std::max(0, given - summary.totalPayable)) << "\n";
     } else {
         ss << "Card POS Approval:                         AUTH #984321 - APPROVED\n";
     }

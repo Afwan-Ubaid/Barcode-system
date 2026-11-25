@@ -293,11 +293,19 @@ bool InventoryManager::updateItemStock(const std::string& barcode, int newStock)
     return false;
 }
 
-std::string InventoryManager::generateUniqueBarcode() const {
-    // Generate sequential 6-digit numeric barcode starting at 100011
-    int candidate = 100001;
-    while (true) {
-        std::string candStr = std::to_string(candidate);
+std::string InventoryManager::generateUniqueBarcode(const std::string& categoryId) const {
+    // Requirement 1: The first two digits of the barcode shall represent the product category.
+    std::string catPrefix = categoryId;
+    if (catPrefix.length() < 2) catPrefix = "0" + catPrefix;
+    if (catPrefix.length() > 2) catPrefix = catPrefix.substr(0, 2);
+    if (catPrefix.empty()) catPrefix = "01";
+
+    // 6-digit barcode: 2 digits category + 4 digits sequence (0001 to 9999)
+    int seq = 1;
+    while (seq <= 9999) {
+        char buf[16];
+        std::snprintf(buf, sizeof(buf), "%s%04d", catPrefix.c_str(), seq);
+        std::string candStr = buf;
         bool used = false;
         for (const auto& it : mItems) {
             if (it.barcode == candStr) {
@@ -308,8 +316,9 @@ std::string InventoryManager::generateUniqueBarcode() const {
         if (!used) {
             return candStr;
         }
-        candidate++;
+        seq++;
     }
+    return catPrefix + "9999";
 }
 
 const InventoryItem* InventoryManager::findByBarcode(const std::string& barcode) const {

@@ -54,3 +54,5 @@
 2026-11-19 01:10:40|LOGIN|wadood|Authenticated user session (Employee) via login terminal
 2026-11-19 11:34:56|LOGIN|admin|Authenticated user session (Admin) via login terminal
 2026-11-19 11:35:58|INVENTORY|admin|Bought 30 units of ahmad (100010) from Nestle Pakistan at Rs 250/unit into inventory.txt
+2026-11-23 17:45:40|RETURN|admin|Customer returned 1x Fresh Milk (100001) - Refunded Rs 320 via Cash [Changed Mind] - Restocked
+2026-11-23 17:49:16|RETURN|admin|Customer returned 1x Fresh Milk (100001) - Refunded Rs 320 via Cash [Changed Mind] - Restocked

@@ -21,25 +21,25 @@ void PosNavigation::drawSidebar(sf::RenderTarget& target, sf::Vector2f m, float 
     drawSprite(target, getTexture("icons/scan.png"), 22, 22, 24, 24, ThemeColor::Ink);
     drawText(target, fontSemiBold, "ScanIT", 11, ThemeColor::Ink, 34, 58, TextAlignment::Center, 0.4f);
 
-    // Navigation Buttons (Admin: POS, Products, Inventory, Sales, Activity, Settings, Return; Employee: POS, Products, Sales, Return)
+    // Navigation Buttons (Admin: POS, Products, Inventory, Reports, Activity, Settings, Return; Employee: POS, Products, Return - ISE-105: Reports restricted from Cashier)
     bool isAdmin = (currentRole == "Admin");
-    std::vector<int> visibleTabs = isAdmin ? std::vector<int>{0, 1, 2, 3, 4, 5, 6} : std::vector<int>{0, 1, 3, 6};
+    std::vector<int> visibleTabs = isAdmin ? std::vector<int>{0, 1, 2, 3, 4, 5, 6} : std::vector<int>{0, 1, 6};
 
     for (size_t slot = 0; slot < visibleTabs.size(); slot++) {
         int i = visibleTabs[slot];
         float cy = Layout::NAV_Y[slot];
         bool selected = (activeTab == i);
-        bool hovered = pointInRect(m, 4, cy - 24, 60, 48);
+        bool hovered = pointInRect(m, 6, cy - 24, 60, 48);
 
         if (selected) {
-            drawRounded(target, 4, cy - 24, 60, 48, 12, sf::Color(228, 219, 200), sf::Color(214, 203, 182), 1.2f);
+            drawRounded(target, 6, cy - 24, 60, 48, 12, sf::Color(228, 219, 200), sf::Color(214, 203, 182), 1.2f);
         } else if (hovered) {
-            drawRounded(target, 4, cy - 24, 60, 48, 12, sf::Color(233, 225, 208));
+            drawRounded(target, 6, cy - 24, 60, 48, 12, sf::Color(233, 225, 208));
         }
 
-        drawSprite(target, getTexture("ui/pebble_" + std::string(Layout::NAV_ITEMS[i][1]) + ".png"), 16, cy - 22, 36, 36);
+        drawSprite(target, getTexture("ui/pebble_" + std::string(Layout::NAV_ITEMS[i][1]) + ".png"), 18, cy - 22, 36, 36);
         drawText(target, selected ? fontSemiBold : fontMedium, Layout::NAV_ITEMS[i][0], 8.5f,
-                 selected ? ThemeColor::Ink : ThemeColor::Mute, 34, cy + 17, TextAlignment::Center, 0.2f);
+                 selected ? ThemeColor::Ink : ThemeColor::Mute, 36.f, cy + 17, TextAlignment::Center, 0.2f);
     }
 
     // Role-Differentiated User Profile at bottom
@@ -110,7 +110,7 @@ void PosNavigation::drawSearch(sf::RenderTarget& target, sf::Vector2f m, float m
     drawSprite(target, getTexture("icons/scan.png"), searchBox.left + 14, searchBox.top + 11, 17, 17, ThemeColor::Mute);
 
     if (searchQuery.empty()) {
-        drawText(target, fontRegular, "Scan barcode (Gun / Camera Ready) or search...", 12, ThemeColor::Mute, searchBox.left + 42, searchBox.top + 19.5f);
+        drawText(target, fontRegular, "Scan barcode or search products...", 12, ThemeColor::Mute, searchBox.left + 42, searchBox.top + 19.5f);
     } else {
         bool showCaret = searchFocused && (std::fmod((float)clock() / CLOCKS_PER_SEC, 1.f) < 0.5f);
         drawText(target, fontRegular, searchQuery + (showCaret ? "|" : ""), 12, ThemeColor::Ink, searchBox.left + 42, searchBox.top + 19.5f);

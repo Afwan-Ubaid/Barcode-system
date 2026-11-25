@@ -34,6 +34,14 @@ static void parseArgs(const char* cmd, bool& shot, bool& shotPaid, std::string& 
     else if (strstr(cmd, "--screenshot-addinv")) { shot = true; modal = "addinv"; }
     else if (strstr(cmd, "--screenshot-splash")) { shot = true; modal = "splash"; }
     else if (strstr(cmd, "--screenshot-login")) { shot = true; modal = "login"; }
+    else if (strstr(cmd, "--screenshot-report1")) { shot = true; modal = "report1"; }
+    else if (strstr(cmd, "--screenshot-report2")) { shot = true; modal = "report2"; }
+    else if (strstr(cmd, "--screenshot-report3-custom")) { shot = true; modal = "report3_custom"; }
+    else if (strstr(cmd, "--screenshot-report3")) { shot = true; modal = "report3"; }
+    else if (strstr(cmd, "--screenshot-report4")) { shot = true; modal = "report4"; }
+    else if (strstr(cmd, "--screenshot-report5")) { shot = true; modal = "report5"; }
+    else if (strstr(cmd, "--screenshot-report6")) { shot = true; modal = "report6"; }
+    else if (strstr(cmd, "--screenshot-cashier-reports")) { shot = true; modal = "cashier_reports"; }
     else if (strstr(cmd, "--screenshot-products")) { shot = true; modal = "products"; }
     else if (strstr(cmd, "--screenshot-cashier-inventory")) { shot = true; modal = "cashier_inventory"; }
     else if (strstr(cmd, "--screenshot-inventory")) { shot = true; modal = "inventory"; }
@@ -43,11 +51,19 @@ static void parseArgs(const char* cmd, bool& shot, bool& shotPaid, std::string& 
     else if (strstr(cmd, "--screenshot-promo")) { shot = true; modal = "promo"; }
     else if (strstr(cmd, "--screenshot-sales")) { shot = true; modal = "sales"; }
     else if (strstr(cmd, "--screenshot-cashier-settings")) { shot = true; modal = "cashier_settings"; }
+    else if (strstr(cmd, "--screenshot-categories")) { shot = true; modal = "categories"; }
+    else if (strstr(cmd, "--screenshot-seasons")) { shot = true; modal = "seasons"; }
+    else if (strstr(cmd, "--screenshot-editproduct")) { shot = true; modal = "editproduct"; }
+    else if (strstr(cmd, "--screenshot-editorder")) { shot = true; modal = "editorder"; }
+    else if (strstr(cmd, "--screenshot-approval")) { shot = true; modal = "approval"; }
+    else if (strstr(cmd, "--screenshot-addcategory")) { shot = true; modal = "addcategory"; }
+    else if (strstr(cmd, "--screenshot-addseason")) { shot = true; modal = "addseason"; }
     else if (strstr(cmd, "--screenshot-settings")) { shot = true; modal = "settings"; }
     else if (strstr(cmd, "--screenshot-logs")) { shot = true; modal = "logs"; }
     else if (strstr(cmd, "--screenshot-activity")) { shot = true; modal = "logs"; }
     else if (strstr(cmd, "--screenshot-addstaff")) { shot = true; modal = "addstaff"; }
     else if (strstr(cmd, "--screenshot-resetpass")) { shot = true; modal = "resetpass"; }
+    else if (strstr(cmd, "--screenshot-return-slip")) { shot = true; modal = "return_slip"; }
     else if (strstr(cmd, "--screenshot-return-item")) { shot = true; modal = "return_item"; }
     else if (strstr(cmd, "--screenshot-return")) { shot = true; modal = "return"; }
     else if (strstr(cmd, "--screenshot-add")) { shot = true; modal = "add"; }

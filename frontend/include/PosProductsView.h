@@ -29,6 +29,7 @@ public:
                              const std::vector<ProductItem>& products,
                              const std::vector<int>& visibleIndices,
                              const std::string& activeCategory,
+                             const std::vector<ProductCategory>& categories,
                              const sf::Font& fontRegular, const sf::Font& fontSemiBold,
                              const sf::Font& fontBold, const sf::Font& fontSerif,
                              std::function<const sf::Texture&(const std::string&)> getTexture);

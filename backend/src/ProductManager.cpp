@@ -120,7 +120,7 @@ bool loadProducts(const std::string& path, std::vector<ProductItem>& products) {
         }
 
         auto tokens = splitSpaces(line);
-        if (tokens.size() < 11) continue;
+        if (tokens.size() < 10) continue;
 
         ProductItem item;
         item.id = tokens[0];
@@ -130,23 +130,41 @@ bool loadProducts(const std::string& path, std::vector<ProductItem>& products) {
             item.acronym = item.acronym.substr(0, 8);
         }
 
-        // D3: last token = categoryId, second-to-last = barcodePath
-        item.categoryId  = tokens.back();
-        item.barcodePath = tokens[tokens.size() - 2];
-        try { item.stock = std::stoi(tokens[tokens.size() - 3]); } catch (...) { item.stock = 0; }
-        try { item.discount = std::stoi(tokens[tokens.size() - 4]); } catch (...) { item.discount = 0; }
-        try { item.tax = std::stoi(tokens[tokens.size() - 5]); } catch (...) { item.tax = 0; }
-        try { item.unitPrice = std::stoi(tokens[tokens.size() - 6]); } catch (...) { item.unitPrice = 0; }
-        item.price = item.unitPrice;
-        item.unit = tokens[tokens.size() - 7];
+        if (tokens.size() >= 11) {
+            // D3: last token = categoryId, second-to-last = barcodePath
+            item.categoryId  = tokens.back();
+            item.barcodePath = tokens[tokens.size() - 2];
+            try { item.stock = std::stoi(tokens[tokens.size() - 3]); } catch (...) { item.stock = 0; }
+            try { item.discount = std::stoi(tokens[tokens.size() - 4]); } catch (...) { item.discount = 0; }
+            try { item.tax = std::stoi(tokens[tokens.size() - 5]); } catch (...) { item.tax = 0; }
+            try { item.unitPrice = std::stoi(tokens[tokens.size() - 6]); } catch (...) { item.unitPrice = 0; }
+            item.price = item.unitPrice;
+            item.unit = tokens[tokens.size() - 7];
 
-        // Join tokens between acronym and unit as the product name
-        std::string name;
-        for (size_t i = 3; i < tokens.size() - 7; i++) {
-            if (!name.empty()) name += " ";
-            name += tokens[i];
+            std::string name;
+            for (size_t i = 3; i < tokens.size() - 7; i++) {
+                if (!name.empty()) name += " ";
+                name += tokens[i];
+            }
+            item.name = desanitizeName(name);
+        } else {
+            // Older 10-field format fallback
+            item.categoryId  = "01";
+            item.barcodePath = tokens.back();
+            try { item.stock = std::stoi(tokens[tokens.size() - 2]); } catch (...) { item.stock = 0; }
+            try { item.discount = std::stoi(tokens[tokens.size() - 3]); } catch (...) { item.discount = 0; }
+            try { item.tax = std::stoi(tokens[tokens.size() - 4]); } catch (...) { item.tax = 0; }
+            try { item.unitPrice = std::stoi(tokens[tokens.size() - 5]); } catch (...) { item.unitPrice = 0; }
+            item.price = item.unitPrice;
+            item.unit = tokens[tokens.size() - 6];
+
+            std::string name;
+            for (size_t i = 3; i < tokens.size() - 6; i++) {
+                if (!name.empty()) name += " ";
+                name += tokens[i];
+            }
+            item.name = desanitizeName(name);
         }
-        item.name = desanitizeName(name);
 
         determineCategoryAndIcon(item);
         products.push_back(item);

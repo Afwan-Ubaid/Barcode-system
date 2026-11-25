@@ -3,11 +3,15 @@
 #include <sstream>
 #include <algorithm>
 #include <cstdio>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 CategoryManager::CategoryManager() {
-    loadCategories();
+    if (!loadCategories("PCategory.txt")) {
+        loadCategories("pCategory.txt");
+    }
     if (mCategories.empty()) {
-        // Seed defaults so the demo isn't empty on first run
         mCategories = {
             {"01", "Dairy",      "DAIRY"},
             {"02", "Bakery",     "BAKE"},
@@ -19,12 +23,24 @@ CategoryManager::CategoryManager() {
             {"08", "Personal",   "PERS"},
             {"09", "Grocery",    "GROC"}
         };
-        saveCategories();
+        saveCategories("PCategory.txt");
+        saveCategories("pCategory.txt");
     }
 }
 
 bool CategoryManager::loadCategories(const std::string& path) {
-    std::ifstream in(path);
+    std::string targetPath = path;
+    if (!fs::exists(targetPath)) {
+        if (targetPath == "PCategory.txt" && fs::exists("pCategory.txt")) {
+            targetPath = "pCategory.txt";
+        } else if (targetPath == "pCategory.txt" && fs::exists("PCategory.txt")) {
+            targetPath = "PCategory.txt";
+        } else {
+            return false;
+        }
+    }
+
+    std::ifstream in(targetPath);
     if (!in.is_open()) return false;
 
     mCategories.clear();
@@ -39,19 +55,38 @@ bool CategoryManager::loadCategories(const std::string& path) {
         std::istringstream iss(line);
         ProductCategory cat;
         if (iss >> cat.categoryId >> cat.name >> cat.acronym) {
+            for (char& ch : cat.name) if (ch == '_') ch = ' ';
+            for (char& ch : cat.acronym) if (ch == '_') ch = ' ';
             mCategories.push_back(cat);
         }
     }
-    return true;
+    return !mCategories.empty();
 }
 
 bool CategoryManager::saveCategories(const std::string& path) const {
-    std::ofstream out(path);
-    if (!out.is_open()) return false;
-    for (const auto& c : mCategories) {
-        out << c.categoryId << " " << c.name << " " << c.acronym << " #\n";
+    std::vector<std::string> paths = {path};
+    if (path == "PCategory.txt") paths.push_back("pCategory.txt");
+    else if (path == "pCategory.txt") paths.push_back("PCategory.txt");
+    if (fs::exists("frontend")) {
+        paths.push_back("frontend/pCategory.txt");
     }
-    return true;
+
+    bool success = false;
+    for (const auto& p : paths) {
+        std::ofstream out(p);
+        if (out.is_open()) {
+            for (const auto& c : mCategories) {
+                std::string sName = c.name;
+                std::string sAcr = c.acronym;
+                for (char& ch : sName) if (ch == ' ') ch = '_';
+                for (char& ch : sAcr) if (ch == ' ') ch = '_';
+                out << c.categoryId << " " << sName << " " << sAcr << " #\n";
+            }
+            out.close();
+            success = true;
+        }
+    }
+    return success;
 }
 
 bool CategoryManager::addCategory(const ProductCategory& cat) {
@@ -61,9 +96,39 @@ bool CategoryManager::addCategory(const ProductCategory& cat) {
     return true;
 }
 
+bool CategoryManager::updateCategory(const ProductCategory& cat) {
+    for (auto& c : mCategories) {
+        if (c.categoryId == cat.categoryId) {
+            c = cat;
+            saveCategories();
+            return true;
+        }
+    }
+    return false;
+}
+
+bool CategoryManager::deleteCategory(const std::string& id) {
+    auto it = std::remove_if(mCategories.begin(), mCategories.end(), [&](const ProductCategory& c) {
+        return c.categoryId == id;
+    });
+    if (it != mCategories.end()) {
+        mCategories.erase(it, mCategories.end());
+        saveCategories();
+        return true;
+    }
+    return false;
+}
+
 const ProductCategory* CategoryManager::findById(const std::string& id) const {
     for (const auto& c : mCategories) {
         if (c.categoryId == id) return &c;
+    }
+    return nullptr;
+}
+
+const ProductCategory* CategoryManager::findByName(const std::string& name) const {
+    for (const auto& c : mCategories) {
+        if (c.name == name) return &c;
     }
     return nullptr;
 }

@@ -11,7 +11,7 @@ namespace Layout {
         {"POS", "pos"},
         {"Products", "products"},
         {"Inventory", "inventory"},
-        {"Sales", "sales"},
+        {"Reports", "sales"},
         {"Activity", "activity"},
         {"Settings", "settings"},
         {"Return", "return"}

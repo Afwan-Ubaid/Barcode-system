@@ -46,8 +46,13 @@ public:
     int getDiscount(const std::vector<ProductItem>& products,
                     const std::vector<std::pair<std::string, std::string>>& barcodeSupplierMap) const;
     int getDiscount() const;
+    int getTax(const std::vector<ProductItem>& products) const;
     int getTax() const;
     int getTotal(const std::vector<ProductItem>& products) const;
+    BillSummary computeBillSummary(const std::vector<ProductItem>& products,
+                                   int seasonalPercent = 0,
+                                   int specialPercent = 0,
+                                   const std::vector<std::pair<std::string, std::string>>& barcodeSupplierMap = {}) const;
     int parseCashGiven() const;
     int getChangeAmount(const std::vector<ProductItem>& products) const;
 
@@ -92,8 +97,12 @@ public:
     const std::string& getCashGivenStr() const { return mCashGivenStr; }
 
     // Transactions & Output
-    bool chargeSale(std::vector<ProductItem>& products, const std::string& userName, std::string& outMessage);
-    std::string printReceipt(const std::vector<ProductItem>& products, const std::string& cashierName, bool& outSuccess);
+    bool chargeSale(std::vector<ProductItem>& products, const std::string& userName, std::string& outMessage,
+                    const BillSummary* summaryOverride = nullptr, const std::string& orderIdOverride = "");
+    std::string printReceipt(const std::vector<ProductItem>& products, const std::string& cashierName, bool& outSuccess,
+                             const BillSummary* summaryOverride = nullptr);
+    const BillSummary& getLastBillSummary() const { return mLastBillSummary; }
+    void setLastOrderId(const std::string& id) { mLastOrderId = id; }
 
     // Park & Retrieve Draft Orders
     bool parkCurrentCart(const std::vector<ProductItem>& products, const std::string& label = "");
@@ -134,6 +143,7 @@ private:
     std::string mLastOrderId = "ORD-1001";
     std::string mLastCashier = "System Admin";
     std::string mLastDateStr = "";
+    BillSummary mLastBillSummary;
 };
 
 #endif // CART_SERVICE_H

@@ -7,7 +7,7 @@
 
 // ============================================================================
 // D3 Req 1: PCategory.txt persistence
-// SRP: only loads/saves/queries categories. No UI, no barcode logic.
+// Handles loading, saving, and querying categories.
 // ============================================================================
 class CategoryManager {
 public:
@@ -17,10 +17,14 @@ public:
     bool saveCategories(const std::string& path = "PCategory.txt") const;
 
     const std::vector<ProductCategory>& getCategories() const { return mCategories; }
+    std::vector<ProductCategory>& getCategories() { return mCategories; }
 
     bool addCategory(const ProductCategory& cat);
+    bool updateCategory(const ProductCategory& cat);
+    bool deleteCategory(const std::string& id);
     const ProductCategory* findById(const std::string& id) const;
-    std::string nextCategoryId() const;  // "01" → "02"
+    const ProductCategory* findByName(const std::string& name) const;
+    std::string nextCategoryId() const;  // "01" -> "02"
 
 private:
     std::vector<ProductCategory> mCategories;

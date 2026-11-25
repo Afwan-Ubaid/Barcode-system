@@ -7,28 +7,28 @@
 ========================================================
                  SALES RECEIPT / INVOICE                
 --------------------------------------------------------
-Date:     2026-11-17 22:33:24
-Order ID: #ORD-1004
+Date:     2026-11-23 17:03:42
+Order ID: #ORD-1014
 Cashier:  admin
 Terminal: POS Counter 04
 Status:   COMPLETED / PAID IN FULL
 --------------------------------------------------------
 ITEM NAME                  QTY    UNIT PRICE     TOTAL  
 --------------------------------------------------------
-Sourdough Bread            x2     Rs 180       Rs 360
-Atelier Coffee             x1     Rs 180       Rs 180
+Atelier Coffee             x1     Rs 100       Rs 100
+Basmati Rice               x2     Rs 100       Rs 200
+Fresh Milk                 x1     Rs 100       Rs 100
+Green Tea                  x1     Rs 100       Rs 100
 --------------------------------------------------------
-Subtotal:                                  Rs 540
-Discount (Store Promo):                   - Rs 120
-Sales Tax (GST 0% - Exempt):               Rs 0 (Exempt)
+Subtotal:                                  Rs 500
 ========================================================
-TOTAL AMOUNT:                              Rs 420
+TOTAL AMOUNT:                              Rs 500
 ========================================================
 Payment Method:                            CASH
-Cash Tendered:                             Rs 420
-Change Returned:                           Rs 0
+Cash Tendered:                             Rs 1,500
+Change Returned:                           Rs 1,000
 --------------------------------------------------------
-                 * ORD-1004 *
+                 * ORD-1014 *
 --------------------------------------------------------
        THANK YOU FOR SHOPPING WITH SCANIT STORE!        
     Exchange / Return valid for 7 days with this slip   

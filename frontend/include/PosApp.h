@@ -55,9 +55,27 @@ private:
     void onBarcodeScanned(const std::string& barcode);
     void lookupReturnItem(const std::string& barcode);
     void processReturn();
-    void recordSaleToOutputFiles(const std::vector<CartLine>& cartItems, const std::string& cashierName, int paymentMethod);
+    void recordSaleToOutputFiles(const std::vector<CartLine>& cartItems, const std::string& cashierName,
+                                   int paymentMethod, const std::string& orderStatus = "paid");
     void generateNewItemBarcode();
     void saveNewInventoryItem();
+
+    // D3 New Capabilities Handlers
+    BillSummary computeCurrentBillSummary() const;
+    void finalizePayment(int paymentMethod);
+    void holdCurrentOrder();
+    void resumeLatestHeldOrder();
+    void syncProductCategoriesFromManager();
+    void printBillPdf();
+    void openEditProductModal(int productIdx);
+    void saveEditedProduct();
+    void openEditOrderModal();
+    void tryOpenOrderForEditing(const std::string& orderId);
+    void approveAndLoadOrder();
+    void openAddCategoryModal();
+    void saveNewCategory();
+    void openAddSeasonModal();
+    void saveNewSeason();
 
     void showToast(const std::string& message);
     void switchCamera();
@@ -146,8 +164,16 @@ private:
     bool mSaleDetailModalOpen = false;
     bool mPromoModalOpen = false;
 
-    // Sales Tab Sub-Tabs (0 = Sales Orders, 1 = Customer Returns)
+    // Sales & Reports Tab Sub-Tabs (0=Incomplete Orders, 1=Completed Orders, 2=Cash Sales, 3=All Sales, 4=Top 10 Sold, 5=Top 10 Overstocked)
     int mSalesSubTab = 0;
+    std::vector<OrderRecord> mOrders;
+    std::vector<OrderDetailItem> mOrderDetails;
+    std::vector<BillRecord> mBills;
+    std::vector<BillDetailRecord> mBillDetails;
+    void reloadAuditData();
+    std::string mCashCustomStartDate = "2026-11-01";
+    std::string mCashCustomEndDate = "2026-11-30";
+    int mCashCustomActiveField = 0; // 0=none, 1=startDate, 2=endDate
     std::vector<ReturnRecord> mReturnHistory;
     bool loadReturnsFile(const std::string& filename = "returns.txt");
     bool saveReturnsFile(const std::string& filename = "returns.txt");
@@ -180,6 +206,10 @@ private:
     bool mNewItemGenerated = false;
     bool mVendorDropdownOpen = false;
     bool mScanningUniversalSupplier = false;
+    bool mNewItemAlsoAddToCatalog = true;
+
+    std::string mEnlargeScannerQuery = "";
+    bool mEnlargeScannerFocused = true;
 
     // Item Description Modal Details
     std::string mDescItemName = "";
@@ -216,9 +246,17 @@ private:
     int mReturnSalePrice = 0;
     std::string mReturnOrderId = "";
     std::string mReturnCustomer = "";
+    std::string mReturnCustomerContact = "";
     std::string mReturnDate = "";
     std::string mReturnStatusMessage = "";
     bool mReturnSuccess = false;
+    std::string mReturnReason = "Customer Changed Mind";
+    int mReturnReasonIdx = 0; // 0: Changed Mind, 1: Defective / Damaged, 2: Wrong Item, 3: Expired, 4: Quality Issue
+    int mReturnPaymentMethod = 0; // 0: Cash, 1: Card / Original, 2: Store Credit
+    bool mReturnRestock = true; // true: Restock, false: Discard / Damaged
+    std::string mReturnSlipText = "";
+    bool mReturnSlipModalOpen = false;
+    std::vector<std::pair<std::string, std::string>> mReturnOrderItemPills;
 
     // Discount Modal State
     bool mDiscountModalOpen = false;
@@ -255,6 +293,54 @@ private:
     float mBarcodeFoundTimer = 0.f;
     std::string mDetectedBarcode = "";
     BarcodeBox mBarcodeBox;
+
+    // D3 State Variables
+    int mSettingsSubTab = 0; // 0=Staff/System, 1=Categories, 2=Seasons
+    float mSettingsScrollOffset = 0.f;
+
+    bool mAddCategoryModalOpen = false;
+    std::string mNewCatId = "";
+    std::string mNewCatName = "";
+    std::string mNewCatAcr = "";
+    int mNewCatActiveField = 0;
+
+    bool mAddSeasonModalOpen = false;
+    std::string mNewSeasonStart = "2026-11-23";
+    std::string mNewSeasonEnd = "2026-12-31";
+    std::string mNewSeasonPctStr = "15";
+    int mNewSeasonActiveField = 0;
+
+    bool mEditProductModalOpen = false;
+    int mEditingProductIdx = -1;
+    std::string mEditProductName = "";
+    std::string mEditProductPriceStr = "";
+    std::string mEditProductUnit = "";
+    std::string mEditProductStockStr = "";
+    std::string mEditProductCategory = "";
+    std::string mEditProductCatId = "01";
+    std::string mEditProductDiscountStr = "0";
+    int mEditProductActiveField = 0;
+
+    bool mEditOrderModalOpen = false;
+    std::string mEditOrderSearchId = "";
+    bool mEditOrderSearchFocused = true;
+    std::string mEditOrderStatusMsg = "";
+    float mEditOrderScrollOffset = 0.f;
+
+    bool mManagerApprovalModalOpen = false;
+    std::string mApprovalTargetOrderId = "";
+    std::string mApprovalTargetOrderDate = "";
+    std::string mApprovalPassInput = "";
+    std::string mApprovalErrorMsg = "";
+
+    bool mIsEditingExistingOrder = false;
+    std::string mCurrentEditingOrderId = "";
+    std::vector<OrderDetailItem> mOriginalEditingOrderItems;
+    std::string mOriginalEditingOrderStatus = "";
+
+    std::string mSpecialDiscountInputStr = "0";
+    bool mSpecialDiscountFocused = false;
+    std::string mLastSavedBillId = "";
 };
 
 #endif // POS_APP_H

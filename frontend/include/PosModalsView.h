@@ -19,6 +19,7 @@ public:
     static void drawReceiptModal(sf::RenderTarget& target, sf::Vector2f mouse,
                                  float currentWidth, float designHeight,
                                  const CartService& cartService,
+                                 const BillSummary& summary,
                                  const std::vector<ProductItem>& products,
                                  const std::string& cashierName,
                                  const sf::Font& fontRegular, const sf::Font& fontMedium,
@@ -30,21 +31,28 @@ public:
                                      float currentWidth, float designHeight,
                                      const std::vector<CartLine>& cart,
                                      const std::vector<ProductItem>& products,
-                                     int subtotal, int total, float scrollOffset,
+                                     const BillSummary& summary, float scrollOffset,
+                                     const sf::Texture& cameraTexture,
+                                     const std::string& barcodeQuery,
+                                     bool scannerInputFocused,
+                                     const std::string& lastScannedInfo,
+                                     const std::string& activeCameraName,
                                      const sf::Font& fontRegular, const sf::Font& fontSemiBold,
                                      const sf::Font& fontBold, const sf::Font& fontSerif,
                                      std::function<const sf::Texture&(const std::string&)> getTexture);
 
     static void drawCashModal(sf::RenderTarget& target, sf::Vector2f mouse,
                               float currentWidth, float designHeight,
-                              int total, int cashGiven, const std::string& cashGivenStr,
+                              const BillSummary& summary, int cashGiven, const std::string& cashGivenStr,
                               bool inputFocused,
+                              const std::string& specialDiscountStr, bool specialDiscountFocused,
                               const sf::Font& fontRegular, const sf::Font& fontSemiBold,
                               const sf::Font& fontBold, const sf::Font& fontSerif,
                               std::function<const sf::Texture&(const std::string&)> getTexture);
 
     static void drawCardModal(sf::RenderTarget& target, sf::Vector2f mouse,
-                              float currentWidth, float designHeight, int total,
+                              float currentWidth, float designHeight, const BillSummary& summary,
+                              const std::string& specialDiscountStr, bool specialDiscountFocused,
                               const sf::Font& fontRegular, const sf::Font& fontSemiBold,
                               const sf::Font& fontBold, const sf::Font& fontSerif,
                               std::function<const sf::Texture&(const std::string&)> getTexture);
@@ -78,6 +86,7 @@ public:
                                       const std::string& supplier,
                                       const std::string& desc,
                                       const std::string& category,
+                                      const std::vector<ProductCategory>& categories,
                                       const std::string& unit,
                                       const std::string& retailPriceStr,
                                       const std::string& costPriceStr,
@@ -89,6 +98,8 @@ public:
                                       const std::vector<std::string>& previousVendors,
                                       bool vendorDropdownOpen,
                                       bool scanningUniversal,
+                                      bool alsoAddToCatalog,
+                                      const std::string& activeCameraName,
                                       const sf::Font& fontRegular, const sf::Font& fontMedium,
                                       const sf::Font& fontSemiBold, const sf::Font& fontBold,
                                       const sf::Font& fontSerif,
@@ -149,7 +160,7 @@ public:
     static void drawDiscountModal(sf::RenderTarget& target, sf::Vector2f mouse,
                                   float currentWidth, float designHeight,
                                   const CartService& cartService,
-                                  int studentRate, int employeeRate,
+                                  int studentRate, int employeeRate, int activeSeasonalPct,
                                   const std::string& empUser, const std::string& empPass, int activeField,
                                   const std::string& promoInput,
                                   const std::string& errorMessage,
@@ -179,6 +190,51 @@ public:
                                          const sf::Font& fontRegular, const sf::Font& fontMedium,
                                          const sf::Font& fontSemiBold, const sf::Font& fontBold,
                                          const sf::Font& fontSerif);
+
+    static void drawEditProductModal(sf::RenderTarget& target, sf::Vector2f mouse,
+                                     float currentWidth, float designHeight,
+                                     const std::string& name, const std::string& priceStr,
+                                     const std::string& unit, const std::string& stockStr,
+                                     const std::string& category, const std::string& catId,
+                                     const std::string& discountStr, int activeField,
+                                     const std::vector<ProductCategory>& categories,
+                                     const sf::Font& fontRegular, const sf::Font& fontMedium,
+                                     const sf::Font& fontSemiBold, const sf::Font& fontBold,
+                                     const sf::Font& fontSerif);
+
+    static void drawEditOrderModal(sf::RenderTarget& target, sf::Vector2f mouse,
+                                   float currentWidth, float designHeight,
+                                   const std::vector<OrderRecord>& orders,
+                                   const std::string& searchOrderId, bool searchFocused,
+                                   const std::string& statusMessage,
+                                   float scrollOffset,
+                                   const sf::Font& fontRegular, const sf::Font& fontMedium,
+                                   const sf::Font& fontSemiBold, const sf::Font& fontBold,
+                                   const sf::Font& fontSerif);
+
+    static void drawManagerApprovalModal(sf::RenderTarget& target, sf::Vector2f mouse,
+                                         float currentWidth, float designHeight,
+                                         const std::string& orderId, const std::string& orderDate,
+                                         const std::string& passInput, const std::string& errorMessage,
+                                         const sf::Font& fontRegular, const sf::Font& fontMedium,
+                                         const sf::Font& fontSemiBold, const sf::Font& fontBold,
+                                         const sf::Font& fontSerif);
+
+    static void drawAddCategoryModal(sf::RenderTarget& target, sf::Vector2f mouse,
+                                     float currentWidth, float designHeight,
+                                     const std::string& catId, const std::string& catName,
+                                     const std::string& catAcr, int activeField,
+                                     const sf::Font& fontRegular, const sf::Font& fontMedium,
+                                     const sf::Font& fontSemiBold, const sf::Font& fontBold,
+                                     const sf::Font& fontSerif);
+
+    static void drawAddSeasonModal(sf::RenderTarget& target, sf::Vector2f mouse,
+                                   float currentWidth, float designHeight,
+                                   const std::string& startDate, const std::string& endDate,
+                                   const std::string& pctStr, int activeField,
+                                   const sf::Font& fontRegular, const sf::Font& fontMedium,
+                                   const sf::Font& fontSemiBold, const sf::Font& fontBold,
+                                   const sf::Font& fontSerif);
 
     static void drawWalletModal(sf::RenderTarget& target, sf::Vector2f mouse) {}
     static void drawDescModal(sf::RenderTarget& target, sf::Vector2f mouse) {}
