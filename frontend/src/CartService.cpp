@@ -151,7 +151,8 @@ int CartService::getTotal(const std::vector<ProductItem>& products) const {
 BillSummary CartService::computeBillSummary(const std::vector<ProductItem>& products,
                                             int seasonalPercent,
                                             int specialPercent,
-                                            const std::vector<std::pair<std::string, std::string>>& barcodeSupplierMap) const {
+                                            const std::vector<std::pair<std::string, std::string>>& barcodeSupplierMap,
+                                            int loyaltyPointsToRedeem) const {
     BillSummary s;
     for (const auto& line : mCart) {
         if (line.productId >= 0 && line.productId < (int)products.size()) {
@@ -172,10 +173,12 @@ BillSummary CartService::computeBillSummary(const std::vector<ProductItem>& prod
     s.specialPercent = std::clamp(specialPercent, 0, 8);
     s.specialDiscount = (afterSeasonal * s.specialPercent) / 100;
 
-    s.totalPayable = std::max(0, s.subtotalWithoutTax + s.totalTax
-                                 - s.totalApplicableDiscount
-                                 - s.seasonalDiscount
-                                 - s.specialDiscount);
+    int afterSpecial = std::max(0, s.subtotalWithoutTax + s.totalTax
+                                      - s.totalApplicableDiscount
+                                      - s.seasonalDiscount
+                                      - s.specialDiscount);
+    s.loyaltyDiscount = std::clamp(loyaltyPointsToRedeem, 0, afterSpecial);
+    s.totalPayable = std::max(0, afterSpecial - s.loyaltyDiscount);
     return s;
 }
 
@@ -479,9 +482,17 @@ bool CartService::chargeSale(std::vector<ProductItem>& products, const std::stri
     rec.timestamp = buf;
     rec.itemCount = (int)mCart.size();
     rec.totalAmount = total;
-    rec.paymentMethod = (mPaymentMethod == 0 ? "Cash" : "Card");
-    rec.cashGiven = (mPaymentMethod == 0 ? given : total);
-    rec.changeGiven = (mPaymentMethod == 0 ? std::max(0, given - total) : 0);
+    rec.paymentMethod = (mPaymentMethod == 0 ? "Cash" : (mPaymentMethod == 1 ? "Card" : "Split"));
+    if (mPaymentMethod == 0) {
+        rec.cashGiven = given;
+        rec.changeGiven = std::max(0, given - total);
+    } else if (mPaymentMethod == 2) {
+        rec.cashGiven = summary.splitCashAmount;
+        rec.changeGiven = 0;
+    } else {
+        rec.cashGiven = total;
+        rec.changeGiven = 0;
+    }
     rec.items = mCart;
     rec.orderId = mLastOrderId;
     rec.cashier = mLastCashier;
@@ -497,7 +508,12 @@ bool CartService::chargeSale(std::vector<ProductItem>& products, const std::stri
     }
 
     mPaymentDone = true;
-    outMessage = "Payment Successful! Paid " + formatRs(total) + (mPaymentMethod == 0 ? " in Cash" : " by Card") + " - Print is ready";
+    if (mPaymentMethod == 2) {
+        outMessage = "Payment Successful! Paid " + formatRs(total) + " (Split: Cash " +
+                     formatRs(summary.splitCashAmount) + " + Card " + formatRs(summary.splitCardAmount) + ") - Print is ready";
+    } else {
+        outMessage = "Payment Successful! Paid " + formatRs(total) + (mPaymentMethod == 0 ? " in Cash" : " by Card") + " - Print is ready";
+    }
     return true;
 }
 
@@ -571,15 +587,22 @@ std::string CartService::printReceipt(const std::vector<ProductItem>& products, 
     if (summary.specialDiscount > 0) {
         ss << "Special Discount (" << summary.specialPercent << "%):                    " << formatRs(-summary.specialDiscount) << "\n";
     }
+    if (summary.loyaltyDiscount > 0) {
+        ss << "Loyalty Points Redeemed:                   " << formatRs(-summary.loyaltyDiscount) << "\n";
+    }
     ss << "========================================================\n";
     ss << "TOTAL PAYABLE AMOUNT:                      " << formatRs(summary.totalPayable) << "\n";
     ss << "========================================================\n";
-    ss << "Payment Method:                            " << (mPaymentMethod == 0 ? "CASH" : "CARD (VISA/MC)") << "\n";
+    std::string payLabel = (mPaymentMethod == 0 ? "CASH" : (mPaymentMethod == 1 ? "CARD (VISA/MC)" : "SPLIT (CASH + CARD)"));
+    ss << "Payment Method:                            " << payLabel << "\n";
 
     if (mPaymentMethod == 0) {
         int given = parseCashGiven();
         ss << "Cash Tendered:                             " << formatRs(given) << "\n";
         ss << "Change Returned:                           " << formatRs(std::max(0, given - summary.totalPayable)) << "\n";
+    } else if (mPaymentMethod == 2) {
+        ss << "Cash Portion:                              " << formatRs(summary.splitCashAmount) << "\n";
+        ss << "Card Portion (AUTH #984321):               " << formatRs(summary.splitCardAmount) << "\n";
     } else {
         ss << "Card POS Approval:                         AUTH #984321 - APPROVED\n";
     }

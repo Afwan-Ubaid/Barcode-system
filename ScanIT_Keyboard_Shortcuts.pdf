@@ -1,0 +1,198 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+6 0 obj
+<< /Length 5339 >>
+stream
+0.94 0.93 0.89 rg 36 744 523 62 re f
+0.14 0.14 0.14 rg
+BT /F2 17 Tf 52 782 Td (ScanIT POS - Keyboard Shortcuts Reference) Tj ET
+0.4 0.38 0.35 rg
+BT /F1 10 Tf 52 761 Td (Fast-Billing Cashier & Manager Hotkeys | Paid-Order Lock Protected) Tj ET
+0.16 0.22 0.2 rg 36 704 523 24 re f
+1 1 1 rg
+BT /F2 9.5 Tf 50 712 Td (SHORTCUT KEY) Tj ET
+1 1 1 rg
+BT /F2 9.5 Tf 150 712 Td (CATEGORY) Tj ET
+1 1 1 rg
+BT /F2 9.5 Tf 235 712 Td (ACTION / BEHAVIOR) Tj ET
+0.91 0.89 0.84 rg 48 679 66 16 re f
+0.12 0.12 0.12 rg
+BT /F2 9.5 Tf 56 683 Td (F2) Tj ET
+0.15 0.38 0.65 rg
+BT /F2 9 Tf 150 683 Td (Billing) Tj ET
+0.15 0.15 0.15 rg
+BT /F1 9.5 Tf 235 683 Td (Simulate barcode scan / add test item to cart) Tj ET
+0.88 G 0.5 w
+36 675 m 559 675 l S
+0.96 0.96 0.95 rg 36 650 523 24 re f
+0.91 0.89 0.84 rg 48 654 66 16 re f
+0.12 0.12 0.12 rg
+BT /F2 9.5 Tf 56 658 Td (F3) Tj ET
+0.15 0.38 0.65 rg
+BT /F2 9 Tf 150 658 Td (Billing) Tj ET
+0.15 0.15 0.15 rg
+BT /F1 9.5 Tf 235 658 Td (Open or toggle Quick Check barcode price lookup modal) Tj ET
+0.88 G 0.5 w
+36 650 m 559 650 l S
+0.91 0.89 0.84 rg 48 629 66 16 re f
+0.12 0.12 0.12 rg
+BT /F2 9.5 Tf 56 633 Td (F4) Tj ET
+0.15 0.38 0.65 rg
+BT /F2 9 Tf 150 633 Td (Checkout) Tj ET
+0.15 0.15 0.15 rg
+BT /F1 9.5 Tf 235 633 Td (Open Cash Checkout modal \(when cart has items & unpaid\)) Tj ET
+0.88 G 0.5 w
+36 625 m 559 625 l S
+0.96 0.96 0.95 rg 36 600 523 24 re f
+0.91 0.89 0.84 rg 48 604 66 16 re f
+0.12 0.12 0.12 rg
+BT /F2 9.5 Tf 56 608 Td (F5) Tj ET
+0.15 0.38 0.65 rg
+BT /F2 9 Tf 150 608 Td (Checkout) Tj ET
+0.15 0.15 0.15 rg
+BT /F1 9.5 Tf 235 608 Td (Open Card Checkout modal \(when cart has items & unpaid\)) Tj ET
+0.88 G 0.5 w
+36 600 m 559 600 l S
+0.91 0.89 0.84 rg 48 579 66 16 re f
+0.12 0.12 0.12 rg
+BT /F2 9.5 Tf 56 583 Td (F6) Tj ET
+0.15 0.38 0.65 rg
+BT /F2 9 Tf 150 583 Td (Orders) Tj ET
+0.15 0.15 0.15 rg
+BT /F1 9.5 Tf 235 583 Td (Hold Cart \(save order as on-hold & park draft\)) Tj ET
+0.88 G 0.5 w
+36 575 m 559 575 l S
+0.96 0.96 0.95 rg 36 550 523 24 re f
+0.91 0.89 0.84 rg 48 554 66 16 re f
+0.12 0.12 0.12 rg
+BT /F2 9.5 Tf 56 558 Td (F7) Tj ET
+0.15 0.38 0.65 rg
+BT /F2 9 Tf 150 558 Td (Orders) Tj ET
+0.15 0.15 0.15 rg
+BT /F1 9.5 Tf 235 558 Td (Resume latest held / parked cart) Tj ET
+0.88 G 0.5 w
+36 550 m 559 550 l S
+0.91 0.89 0.84 rg 48 529 66 16 re f
+0.12 0.12 0.12 rg
+BT /F2 9.5 Tf 56 533 Td (F8) Tj ET
+0.15 0.38 0.65 rg
+BT /F2 9 Tf 150 533 Td (Billing) Tj ET
+0.15 0.15 0.15 rg
+BT /F1 9.5 Tf 235 533 Td (Open or toggle Enlarge Cart + Side Camera view) Tj ET
+0.88 G 0.5 w
+36 525 m 559 525 l S
+0.96 0.96 0.95 rg 36 500 523 24 re f
+0.91 0.89 0.84 rg 48 504 66 16 re f
+0.12 0.12 0.12 rg
+BT /F2 9.5 Tf 56 508 Td (F9) Tj ET
+0.15 0.38 0.65 rg
+BT /F2 9 Tf 150 508 Td (Checkout) Tj ET
+0.15 0.15 0.15 rg
+BT /F1 9.5 Tf 235 508 Td (Open Split Payment \(Cash + Card\) modal) Tj ET
+0.88 G 0.5 w
+36 500 m 559 500 l S
+0.91 0.89 0.84 rg 48 479 66 16 re f
+0.12 0.12 0.12 rg
+BT /F2 9.5 Tf 56 483 Td (F10) Tj ET
+0.15 0.38 0.65 rg
+BT /F2 9 Tf 150 483 Td (Loyalty) Tj ET
+0.15 0.15 0.15 rg
+BT /F1 9.5 Tf 235 483 Td (Open or toggle Customer Loyalty & History modal) Tj ET
+0.88 G 0.5 w
+36 475 m 559 475 l S
+0.96 0.96 0.95 rg 36 450 523 24 re f
+0.91 0.89 0.84 rg 48 454 66 16 re f
+0.12 0.12 0.12 rg
+BT /F2 9.5 Tf 56 458 Td (+ or =) Tj ET
+0.15 0.38 0.65 rg
+BT /F2 9 Tf 150 458 Td (Cart Qty) Tj ET
+0.15 0.15 0.15 rg
+BT /F1 9.5 Tf 235 458 Td (Increase last cart item quantity by 1 \(unpaid only\)) Tj ET
+0.88 G 0.5 w
+36 450 m 559 450 l S
+0.91 0.89 0.84 rg 48 429 66 16 re f
+0.12 0.12 0.12 rg
+BT /F2 9.5 Tf 56 433 Td (-) Tj ET
+0.15 0.38 0.65 rg
+BT /F2 9 Tf 150 433 Td (Cart Qty) Tj ET
+0.15 0.15 0.15 rg
+BT /F1 9.5 Tf 235 433 Td (Decrease last cart item quantity by 1 \(unpaid only\)) Tj ET
+0.88 G 0.5 w
+36 425 m 559 425 l S
+0.96 0.96 0.95 rg 36 400 523 24 re f
+0.91 0.89 0.84 rg 48 404 66 16 re f
+0.12 0.12 0.12 rg
+BT /F2 9.5 Tf 56 408 Td (C) Tj ET
+0.15 0.38 0.65 rg
+BT /F2 9 Tf 150 408 Td (Scanner) Tj ET
+0.15 0.15 0.15 rg
+BT /F1 9.5 Tf 235 408 Td (Switch active camera source \(when not typing in a field\)) Tj ET
+0.88 G 0.5 w
+36 400 m 559 400 l S
+0.91 0.89 0.84 rg 48 379 66 16 re f
+0.12 0.12 0.12 rg
+BT /F2 9.5 Tf 56 383 Td (Tab) Tj ET
+0.15 0.38 0.65 rg
+BT /F2 9 Tf 150 383 Td (Modals) Tj ET
+0.15 0.15 0.15 rg
+BT /F1 9.5 Tf 235 383 Td (Move focus to the next input field inside open modals) Tj ET
+0.88 G 0.5 w
+36 375 m 559 375 l S
+0.96 0.96 0.95 rg 36 350 523 24 re f
+0.91 0.89 0.84 rg 48 354 66 16 re f
+0.12 0.12 0.12 rg
+BT /F2 9.5 Tf 56 358 Td (Enter) Tj ET
+0.15 0.38 0.65 rg
+BT /F2 9 Tf 150 358 Td (Modals) Tj ET
+0.15 0.15 0.15 rg
+BT /F1 9.5 Tf 235 358 Td (Submit / confirm active modal or barcode search) Tj ET
+0.88 G 0.5 w
+36 350 m 559 350 l S
+0.91 0.89 0.84 rg 48 329 66 16 re f
+0.12 0.12 0.12 rg
+BT /F2 9.5 Tf 56 333 Td (Esc) Tj ET
+0.15 0.38 0.65 rg
+BT /F2 9 Tf 150 333 Td (Global) Tj ET
+0.15 0.15 0.15 rg
+BT /F1 9.5 Tf 235 333 Td (Close any open modal, unfocus inputs, and clear search) Tj ET
+0.88 G 0.5 w
+36 325 m 559 325 l S
+0.92 0.96 0.93 rg 36 70 523 34 re f
+0.25 0.55 0.35 RG 1 w 36 70 523 34 re S
+0.12 0.35 0.18 rg
+BT /F1 8.5 Tf 46 83 Td (Note: Single-key shortcuts \(C, +, -\) pause automatically while typing in text inputs. Paid orders remain locked until '+ Start New Sale'.) Tj ET
+0.8 G 1 w
+36 52 m 559 52 l S
+0.45 0.45 0.45 rg
+BT /F1 8 Tf 36 36 Td (ScanIT Supermarket Point of Sale System - Quick Reference Sheet) Tj ET
+
+endstream
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000251 00000 n 
+0000000321 00000 n 
+0000000396 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+5787
+%%EOF

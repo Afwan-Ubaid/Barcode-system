@@ -179,6 +179,7 @@
     <ClCompile Include="src\LoginScreen.cpp" />
     <ClCompile Include="src\CategoryManager.cpp" />
     <ClCompile Include="src\SeasonManager.cpp" />
+    <ClCompile Include="src\CustomerManager.cpp" />
     <ClCompile Include="src\PdfGenerator.cpp" />
     <!-- Backend sources: given extra include dir so bare #include "X.h" resolves -->
     <ClCompile Include="..\backend\src\Generator.cpp">
@@ -215,6 +216,10 @@
     <ClInclude Include="include\PosModalsView.h" />
     <ClInclude Include="include\SplashScreen.h" />
     <ClInclude Include="include\LoginScreen.h" />
+    <ClInclude Include="include\CustomerManager.h" />
+    <ClInclude Include="include\CategoryManager.h" />
+    <ClInclude Include="include\SeasonManager.h" />
+    <ClInclude Include="include\PdfGenerator.h" />
     <ClInclude Include="..\backend\include\Generator.h" />
     <ClInclude Include="..\backend\include\Decoder.h" />
     <ClInclude Include="..\backend\include\Validator.h" />

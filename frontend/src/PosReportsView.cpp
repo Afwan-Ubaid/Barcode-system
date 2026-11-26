@@ -83,16 +83,30 @@ void PosReportsView::drawSalesTab(sf::RenderTarget& target, sf::Vector2f mouse, 
     else if (salesSubTab == 3) title = "Report 4: All Sales & Discounts Summary";
     else if (salesSubTab == 4) title = "Report 5: Top 10 Most Sold Items";
     else if (salesSubTab == 5) title = "Report 6: Top 10 Overstocked Items (Hold Purchase)";
-    else if (salesSubTab == 6) title = "Customer Returns & Refund Audit";
+    else if (salesSubTab == 6) title = "Report 7: Low-Stock Reorder List (< 15)";
+    else if (salesSubTab == 7) title = "Customer Returns & Refund Audit";
 
-    drawText(target, fontSerif, title, 16.5f, ThemeColor::Ink, mainX + 2.f, 38);
+    drawText(target, fontSerif, title, 16.f, ThemeColor::Ink, mainX + 2.f, 38);
 
-    // Tab switcher pills (6 Distinct Manager Reports)
-    const char* tabLabels[] = {"1. Incomplete", "2. Completed", "3. Cash Audit", "4. All Sales", "5. Top Sold", "6. Overstock"};
-    float pillW = 86.f;
+    // Export CSV & Export PDF buttons (Top-Right of Reports Header)
+    float expCsvX = mainX + Layout::MAIN_W - 154.f;
+    float expPdfX = mainX + Layout::MAIN_W - 76.f;
+    float expY = 27.f;
+    bool hovCsv = pointInRect(mouse, expCsvX, expY, 74.f, 24.f);
+    bool hovPdf = pointInRect(mouse, expPdfX, expY, 74.f, 24.f);
+    drawRounded(target, expCsvX, expY, 74.f, 24.f, 5,
+                hovCsv ? sf::Color(225, 240, 230) : ThemeColor::Paper, ThemeColor::Green, 1.f);
+    drawText(target, fontSemiBold, "Export CSV", 8.f, sf::Color(22, 101, 52), expCsvX + 37.f, expY + 12.f, TextAlignment::Center);
+    drawRounded(target, expPdfX, expY, 74.f, 24.f, 5,
+                hovPdf ? sf::Color(29, 78, 216) : ThemeColor::Blue);
+    drawText(target, fontSemiBold, "Export PDF", 8.f, ThemeColor::White, expPdfX + 37.f, expY + 12.f, TextAlignment::Center);
+
+    // Tab switcher pills (Option A: 7 Manager Reports spanning 541px)
+    const char* tabLabels[] = {"1.Inc", "2.Compl", "3.Cash", "4.Sales", "5.Top", "6.Over", "7.Reorder"};
+    float pillW = 73.f;
     float pillY = 66.f;
-    for (int ti = 0; ti < 6; ti++) {
-        float px = mainX + ti * 91.f;
+    for (int ti = 0; ti < 7; ti++) {
+        float px = mainX + ti * 78.f;
         bool active = (salesSubTab == ti);
         bool hov = pointInRect(mouse, px, pillY, pillW, 26.f);
         drawRounded(target, px, pillY, pillW, 26.f, 5,
@@ -681,7 +695,83 @@ void PosReportsView::drawSalesTab(sf::RenderTarget& target, sf::Vector2f mouse, 
         drawText(target, fontBold, "Tied-Up Capital: " + formatRs(totalCapitalTied), 11.5f, sf::Color(220, 70, 60), mainX + Layout::MAIN_W - 15, ty + 481.f, TextAlignment::Right);
     }
     // =========================================================================
-    // REPORT 7: CUSTOMER RETURNS AUDIT
+    // REPORT 7: LOW-STOCK ALERTS & AUTOMATED REORDER LIST (Stock < 15)
+    // =========================================================================
+    else if (salesSubTab == 6) {
+        std::vector<InventoryItem> lowItems;
+        for (const auto& it : inventoryMgr.getItems()) {
+            if (it.stock < 15) lowItems.push_back(it);
+        }
+        std::sort(lowItems.begin(), lowItems.end(), [](const InventoryItem& a, const InventoryItem& b) {
+            return a.stock < b.stock;
+        });
+
+        int estTotalCost = 0;
+        int outCount = 0;
+        for (const auto& it : lowItems) {
+            if (it.stock == 0) outCount++;
+            int unitC = it.costPrice > 0 ? it.costPrice : (it.retailPrice * 7 / 10);
+            estTotalCost += 20 * unitC;
+        }
+
+        drawRounded(target, mainX, cardY, Layout::MAIN_W, 52, 8, sf::Color(254, 226, 226), ThemeColor::Line, 1.f);
+        drawText(target, fontBold, "Low-Stock Alert & Automated Reorder Queue (" + std::to_string(lowItems.size()) + " SKUs < 15)",
+                 10.f, sf::Color(185, 28, 28), mainX + 15, cardY + 16);
+        drawText(target, fontRegular, "Sorted ascending by remaining stock | Suggested order: +20 units/SKU | Out of stock: " + std::to_string(outCount),
+                 8.3f, ThemeColor::Mute, mainX + 15, cardY + 35);
+
+        drawRounded(target, mainX, ty, Layout::MAIN_W, 502, 10, ThemeColor::Paper, ThemeColor::Line, 1);
+        drawText(target, fontSemiBold, "Barcode", 9.f, ThemeColor::Mute, mainX + 15, ty + 14);
+        drawText(target, fontSemiBold, "Product Name", 9.f, ThemeColor::Mute, mainX + 75, ty + 14);
+        drawText(target, fontSemiBold, "Supplier", 9.f, ThemeColor::Mute, mainX + 205, ty + 14);
+        drawText(target, fontSemiBold, "Stock", 9.f, ThemeColor::Mute, mainX + 310, ty + 14);
+        drawText(target, fontSemiBold, "Unit Cost", 9.f, ThemeColor::Mute, mainX + 365, ty + 14);
+        drawText(target, fontSemiBold, "Reorder (20)", 9.f, ThemeColor::Mute, mainX + Layout::MAIN_W - 15, ty + 14, TextAlignment::Right);
+
+        sf::RectangleShape sep({Layout::MAIN_W - 30, 1});
+        sep.setPosition(mainX + 15, ty + 26);
+        sep.setFillColor(ThemeColor::Line);
+        target.draw(sep);
+
+        if (lowItems.empty()) {
+            drawText(target, fontMedium, "All inventory items are healthy (>= 15 units in stock)!", 11.f, ThemeColor::Green,
+                     mainX + Layout::MAIN_W / 2.f, ty + 180.f, TextAlignment::Center);
+        } else {
+            for (size_t i = 0; i < lowItems.size(); i++) {
+                float rowY = ty + 38.f + static_cast<float>(i) * 38.f - scrollOffset;
+                if (rowY < ty + 32.f || rowY + 26.f > ty + 455.f) continue;
+
+                const auto& it = lowItems[i];
+                int unitC = it.costPrice > 0 ? it.costPrice : (it.retailPrice * 7 / 10);
+                int reorderCost = 20 * unitC;
+
+                drawText(target, fontMedium, it.barcode, 8.8f, ThemeColor::Ink, mainX + 15, rowY + 7);
+                std::string nm = it.name;
+                if (nm.length() > 18) nm = nm.substr(0, 16) + "..";
+                drawText(target, fontBold, nm, 9.f, ThemeColor::Ink, mainX + 75, rowY + 7);
+                std::string sup = it.supplier.empty() ? "General" : it.supplier;
+                if (sup.length() > 15) sup = sup.substr(0, 13) + "..";
+                drawText(target, fontRegular, sup, 8.5f, ThemeColor::Mute, mainX + 205, rowY + 7);
+
+                sf::Color stkCol = (it.stock == 0) ? ThemeColor::Red : ThemeColor::Amber;
+                drawText(target, fontBold, std::to_string(it.stock) + (it.stock == 0 ? " OUT" : " low"), 9.f, stkCol, mainX + 310, rowY + 7);
+                drawText(target, fontRegular, formatRs(unitC), 8.8f, ThemeColor::Mute, mainX + 365, rowY + 7);
+                drawText(target, fontBold, formatRs(reorderCost), 9.2f, ThemeColor::Blue, mainX + Layout::MAIN_W - 15, rowY + 7, TextAlignment::Right);
+
+                sf::RectangleShape rLine({Layout::MAIN_W - 30, 1});
+                rLine.setPosition(mainX + 15, rowY + 24);
+                rLine.setFillColor(ThemeColor::Line);
+                target.draw(rLine);
+            }
+        }
+
+        drawRounded(target, mainX + 2, ty + 462.f, Layout::MAIN_W - 4.f, 38.f, 6, sf::Color(245, 240, 230), ThemeColor::Line, 1.f);
+        drawText(target, fontBold, "REORDER SUMMARY", 9.5f, ThemeColor::Ink, mainX + 15, ty + 481.f);
+        drawText(target, fontBold, std::to_string(lowItems.size()) + " SKUs Need Restock", 10.f, ThemeColor::Amber, mainX + 200, ty + 481.f);
+        drawText(target, fontBold, "Est. Total: " + formatRs(estTotalCost), 11.f, ThemeColor::Blue, mainX + Layout::MAIN_W - 15, ty + 481.f, TextAlignment::Right);
+    }
+    // =========================================================================
+    // REPORT 8: CUSTOMER RETURNS AUDIT
     // =========================================================================
     else {
         int totalReturns = (int)returnHistory.size();
@@ -753,13 +843,26 @@ void PosReportsView::drawSalesTab(sf::RenderTarget& target, sf::Vector2f mouse, 
     }
 }
 
-void PosReportsView::drawActivityLogsTab(sf::RenderTarget& target, sf::Vector2f /*mouse*/, float mainX,
+void PosReportsView::drawActivityLogsTab(sf::RenderTarget& target, sf::Vector2f mouse, float mainX,
                                         const std::vector<ActivityRecord>& logs,
                                         const std::string& logFilter, float scrollOffset,
                                         const sf::Font& fontRegular, const sf::Font& fontMedium,
                                         const sf::Font& fontSemiBold, const sf::Font& fontBold,
                                         const sf::Font& fontSerif) {
-    drawText(target, fontSerif, "Activity & Security Audit Logs", 24, ThemeColor::Ink, mainX, 50);
+    drawText(target, fontSerif, "Activity & Security Audit Logs", 22, ThemeColor::Ink, mainX, 50);
+
+    // Export CSV & Export PDF buttons (Top-Right of Activity Logs)
+    float expCsvX = mainX + Layout::MAIN_W - 154.f;
+    float expPdfX = mainX + Layout::MAIN_W - 76.f;
+    float expY = 38.f;
+    bool hovCsv = pointInRect(mouse, expCsvX, expY, 74.f, 24.f);
+    bool hovPdf = pointInRect(mouse, expPdfX, expY, 74.f, 24.f);
+    drawRounded(target, expCsvX, expY, 74.f, 24.f, 5,
+                hovCsv ? sf::Color(225, 240, 230) : ThemeColor::Paper, ThemeColor::Green, 1.f);
+    drawText(target, fontSemiBold, "Export CSV", 8.f, sf::Color(22, 101, 52), expCsvX + 37.f, expY + 12.f, TextAlignment::Center);
+    drawRounded(target, expPdfX, expY, 74.f, 24.f, 5,
+                hovPdf ? sf::Color(29, 78, 216) : ThemeColor::Blue);
+    drawText(target, fontSemiBold, "Export PDF", 8.f, ThemeColor::White, expPdfX + 37.f, expY + 12.f, TextAlignment::Center);
 
     const char* filters[] = {"ALL", "LOGIN", "SALE", "RETURN", "STAFF", "INVENTORY", "ORDER"};
     for (int i = 0; i < 7; i++) {
@@ -965,15 +1068,20 @@ void PosReportsView::drawSettingsTab(sf::RenderTarget& target, sf::Vector2f mous
             drawText(target, fontSemiBold, "Manage Promo Codes (" + std::to_string(promoCount) + ")", 9.5f, ThemeColor::White,
                      mainX + 305 + promoBtnW / 2.f, r1Y + 31, TextAlignment::Center);
 
-            // Database Utilities Row
+            // Database Utilities Row (Reload, Sync, Backup Now)
             float utilY = discY + 122.f;
-            bool hovRel = pointInRect(mouse, mainX + 25, utilY, 240, 30);
-            drawRounded(target, mainX + 25, utilY, 240, 30, 6, hovRel ? sf::Color(232, 224, 210) : ThemeColor::Panel, ThemeColor::Edge, 1);
-            drawText(target, fontSemiBold, "Reload Databases from Disk", 9.5f, ThemeColor::Ink, mainX + 145, utilY + 15, TextAlignment::Center);
+            float utilW = 158.f;
+            bool hovRel = pointInRect(mouse, mainX + 25, utilY, utilW, 30);
+            drawRounded(target, mainX + 25, utilY, utilW, 30, 6, hovRel ? sf::Color(232, 224, 210) : ThemeColor::Panel, ThemeColor::Edge, 1);
+            drawText(target, fontSemiBold, "Reload Databases", 9.f, ThemeColor::Ink, mainX + 25 + utilW / 2.f, utilY + 15, TextAlignment::Center);
 
-            bool hovSync = pointInRect(mouse, mainX + 280, utilY, 240, 30);
-            drawRounded(target, mainX + 280, utilY, 240, 30, 6, hovSync ? sf::Color(232, 224, 210) : ThemeColor::Panel, ThemeColor::Edge, 1);
-            drawText(target, fontSemiBold, "Sync Barcode Bitmaps", 9.5f, ThemeColor::Ink, mainX + 400, utilY + 15, TextAlignment::Center);
+            bool hovSync = pointInRect(mouse, mainX + 193, utilY, utilW, 30);
+            drawRounded(target, mainX + 193, utilY, utilW, 30, 6, hovSync ? sf::Color(232, 224, 210) : ThemeColor::Panel, ThemeColor::Edge, 1);
+            drawText(target, fontSemiBold, "Sync Barcodes", 9.f, ThemeColor::Ink, mainX + 193 + utilW / 2.f, utilY + 15, TextAlignment::Center);
+
+            bool hovBak = pointInRect(mouse, mainX + 361, utilY, utilW, 30);
+            drawRounded(target, mainX + 361, utilY, utilW, 30, 6, hovBak ? sf::Color(35, 75, 50) : ThemeColor::Green);
+            drawText(target, fontSemiBold, "Backup Now", 9.f, ThemeColor::White, mainX + 361 + utilW / 2.f, utilY + 15, TextAlignment::Center);
         }
     }
     // =========================================================================

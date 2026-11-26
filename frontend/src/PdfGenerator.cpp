@@ -210,6 +210,111 @@ bool PdfGenerator::generateReceiptPdf(const std::string& outputPath,
     return true;
 }
 
+bool PdfGenerator::generateReportPdf(const std::string& outputPath,
+                                     const std::string& title,
+                                     const std::string& subtitle,
+                                     const std::vector<std::string>& headers,
+                                     const std::vector<std::vector<std::string>>& rows,
+                                     const std::string& footerSummary) {
+    fs::path p(outputPath);
+    if (p.has_parent_path() && !fs::exists(p.parent_path())) {
+        fs::create_directories(p.parent_path());
+    }
+
+    std::ostringstream stream;
+    auto drawText = [&](const std::string& text, float x, float y, const std::string& font, float size, float r = 0.f, float g = 0.f, float b = 0.f) {
+        stream << r << " " << g << " " << b << " rg\n";
+        stream << "BT /" << font << " " << size << " Tf " << x << " " << y << " Td (" << escapePdf(text) << ") Tj ET\n";
+    };
+    auto drawLine = [&](float x1, float y1, float x2, float y2, float gray = 0.7f, float width = 1.f) {
+        stream << gray << " G " << width << " w\n";
+        stream << x1 << " " << y1 << " m " << x2 << " " << y2 << " l S\n";
+    };
+    auto drawRect = [&](float x, float y, float w, float h, float r, float g, float b, bool fill = true) {
+        if (fill) {
+            stream << r << " " << g << " " << b << " rg " << x << " " << y << " " << w << " " << h << " re f\n";
+        } else {
+            stream << r << " " << g << " " << b << " RG 1 w " << x << " " << y << " " << w << " " << h << " re S\n";
+        }
+    };
+
+    // Header banner
+    drawRect(36, 748, 523, 56, 0.94f, 0.93f, 0.89f);
+    drawText(title, 50, 782, "F2", 15, 0.14f, 0.14f, 0.14f);
+    drawText(subtitle, 50, 762, "F1", 9, 0.40f, 0.38f, 0.35f);
+
+    // Table header
+    float tableX = 36.f;
+    float tableW = 523.f;
+    float tableY = 718.f;
+    drawRect(tableX, tableY - 5, tableW, 20, 0.18f, 0.24f, 0.22f);
+
+    size_t colCount = headers.empty() ? 1 : headers.size();
+    float colW = tableW / static_cast<float>(colCount);
+    size_t maxChars = colCount <= 4 ? 22 : (colCount <= 6 ? 15 : 11);
+
+    for (size_t c = 0; c < headers.size(); ++c) {
+        std::string h = headers[c].substr(0, maxChars);
+        drawText(h, tableX + 6.f + c * colW, tableY + 2, "F2", 8.f, 1.f, 1.f, 1.f);
+    }
+
+    float curY = tableY - 22.f;
+    int maxRows = 34;
+    int drawn = 0;
+    for (size_t r = 0; r < rows.size() && drawn < maxRows; ++r, ++drawn) {
+        if (r % 2 == 1) {
+            drawRect(tableX, curY - 4, tableW, 17, 0.96f, 0.96f, 0.96f);
+        }
+        for (size_t c = 0; c < rows[r].size() && c < colCount; ++c) {
+            std::string cell = rows[r][c];
+            if (cell.size() > maxChars) cell = cell.substr(0, maxChars - 2) + "..";
+            drawText(cell, tableX + 6.f + c * colW, curY, "F1", 8.f, 0.15f, 0.15f, 0.15f);
+        }
+        drawLine(tableX, curY - 4, tableX + tableW, curY - 4, 0.90f, 0.5f);
+        curY -= 17.5f;
+    }
+
+    if ((int)rows.size() > maxRows) {
+        drawText("... (" + std::to_string(rows.size() - maxRows) + " more rows in CSV export)", tableX + 6.f, curY - 4, "F1", 8.f, 0.45f, 0.45f, 0.45f);
+    }
+
+    if (!footerSummary.empty()) {
+        drawRect(tableX, 54, tableW, 24, 0.92f, 0.96f, 0.93f);
+        drawRect(tableX, 54, tableW, 24, 0.25f, 0.55f, 0.35f, false);
+        drawText(footerSummary, tableX + 10.f, 62, "F2", 9.f, 0.12f, 0.38f, 0.18f);
+    }
+
+    drawLine(36, 44, 559, 44, 0.8f, 1.f);
+    drawText("ScanIT Supermarket POS - Generated Report PDF", 36, 30, "F1", 7.5f, 0.50f, 0.50f, 0.50f);
+
+    std::string streamData = stream.str();
+    std::vector<std::string> objects;
+    objects.push_back("<< /Type /Catalog /Pages 2 0 R >>");
+    objects.push_back("<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
+    objects.push_back("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>");
+    objects.push_back("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+    objects.push_back("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>");
+    std::ostringstream obj6;
+    obj6 << "<< /Length " << streamData.length() << " >>\nstream\n" << streamData << "\nendstream";
+    objects.push_back(obj6.str());
+
+    std::ofstream pdf(outputPath, std::ios::binary);
+    if (!pdf.is_open()) return false;
+    pdf << "%PDF-1.4\n";
+    std::vector<long long> xrefOffsets(1, 0);
+    for (size_t i = 0; i < objects.size(); i++) {
+        xrefOffsets.push_back((long long)pdf.tellp());
+        pdf << (i + 1) << " 0 obj\n" << objects[i] << "\nendobj\n";
+    }
+    long long xrefStart = (long long)pdf.tellp();
+    pdf << "xref\n0 " << (objects.size() + 1) << "\n0000000000 65535 f \n";
+    for (size_t i = 1; i <= objects.size(); i++) {
+        pdf << std::setw(10) << std::setfill('0') << xrefOffsets[i] << " 00000 n \n";
+    }
+    pdf << "trailer\n<< /Size " << (objects.size() + 1) << " /Root 1 0 R >>\nstartxref\n" << xrefStart << "\n%%EOF\n";
+    return true;
+}
+
 bool PdfGenerator::openPdfInDefaultViewer(const std::string& filePath) {
     if (!fs::exists(filePath)) return false;
     HINSTANCE res = ShellExecuteA(NULL, "open", filePath.c_str(), NULL, NULL, SW_SHOWNORMAL);

@@ -36,6 +36,7 @@ cl /EHsc /O2 /std:c++17 /D_HAS_STD_BYTE=0 /DNOMINMAX /DWIN32_LEAN_AND_MEAN ^
   src\LoginScreen.cpp ^
   src\CategoryManager.cpp ^
   src\SeasonManager.cpp ^
+  src\CustomerManager.cpp ^
   src\PdfGenerator.cpp ^
   ..\backend\src\Generator.cpp ^
   ..\backend\src\Decoder.cpp ^

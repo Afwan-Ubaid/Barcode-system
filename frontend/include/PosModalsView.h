@@ -32,6 +32,7 @@ public:
                                      const std::vector<CartLine>& cart,
                                      const std::vector<ProductItem>& products,
                                      const BillSummary& summary, float scrollOffset,
+                                     bool paymentDone,
                                      const sf::Texture& cameraTexture,
                                      const std::string& barcodeQuery,
                                      bool scannerInputFocused,
@@ -92,6 +93,7 @@ public:
                                       const std::string& costPriceStr,
                                       const std::string& qtyStr,
                                       const std::string& dateStr,
+                                      const std::string& expiryDateStr,
                                       const std::string& barcodeStr,
                                       int activeField,
                                       bool barcodeGenerated,
@@ -235,6 +237,27 @@ public:
                                    const sf::Font& fontRegular, const sf::Font& fontMedium,
                                    const sf::Font& fontSemiBold, const sf::Font& fontBold,
                                    const sf::Font& fontSerif);
+
+    static void drawSplitModal(sf::RenderTarget& target, sf::Vector2f mouse,
+                               float currentWidth, float designHeight,
+                               const BillSummary& summary, const std::string& splitCashStr,
+                               bool cashInputFocused,
+                               const std::string& specialDiscountStr, bool specialDiscountFocused,
+                               const sf::Font& fontRegular, const sf::Font& fontSemiBold,
+                               const sf::Font& fontBold, const sf::Font& fontSerif,
+                               std::function<const sf::Texture&(const std::string&)> getTexture);
+
+    static void drawCustomerModal(sf::RenderTarget& target, sf::Vector2f mouse,
+                                  float currentWidth, float designHeight,
+                                  const std::string& phoneInput, const std::string& nameInput,
+                                  int activeField,
+                                  const CustomerRecord* foundCustomer,
+                                  bool redeemPoints,
+                                  const std::vector<OrderRecord>& customerOrders,
+                                  const std::string& statusMsg,
+                                  const sf::Font& fontRegular, const sf::Font& fontMedium,
+                                  const sf::Font& fontSemiBold, const sf::Font& fontBold,
+                                  const sf::Font& fontSerif);
 
     static void drawWalletModal(sf::RenderTarget& target, sf::Vector2f mouse) {}
     static void drawDescModal(sf::RenderTarget& target, sf::Vector2f mouse) {}

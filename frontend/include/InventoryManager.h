@@ -21,6 +21,7 @@ struct InventoryItem {
     std::string supplier;      // Supplier / Vendor name
     std::string arrivalDate;   // Date item was received (YYYY-MM-DD)
     std::string barcodePath;   // Path to generated/existing BMP barcode
+    std::string expiryDate;    // Optional expiry date (YYYY-MM-DD)
 };
 
 struct SupplierPurchaseRecord {

@@ -17,6 +17,7 @@
 #include "CartService.h"
 #include "CategoryManager.h"
 #include "SeasonManager.h"
+#include "CustomerManager.h"
 #include "SplashScreen.h"
 #include "LoginScreen.h"
 #include "../../backend/include/CameraCapture.h"
@@ -77,6 +78,12 @@ private:
     void openAddSeasonModal();
     void saveNewSeason();
 
+    // New PoS Capabilities (Loyalty, Split, Backup, Export)
+    bool performBackup(const std::string& reason);
+    void exportCurrentReport(bool asPdf);
+    void exportActivityLogs(bool asPdf);
+    std::vector<OrderRecord> getSelectedCustomerOrders() const;
+
     void showToast(const std::string& message);
     void switchCamera();
     void updateLayout(float winW, float winH);
@@ -89,6 +96,7 @@ private:
     CartService mCartService;
     CategoryManager mCategoryManager;   // D3 Req 1
     SeasonManager   mSeasonManager;     // D3 Req 13
+    CustomerManager mCustomerManager;   // Loyalty & Purchase History
     // Window & Display Layout
     sf::RenderWindow mWindow;
     float mDesignWidth = 1280.f;
@@ -163,6 +171,19 @@ private:
     bool mDraftsModalOpen = false;
     bool mSaleDetailModalOpen = false;
     bool mPromoModalOpen = false;
+    bool mSplitModalOpen = false;
+    bool mCustomerModalOpen = false;
+
+    std::string mSplitCashStr = "";
+    bool mSplitCashFocused = true;
+    std::string mCustomerPhoneInput = "";
+    std::string mCustomerNameInput = "";
+    int mCustomerActiveField = 0; // 0=phone, 1=name
+    std::string mCustomerModalStatus = "";
+    std::string mSelectedCustomerPhone = "";
+    std::string mSelectedCustomerName = "Walk-in Customer";
+    bool mRedeemLoyaltyPoints = false;
+    std::string mNewItemExpiryDate = "";
 
     // Sales & Reports Tab Sub-Tabs (0=Incomplete Orders, 1=Completed Orders, 2=Cash Sales, 3=All Sales, 4=Top 10 Sold, 5=Top 10 Overstocked)
     int mSalesSubTab = 0;

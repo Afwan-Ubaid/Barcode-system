@@ -459,7 +459,24 @@ void PosProductsView::drawInventoryTab(sf::RenderTarget& target, sf::Vector2f /*
             if (currentRole == "Admin" && item.costPrice > 0) {
                 priceLine += " | Cost: Rs " + std::to_string(item.costPrice);
             }
-            drawText(target, fontSemiBold, priceLine, 8.5f, sf::Color(100, 90, 80), mainX + 15, rowY + 33);
+            if (!item.expiryDate.empty()) {
+                std::time_t nowT = std::time(nullptr);
+                std::tm tmT;
+                localtime_s(&tmT, &nowT);
+                char todayBuf[16];
+                std::strftime(todayBuf, sizeof(todayBuf), "%Y-%m-%d", &tmT);
+                bool isExpired = (item.expiryDate <= std::string(todayBuf));
+                drawText(target, fontSemiBold, priceLine, 8.2f, sf::Color(100, 90, 80), mainX + 15, rowY + 33);
+                float pw = getTextWidth(fontSemiBold, priceLine, 8.2f);
+                if (pw < 145.f) {
+                    std::string expLbl = " | EXP " + item.expiryDate + (isExpired ? " (!)" : "");
+                    drawText(target, fontSemiBold, expLbl, 8.f,
+                             isExpired ? ThemeColor::Red : sf::Color(180, 83, 9),
+                             mainX + 15 + pw, rowY + 33);
+                }
+            } else {
+                drawText(target, fontSemiBold, priceLine, 8.5f, sf::Color(100, 90, 80), mainX + 15, rowY + 33);
+            }
 
             // [ Description ] popup button
             drawRounded(target, mainX + 250, rowY + 10, 68, 22, 4, sf::Color(240, 245, 250), ThemeColor::Blue, 1.f);

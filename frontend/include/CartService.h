@@ -52,7 +52,8 @@ public:
     BillSummary computeBillSummary(const std::vector<ProductItem>& products,
                                    int seasonalPercent = 0,
                                    int specialPercent = 0,
-                                   const std::vector<std::pair<std::string, std::string>>& barcodeSupplierMap = {}) const;
+                                   const std::vector<std::pair<std::string, std::string>>& barcodeSupplierMap = {},
+                                   int loyaltyPointsToRedeem = 0) const;
     int parseCashGiven() const;
     int getChangeAmount(const std::vector<ProductItem>& products) const;
 
@@ -135,7 +136,7 @@ private:
     std::string mAppliedEmployeeUser = "";
     std::vector<PromoRecord> mPromoDatabase;
     mutable int mLastCalculatedDiscount = 0;
-    int mPaymentMethod = 0; // 0=Cash, 1=Card, 2=Wallet
+    int mPaymentMethod = 0; // 0=Cash, 1=Card, 2=Split
     bool mPaymentDone = false;
     int mCashGiven = 0;
     std::string mCashGivenStr = "";

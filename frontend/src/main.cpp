@@ -41,6 +41,9 @@ static void parseArgs(const char* cmd, bool& shot, bool& shotPaid, std::string& 
     else if (strstr(cmd, "--screenshot-report4")) { shot = true; modal = "report4"; }
     else if (strstr(cmd, "--screenshot-report5")) { shot = true; modal = "report5"; }
     else if (strstr(cmd, "--screenshot-report6")) { shot = true; modal = "report6"; }
+    else if (strstr(cmd, "--screenshot-report7")) { shot = true; modal = "report7"; }
+    else if (strstr(cmd, "--screenshot-split")) { shot = true; modal = "split"; }
+    else if (strstr(cmd, "--screenshot-customer")) { shot = true; modal = "customer"; }
     else if (strstr(cmd, "--screenshot-cashier-reports")) { shot = true; modal = "cashier_reports"; }
     else if (strstr(cmd, "--screenshot-products")) { shot = true; modal = "products"; }
     else if (strstr(cmd, "--screenshot-cashier-inventory")) { shot = true; modal = "cashier_inventory"; }

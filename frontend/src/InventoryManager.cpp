@@ -101,7 +101,7 @@ bool InventoryManager::loadInventory(const std::string& customPath) {
 
         if (currentSection == Items) {
             std::stringstream ss(line);
-            std::string bc, desc, cat, unit, retP, costP, stk, supp, arrDate, bcPath;
+            std::string bc, desc, cat, unit, retP, costP, stk, supp, arrDate, bcPath, expDate;
 
             std::getline(ss, bc, ',');
             std::getline(ss, desc, ',');
@@ -113,6 +113,7 @@ bool InventoryManager::loadInventory(const std::string& customPath) {
             std::getline(ss, supp, ',');
             std::getline(ss, arrDate, ',');
             std::getline(ss, bcPath, ',');
+            std::getline(ss, expDate, ',');
 
             bc = trimStr(bc);
             desc = trimStr(desc);
@@ -132,6 +133,7 @@ bool InventoryManager::loadInventory(const std::string& customPath) {
             if (item.barcodePath.empty()) {
                 item.barcodePath = "barcodes/barcode_" + bc + ".bmp";
             }
+            item.expiryDate = trimStr(expDate);
 
             mItems.push_back(item);
         } else if (currentSection == Purchases) {
@@ -177,7 +179,7 @@ bool InventoryManager::saveInventory(const std::string& customPath) {
         << "# ScanIT Inventory & Supplier Procurement Database\n"
         << "# ==============================================================================\n"
         << "# [INVENTORY_ITEMS]\n"
-        << "# Format: Barcode,Description,Category,Unit,RetailPrice,CostPrice,Stock,Supplier,ArrivalDate,BarcodePath\n";
+        << "# Format: Barcode,Description,Category,Unit,RetailPrice,CostPrice,Stock,Supplier,ArrivalDate,BarcodePath,ExpiryDate\n";
 
     for (const auto& it : mItems) {
         out << it.barcode << ","
@@ -189,7 +191,8 @@ bool InventoryManager::saveInventory(const std::string& customPath) {
             << it.stock << ","
             << it.supplier << ","
             << it.arrivalDate << ","
-            << it.barcodePath << "\n";
+            << it.barcodePath << ","
+            << it.expiryDate << "\n";
     }
 
     out << "\n# [SUPPLIER_PURCHASE_HISTORY]\n"
@@ -219,7 +222,8 @@ bool InventoryManager::saveInventory(const std::string& customPath) {
             for (const auto& it : mItems) {
                 mOut << it.barcode << "," << it.name << "," << it.category << "," << it.unit << ","
                      << it.retailPrice << "," << it.costPrice << "," << it.stock << ","
-                     << it.supplier << "," << it.arrivalDate << "," << it.barcodePath << "\n";
+                     << it.supplier << "," << it.arrivalDate << "," << it.barcodePath << ","
+                     << it.expiryDate << "\n";
             }
             mOut << "\n# [SUPPLIER_PURCHASE_HISTORY]\n";
             for (const auto& p : mPurchases) {
@@ -243,6 +247,7 @@ bool InventoryManager::addOrRestockItem(const InventoryItem& item, int purchaseQ
         mItems[idx].costPrice = unitCost;
         mItems[idx].supplier = supplier;
         mItems[idx].arrivalDate = date;
+        if (!item.expiryDate.empty()) mItems[idx].expiryDate = item.expiryDate;
     } else {
         InventoryItem newItem = item;
         newItem.stock = purchaseQty;

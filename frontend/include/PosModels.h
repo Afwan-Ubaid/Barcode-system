@@ -177,7 +177,19 @@ struct BillSummary {
     int seasonalDiscount = 0;
     int specialPercent = 0;
     int specialDiscount = 0;
+    int loyaltyDiscount = 0;
+    int splitCashAmount = 0;
+    int splitCardAmount = 0;
     int totalPayable = 0;
+};
+
+struct CustomerRecord {
+    std::string phone;
+    std::string name;
+    int points = 0;
+    int totalSpent = 0;
+    int visits = 0;
+    std::string lastVisit;
 };
 
 // ----------------------------------------------------------------------------

@@ -16,6 +16,13 @@ public:
                                    const std::vector<BillDetailRecord>& details,
                                    const std::string& cashierName = "Cashier");
 
+    static bool generateReportPdf(const std::string& outputPath,
+                                  const std::string& title,
+                                  const std::string& subtitle,
+                                  const std::vector<std::string>& headers,
+                                  const std::vector<std::vector<std::string>>& rows,
+                                  const std::string& footerSummary = "");
+
     static bool openPdfInDefaultViewer(const std::string& filePath);
 };
 
