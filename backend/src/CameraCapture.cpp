@@ -82,7 +82,7 @@ static bool isLikelyExternalCamera(const std::string& name, int index, int count
 
 std::vector<CameraDeviceInfo> CameraStream::getAvailableCameras() {
     std::vector<CameraDeviceInfo> result;
-    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    HRESULT coHr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
     MFStartup(MF_VERSION);
 
     IMFAttributes* pConfig = nullptr;
@@ -114,7 +114,9 @@ std::vector<CameraDeviceInfo> CameraStream::getAvailableCameras() {
     }
 
     MFShutdown();
-    CoUninitialize();
+    if (SUCCEEDED(coHr)) {
+        CoUninitialize();
+    }
     return result;
 }
 
@@ -195,7 +197,6 @@ bool CameraStream::isActiveCameraExternal() const {
 }
 
 void CameraStream::stop() {
-    if (!mRunning) return;
     mRunning = false;
     if (mThread.joinable()) {
         mThread.join();

@@ -46,19 +46,27 @@ const sf::Texture& PosApp::getTexture(const std::string& relPath) {
     if (it != mTextures.end()) return it->second;
 
     sf::Texture& tx = mTextures[relPath];
+    bool isBarcodeBmp = (relPath.find("barcodes/") != std::string::npos || relPath.find(".bmp") != std::string::npos);
     std::string fullPath = getAssetPath(relPath);
     if (tx.loadFromFile(fullPath) || tx.loadFromFile(relPath)) {
-        tx.setSmooth(true);
-        tx.generateMipmap();
+        tx.setSmooth(!isBarcodeBmp);
+        if (!isBarcodeBmp) tx.generateMipmap();
     } else {
-        // Fallback checks for barcodes (e.g. barcodes/100001.bmp -> barcodes/barcode_100001.bmp)
+        // Fallback checks for barcodes in both naming conventions:
+        // 1) barcodes/100001.bmp -> barcodes/barcode_100001.bmp
+        // 2) barcodes/barcode_100001.bmp -> barcodes/100001.bmp
         std::string alt = relPath;
         size_t bPos = alt.find("barcodes/");
-        if (bPos != std::string::npos && alt.find("barcode_") == std::string::npos) {
-            alt.insert(bPos + 9, "barcode_");
-            if (tx.loadFromFile(getAssetPath(alt)) || tx.loadFromFile(alt)) {
-                tx.setSmooth(true);
-                tx.generateMipmap();
+        if (bPos != std::string::npos) {
+            size_t prefPos = alt.find("barcode_", bPos + 9);
+            if (prefPos == std::string::npos) {
+                alt.insert(bPos + 9, "barcode_");
+            } else {
+                alt.erase(prefPos, 8);
+            }
+            if (tx.loadFromFile(getAssetPath(alt)) || tx.loadFromFile(alt) || tx.loadFromFile("../" + alt) || tx.loadFromFile("../../" + alt)) {
+                tx.setSmooth(!isBarcodeBmp);
+                if (!isBarcodeBmp) tx.generateMipmap();
             }
         }
     }
@@ -81,11 +89,8 @@ void PosApp::updateLayout(float winW, float winH) {
 static bool parseBillsFile(const std::string& filename, std::vector<BillRecord>& bills);
 
 static bool parseOrdersFile(const std::string& filename, std::vector<OrderRecord>& orders) {
-    std::ifstream in(filename);
-    if (!in.is_open()) {
-        in.open("../" + filename);
-        if (!in.is_open()) return false;
-    }
+    std::ifstream in(resolveDataFilePath(filename));
+    if (!in.is_open()) return false;
     orders.clear();
     std::string line;
     while (std::getline(in, line)) {
@@ -105,11 +110,8 @@ static bool parseOrdersFile(const std::string& filename, std::vector<OrderRecord
 }
 
 static bool parseOrderDetailsFile(const std::string& filename, std::vector<ReturnOrderDetailItem>& details) {
-    std::ifstream in(filename);
-    if (!in.is_open()) {
-        in.open("../" + filename);
-        if (!in.is_open()) return false;
-    }
+    std::ifstream in(resolveDataFilePath(filename));
+    if (!in.is_open()) return false;
     details.clear();
     std::string line;
     while (std::getline(in, line)) {
@@ -129,11 +131,8 @@ static bool parseOrderDetailsFile(const std::string& filename, std::vector<Retur
 }
 
 static bool parseBillDetailsFile(const std::string& filename, std::vector<BillDetailRecord>& details) {
-    std::ifstream in(filename);
-    if (!in.is_open()) {
-        in.open("../" + filename);
-        if (!in.is_open()) return false;
-    }
+    std::ifstream in(resolveDataFilePath(filename));
+    if (!in.is_open()) return false;
     details.clear();
     std::string line;
     while (std::getline(in, line)) {
@@ -527,11 +526,8 @@ void PosApp::onBarcodeScanned(const std::string& barcode) {
 }
 
 static bool parseBillsFile(const std::string& filename, std::vector<BillRecord>& bills) {
-    std::ifstream in(filename);
-    if (!in.is_open()) {
-        in.open("../" + filename);
-        if (!in.is_open()) return false;
-    }
+    std::ifstream in(resolveDataFilePath(filename));
+    if (!in.is_open()) return false;
     bills.clear();
     std::string line;
     while (std::getline(in, line)) {
@@ -584,6 +580,29 @@ static bool parseBillsFile(const std::string& filename, std::vector<BillRecord>&
     return true;
 }
 
+void PosApp::resetReturnState() {
+    mSelectedReturnProductIdx = -1;
+    mReturnBarcode.clear();
+    mReturnBarcodeFocused = true;
+    mReturnQty = 1;
+    mReturnMaxQty = 0;
+    mReturnSaleInfo.clear();
+    mReturnSalePrice = 0;
+    mReturnOrderId.clear();
+    mReturnCustomer.clear();
+    mReturnCustomerContact.clear();
+    mReturnDate.clear();
+    mReturnStatusMessage.clear();
+    mReturnSuccess = false;
+    mReturnReason = "Customer Changed Mind";
+    mReturnReasonIdx = 0;
+    mReturnPaymentMethod = 0;
+    mReturnRestock = true;
+    mReturnSlipText.clear();
+    mReturnSlipModalOpen = false;
+    mReturnOrderItemPills.clear();
+}
+
 void PosApp::lookupReturnItem(const std::string& inputQuery) {
     std::string query = trimStr(inputQuery);
     mReturnBarcode = query;
@@ -624,14 +643,14 @@ void PosApp::lookupReturnItem(const std::string& inputQuery) {
 
     const OrderRecord* matchedOrder = nullptr;
     for (const auto& ord : orders) {
-        if (ord.orderId == requestedOrderId || ("ORD-" + ord.orderId) == requestedOrderId) {
+        if (ord.orderStatus == "paid" && (ord.orderId == requestedOrderId || ("ORD-" + ord.orderId) == requestedOrderId)) {
             matchedOrder = &ord;
             break;
         }
     }
     if (!matchedOrder && !queryIsExactProductBarcode && requestedOrderId.length() >= 6) {
         for (const auto& ord : orders) {
-            if (ord.orderId.find(requestedOrderId) != std::string::npos) {
+            if (ord.orderStatus == "paid" && ord.orderId.find(requestedOrderId) != std::string::npos) {
                 matchedOrder = &ord;
                 break;
             }
@@ -786,7 +805,7 @@ void PosApp::lookupReturnItem(const std::string& inputQuery) {
             if (!matchesOrder) continue;
 
             if (!bills[i].productAcronym.empty()) {
-                if (bills[i].productAcronym == p.acronym || bills[i].unitPrice == p.price) {
+                if (bills[i].productAcronym == p.acronym) {
                     int discPerUnit = bills[i].discountPerUnit;
                     int effectivePrice = bills[i].unitPrice - discPerUnit;
                     if (effectivePrice > 0 && effectivePrice <= p.price) {
@@ -797,7 +816,9 @@ void PosApp::lookupReturnItem(const std::string& inputQuery) {
             } else {
                 // 14-field Bill.txt format -> check BillDetail.txt for item line
                 for (const auto& bd : billDetails) {
-                    if (bd.billId == bills[i].billId && (bd.productAcronym == p.acronym || bd.unitPrice == p.price)) {
+                    bool acronymMatches = (!bd.productAcronym.empty() && bd.productAcronym == p.acronym);
+                    bool fallbackPriceMatches = (bd.productAcronym.empty() && bd.unitPrice == p.price);
+                    if (bd.billId == bills[i].billId && (acronymMatches || fallbackPriceMatches)) {
                         int discPerUnit = (bd.quantity > 0) ? (bd.productDiscount / bd.quantity) : 0;
                         int baseUnit = bd.unitPrice - discPerUnit;
                         int netBeforeSeason = std::max(1, bills[i].totalWithoutTax + bills[i].totalTax - bills[i].totalDiscount);
@@ -863,7 +884,9 @@ void PosApp::lookupReturnItem(const std::string& inputQuery) {
 
         if (!matched) {
             for (int i = (int)bills.size() - 1; i >= 0; --i) {
-                if (bills[i].productAcronym == p.acronym || bills[i].unitPrice == p.price) {
+                if (bills[i].paymentStatus == "paid" &&
+                    ((!bills[i].productAcronym.empty() && bills[i].productAcronym == p.acronym) ||
+                     (bills[i].productAcronym.empty() && bills[i].unitPrice == p.price))) {
                     mReturnOrderId = bills[i].orderId;
                     mReturnCustomer = bills[i].customerName;
                     for (char& c : mReturnCustomer) if (c == '_') c = ' ';
@@ -1010,15 +1033,10 @@ void PosApp::processReturn() {
     slip << "==================================================\n";
     mReturnSlipText = slip.str();
 
-    std::ofstream rOut("return_receipt.txt");
+    std::ofstream rOut(resolveDataFilePath("return_receipt.txt"));
     if (rOut.is_open()) {
         rOut << mReturnSlipText;
         rOut.close();
-    }
-    std::ofstream rOutF("frontend/return_receipt.txt");
-    if (rOutF.is_open()) {
-        rOutF << mReturnSlipText;
-        rOutF.close();
     }
 
     mReturnMaxQty -= returnedCount;
@@ -1100,12 +1118,13 @@ bool PosApp::performBackup(const std::string& reason) {
         "Product.txt", "PCategory.txt", "Seasons.txt", "Order.txt",
         "OrderDetail.txt", "Bill.txt", "BillDetail.txt", "inventory.txt",
         "customers.txt", "staff.txt", "activity_log.txt", "returns.txt",
-        "promos.txt", "discount_settings.txt"
+        "promo.txt", "discount_settings.txt"
     };
     int copied = 0;
     for (const char* f : dbFiles) {
-        if (std::filesystem::exists(f)) {
-            std::filesystem::copy_file(f, dir / f, std::filesystem::copy_options::overwrite_existing, ec);
+        std::string srcPath = resolveDataFilePath(f);
+        if (std::filesystem::exists(srcPath)) {
+            std::filesystem::copy_file(srcPath, dir / f, std::filesystem::copy_options::overwrite_existing, ec);
             if (!ec) copied++;
         }
     }
@@ -1313,6 +1332,9 @@ void PosApp::finalizePayment(int paymentMethod) {
         mActivityLogger.logActivity("SALE", mCurrentUserName,
             modeWord + " sale of " + formatRs(summary.totalPayable) +
             (mLastSavedBillId.empty() ? "" : (" (Bill #" + mLastSavedBillId + ")")));
+        mActivityLogger.logActivity("ORDER", mCurrentUserName,
+            "Completed order" + (mCartService.getLastOrderId().empty() ? "" : (" #" + mCartService.getLastOrderId())) +
+            " (" + modeWord + ", " + formatRs(summary.totalPayable) + ")");
         showToast(msg);
         mCashModalOpen = false;
         mCardModalOpen = false;
@@ -1347,6 +1369,9 @@ void PosApp::holdCurrentOrder() {
     mOriginalEditingOrderStatus = "";
     mReceiptScrollOffset = 0.f;
     mSpecialDiscountInputStr = "0";
+    if (!savedOrderId.empty()) {
+        mActivityLogger.logActivity("ORDER", mCurrentUserName, "Held order #" + savedOrderId + " (on-hold)");
+    }
     showToast("Order #" + savedOrderId + " held (saved on-hold)! Next customer ready.");
 }
 
@@ -1367,6 +1392,7 @@ void PosApp::resumeLatestHeldOrder() {
             mOriginalEditingOrderStatus = "on-hold";
             mIsEditingExistingOrder = true;
             mCurrentEditingOrderId = oid;
+            mActivityLogger.logActivity("ORDER", mCurrentUserName, "Resumed held order #" + oid);
         }
         showToast("Resumed held cart (" + label + ")");
         return;
@@ -1517,7 +1543,7 @@ void PosApp::recordSaleToOutputFiles(const std::vector<CartLine>& cartItems, con
                 keptDetails.push_back(nd);
             }
         }
-        std::ofstream outOrd("Order.txt");
+        std::ofstream outOrd(resolveDataFilePath("Order.txt"));
         if (outOrd.is_open()) {
             for (const auto& o : orders) {
                 outOrd << o.orderId << " " << o.orderDate << " " << o.orderTime << " "
@@ -1526,7 +1552,7 @@ void PosApp::recordSaleToOutputFiles(const std::vector<CartLine>& cartItems, con
             }
             outOrd.close();
         }
-        std::ofstream outDet("OrderDetail.txt");
+        std::ofstream outDet(resolveDataFilePath("OrderDetail.txt"));
         if (outDet.is_open()) {
             for (const auto& d : keptDetails) {
                 outDet << d.orderId << " " << d.productId << " " << d.productBarcode << " " << d.quantity << " #\n";
@@ -1534,14 +1560,14 @@ void PosApp::recordSaleToOutputFiles(const std::vector<CartLine>& cartItems, con
             outDet.close();
         }
     } else {
-        std::ofstream outOrd("Order.txt", std::ios::app);
+        std::ofstream outOrd(resolveDataFilePath("Order.txt"), std::ios::app);
         if (outOrd.is_open()) {
             outOrd << newOrd.orderId << " " << newOrd.orderDate << " " << newOrd.orderTime << " "
                    << newOrd.customerName << " " << newOrd.customerContact << " " << newOrd.orderStatus << " "
                    << newOrd.paymentAmount << " " << newOrd.paymentMode << " " << newOrd.paymentMerchant << " #\n";
             outOrd.close();
         }
-        std::ofstream outDet("OrderDetail.txt", std::ios::app);
+        std::ofstream outDet(resolveDataFilePath("OrderDetail.txt"), std::ios::app);
         if (outDet.is_open()) {
             for (const auto& item : cartItems) {
                 if (item.productId >= 0 && item.productId < (int)products.size()) {
@@ -1608,7 +1634,7 @@ void PosApp::recordSaleToOutputFiles(const std::vector<CartLine>& cartItems, con
                 keptBD.push_back(nd);
             }
         }
-        std::ofstream outBill("Bill.txt");
+        std::ofstream outBill(resolveDataFilePath("Bill.txt"));
         if (outBill.is_open()) {
             for (const auto& b : bills) {
                 if (!b.productAcronym.empty()) {
@@ -1627,7 +1653,7 @@ void PosApp::recordSaleToOutputFiles(const std::vector<CartLine>& cartItems, con
             }
             outBill.close();
         }
-        std::ofstream outBD("BillDetail.txt");
+        std::ofstream outBD(resolveDataFilePath("BillDetail.txt"));
         if (outBD.is_open()) {
             for (const auto& bd : keptBD) {
                 outBD << bd.billId << " " << bd.productAcronym << " "
@@ -1636,7 +1662,7 @@ void PosApp::recordSaleToOutputFiles(const std::vector<CartLine>& cartItems, con
             outBD.close();
         }
     } else {
-        std::ofstream outBill("Bill.txt", std::ios::app);
+        std::ofstream outBill(resolveDataFilePath("Bill.txt"), std::ios::app);
         if (outBill.is_open()) {
             outBill << bill.billId << " " << bill.customerName << " " << bill.orderId << " "
                     << bill.totalWithoutTax << " " << bill.totalTax << " " << bill.totalDiscount << " "
@@ -1645,7 +1671,7 @@ void PosApp::recordSaleToOutputFiles(const std::vector<CartLine>& cartItems, con
                     << bill.billDate << " " << bill.billTime << " #\n";
             outBill.close();
         }
-        std::ofstream outBillDet("BillDetail.txt", std::ios::app);
+        std::ofstream outBillDet(resolveDataFilePath("BillDetail.txt"), std::ios::app);
         if (outBillDet.is_open()) {
             for (const auto& item : cartItems) {
                 if (item.productId >= 0 && item.productId < (int)products.size()) {
@@ -1674,14 +1700,8 @@ void PosApp::recordSaleToOutputFiles(const std::vector<CartLine>& cartItems, con
 
 bool PosApp::loadReturnsFile(const std::string& filename) {
     mReturnHistory.clear();
-    std::vector<std::string> searchPaths = {filename, "frontend/" + filename, "../" + filename};
-    std::string foundPath = "";
-    for (const auto& p : searchPaths) {
-        if (std::filesystem::exists(p)) {
-            foundPath = p;
-            break;
-        }
-    }
+    std::string resolved = resolveDataFilePath(filename);
+    std::string foundPath = std::filesystem::exists(resolved) ? resolved : "";
 
     if (foundPath.empty()) {
         saveReturnsFile(filename);
@@ -1722,7 +1742,7 @@ bool PosApp::loadReturnsFile(const std::string& filename) {
 }
 
 bool PosApp::saveReturnsFile(const std::string& filename) {
-    std::vector<std::string> writePaths = {filename, "frontend/" + filename};
+    std::vector<std::string> writePaths = {resolveDataFilePath(filename)};
     for (const auto& p : writePaths) {
         std::ofstream out(p);
         if (out.is_open()) {
@@ -1741,7 +1761,7 @@ bool PosApp::saveReturnsFile(const std::string& filename) {
 
 bool PosApp::appendReturnRecord(const ReturnRecord& rec) {
     mReturnHistory.push_back(rec);
-    std::vector<std::string> writePaths = {"returns.txt", "frontend/returns.txt"};
+    std::vector<std::string> writePaths = {resolveDataFilePath("returns.txt")};
     for (const auto& p : writePaths) {
         std::ofstream out(p, std::ios::app);
         if (out.is_open()) {
@@ -1789,10 +1809,16 @@ void PosApp::saveNewInventoryItem() {
     if (mNewItemBarcode.empty()) {
         generateNewItemBarcode();
     }
-    int retPrice = 100, costPrice = 80, qty = 20;
+    int retPrice = 100, costPrice = 80, qty = 20, taxPct = 0;
     try { retPrice = std::stoi(mNewItemPriceStr); } catch (...) {}
     try { costPrice = std::stoi(mNewItemCostStr); } catch (...) {}
     try { qty = std::stoi(mNewItemQtyStr); } catch (...) {}
+    try { taxPct = std::clamp(std::stoi(mNewItemTaxStr), 0, 100); } catch (...) {}
+
+    if (retPrice < costPrice) {
+        showToast("Selling price (Rs " + std::to_string(retPrice) + ") cannot be less than buying cost (Rs " + std::to_string(costPrice) + ")!");
+        return;
+    }
 
     // Ensure barcode BMP exists
     std::string bmpPath = "barcodes/barcode_" + mNewItemBarcode + ".bmp";
@@ -1826,7 +1852,7 @@ void PosApp::saveNewInventoryItem() {
         prod.unit = mNewItemUnit.empty() ? "1 pc" : mNewItemUnit;
         prod.price = retPrice;
         prod.unitPrice = retPrice;
-        prod.tax = std::max(0, retPrice / 20);
+        prod.tax = (retPrice * taxPct) / 100;
         prod.discount = 0;
         prod.stock = qty;
         prod.barcodePath = bmpPath;
@@ -2119,6 +2145,18 @@ void PosApp::handleScroll(float delta, sf::Vector2f m) {
     const auto& products = mProductCatalog.getProducts();
     const auto& cart = mCartService.getCart();
 
+    if (mPromoModalOpen) {
+        if (mPromoDropdownOpen) {
+            int total = (mNewPromoTargetType == "ITEM") ? (int)products.size() : (int)mInventoryManager.getUniqueSuppliers().size();
+            int maxScroll = std::max(0, total - 6);
+            mPromoDropdownScroll = std::clamp(mPromoDropdownScroll + (delta < 0 ? 1 : -1), 0, maxScroll);
+        } else {
+            int maxScroll = std::max(0, (int)mCartService.getPromoCodes().size() - 10);
+            mPromoListScroll = std::clamp(mPromoListScroll + (delta < 0 ? 1 : -1), 0, maxScroll);
+        }
+        return;
+    }
+
     if (mEditOrderModalOpen) {
         float maxScroll = std::max(0.f, (float)(mOrders.size() - 6) * 32.f);
         mEditOrderScrollOffset = std::clamp(mEditOrderScrollOffset - delta * 30.f, 0.f, maxScroll);
@@ -2157,6 +2195,10 @@ void PosApp::handleScroll(float delta, sf::Vector2f m) {
     } else if (mActiveTab == 4) {
         float maxScroll = std::max(0.f, (float)(mActivityLogger.getLogs().size() - 10) * 34.f);
         mLogScrollOffset = std::clamp(mLogScrollOffset - delta * 30.f, 0.f, maxScroll);
+        return;
+    } else if (mActiveTab == 5) {
+        float maxScroll = 600.f;
+        mSettingsScrollOffset = std::clamp(mSettingsScrollOffset - delta * 30.f, 0.f, maxScroll);
         return;
     }
 
@@ -2541,11 +2583,22 @@ void PosApp::handleClick(sf::Vector2f m) {
         }
 
         // + Add to Active Cart (safe non-intrusive addition to existing cart)
-        if (mQuickCheckProductIdx >= 0) {
+        if (mQuickCheckProductIdx >= 0 && mQuickCheckProductIdx < (int)products.size()) {
             float addW = rightW - 145.f;
             if (pointInRect(m, rightX + 145.f, btnY, addW, 36)) {
+                if (mCartService.isPaymentDone()) {
+                    showToast("Order already paid. Click New Order first.");
+                    return;
+                }
+                const auto& prod = products[mQuickCheckProductIdx];
+                int curQty = 0;
+                for (const auto& cl : cart) if (cl.productId == mQuickCheckProductIdx) curQty = cl.quantity;
+                if (curQty + 1 > prod.stock) {
+                    showToast("Stock limit: only " + std::to_string(prod.stock) + " available for " + prod.name);
+                    return;
+                }
                 mCartService.addItem(mQuickCheckProductIdx, 1);
-                showToast("Added " + mProductCatalog.getProducts()[mQuickCheckProductIdx].name + " to cart");
+                showToast("Added " + prod.name + " to cart");
                 mQuickCheckModalOpen = false;
                 return;
             }
@@ -2628,64 +2681,103 @@ void PosApp::handleClick(sf::Vector2f m) {
         // Close [X] Button
         if (pointInRect(m, dx + dw - 40, dy + 16, 26, 26)) {
             mPromoModalOpen = false;
+            mPromoDropdownOpen = false;
             return;
         }
         // Close Button
         if (pointInRect(m, dx + dw - 146, dy + dh - 44, 120, 32)) {
             mPromoModalOpen = false;
+            mPromoDropdownOpen = false;
             return;
         }
 
         float colW = 340.f;
         float colH = 405.f;
         float colY = dy + 68.f;
-
-        // Promo Code input
         float fCodeY = colY + 54.f;
-        if (pointInRect(m, dx + 40, fCodeY + 14, colW - 32, 32)) {
-            mNewPromoActiveField = 0;
-            return;
-        }
-
-        // Discount Rate input
         float fRateY = fCodeY + 54.f;
-        if (pointInRect(m, dx + 40, fRateY + 14, colW - 32, 32)) {
-            mNewPromoActiveField = 1;
-            return;
-        }
-
-        // Scope pills
         float fScopeY = fRateY + 54.f;
         float pillW = (colW - 36.f) / 3.f;
         float p1X = dx + 40.f;
         float p2X = p1X + pillW + 2.f;
         float p3X = p2X + pillW + 2.f;
         float pillY = fScopeY + 14.f;
+        float fTargY = pillY + 34.f;
+
+        // Handle open dropdown list clicks first (it floats over Save button)
+        if (mPromoDropdownOpen && mNewPromoTargetType != "ALL") {
+            float ddX = dx + 40.f;
+            float ddY = fTargY + 48.f;
+            float ddW = colW - 32.f;
+            int maxVis = 6;
+            bool isItem = (mNewPromoTargetType == "ITEM");
+            auto suppliers = mInventoryManager.getUniqueSuppliers();
+            int total = isItem ? (int)products.size() : (int)suppliers.size();
+            int visCount = std::min(maxVis, std::max(1, total));
+            float ddH = visCount * 28.f + 8.f;
+
+            if (pointInRect(m, ddX, ddY, ddW, ddH)) {
+                if (total > 0) {
+                    int startIdx = std::clamp(mPromoDropdownScroll, 0, std::max(0, total - maxVis));
+                    for (int i = 0; i < visCount && (startIdx + i) < total; i++) {
+                        float ry = ddY + 4.f + i * 28.f;
+                        if (pointInRect(m, ddX + 4.f, ry, ddW - 8.f, 26.f)) {
+                            mNewPromoTargetValue = isItem ? products[startIdx + i].barcode : suppliers[startIdx + i];
+                            mPromoDropdownOpen = false;
+                            mNewPromoActiveField = 2;
+                            return;
+                        }
+                    }
+                }
+                return;
+            }
+        }
+
+        // Promo Code input
+        if (pointInRect(m, dx + 40, fCodeY + 14, colW - 32, 32)) {
+            mNewPromoActiveField = 0;
+            mPromoDropdownOpen = false;
+            return;
+        }
+
+        // Discount Rate input
+        if (pointInRect(m, dx + 40, fRateY + 14, colW - 32, 32)) {
+            mNewPromoActiveField = 1;
+            mPromoDropdownOpen = false;
+            return;
+        }
 
         if (pointInRect(m, p1X, pillY, pillW, 26.f)) {
             mNewPromoTargetType = "ALL";
             mNewPromoTargetValue = "ALL";
+            mPromoDropdownOpen = false;
             return;
         }
         if (pointInRect(m, p2X, pillY, pillW, 26.f)) {
             mNewPromoTargetType = "ITEM";
             if (mNewPromoTargetValue == "ALL") mNewPromoTargetValue.clear();
             mNewPromoActiveField = 2;
+            mPromoDropdownOpen = true;
+            mPromoDropdownScroll = 0;
             return;
         }
         if (pointInRect(m, p3X, pillY, pillW, 26.f)) {
             mNewPromoTargetType = "SUPPLIER";
             if (mNewPromoTargetValue == "ALL") mNewPromoTargetValue.clear();
             mNewPromoActiveField = 2;
+            mPromoDropdownOpen = true;
+            mPromoDropdownScroll = 0;
             return;
         }
 
-        // Target value input
-        float fTargY = pillY + 34.f;
+        // Target value input / dropdown toggle
         if (mNewPromoTargetType != "ALL" && pointInRect(m, dx + 40, fTargY + 14, colW - 32, 32)) {
             mNewPromoActiveField = 2;
+            mPromoDropdownOpen = !mPromoDropdownOpen;
+            mPromoDropdownScroll = 0;
             return;
         }
+        mPromoDropdownOpen = false;
 
         // Save Promo button
         float fSaveBtnY = colY + colH - 46.f;
@@ -2721,13 +2813,18 @@ void PosApp::handleClick(sf::Vector2f m) {
         float rHdrY = colY + 48.f;
         float rRowY = rHdrY + 22.f;
         const auto& pList = mCartService.getPromoCodes();
-        for (size_t r = 0; r < pList.size() && r < 7; r++) {
+        const int maxVisRows = 10;
+        int totalRows = (int)pList.size();
+        int startRow = std::clamp(mPromoListScroll, 0, std::max(0, totalRows - maxVisRows));
+        for (int r = 0; (startRow + r) < totalRows && r < maxVisRows; r++) {
             float delW = 48.f, delH = 22.f;
             float delX = rColX + rColW - 16.f - delW;
             float rowYPos = rRowY + static_cast<float>(r) * 32.f;
             if (pointInRect(m, delX, rowYPos, delW, delH)) {
-                std::string codeToDel = pList[r].code;
+                std::string codeToDel = pList[startRow + r].code;
                 mCartService.deletePromoCode(codeToDel);
+                int newMaxScroll = std::max(0, (int)mCartService.getPromoCodes().size() - maxVisRows);
+                mPromoListScroll = std::clamp(mPromoListScroll, 0, newMaxScroll);
                 mActivityLogger.logActivity("SETTINGS", mCurrentUserName, "Deleted promo voucher: " + codeToDel);
                 showToast("Deleted promo voucher: " + codeToDel);
                 return;
@@ -2763,6 +2860,23 @@ void PosApp::handleClick(sf::Vector2f m) {
             if (pointInRect(m, dx + dw - 200, ry + 12, 90, 32)) {
                 std::string custLabel = (d < drafts.size()) ? drafts[d].customerLabel : "Customer";
                 mCartService.resumeDraft((int)d);
+                mReceiptScrollOffset = 0.f;
+                if (custLabel.rfind("Order #", 0) == 0 && custLabel.size() > 7) {
+                    std::string oid = custLabel.substr(7);
+                    reloadAuditData();
+                    mOriginalEditingOrderItems.clear();
+                    for (const auto& od : mOrderDetails) {
+                        if (od.orderId == oid) mOriginalEditingOrderItems.push_back(od);
+                    }
+                    mOriginalEditingOrderStatus = "on-hold";
+                    mIsEditingExistingOrder = true;
+                    mCurrentEditingOrderId = oid;
+                } else {
+                    mIsEditingExistingOrder = false;
+                    mCurrentEditingOrderId = "";
+                    mOriginalEditingOrderItems.clear();
+                    mOriginalEditingOrderStatus = "";
+                }
                 mDraftsModalOpen = false;
                 showToast("Resumed draft sale for " + custLabel);
                 return;
@@ -3473,13 +3587,12 @@ void PosApp::handleClick(sf::Vector2f m) {
             }
         }
 
-        // Retail Price (Field 2)
-        float col3W = (formW - 20.f) / 3.f;
-        if (pointInRect(m, formX, dy + 256 + 16, col3W, 32)) { mNewItemActiveField = 2; return; }
-        // Cost Price (Field 3)
-        if (pointInRect(m, formX + col3W + 10.f, dy + 256 + 16, col3W, 32)) { mNewItemActiveField = 3; return; }
-        // Quantity (Field 4)
-        if (pointInRect(m, formX + (col3W + 10.f) * 2.f, dy + 256 + 16, col3W, 32)) { mNewItemActiveField = 4; return; }
+        // Retail Price (Field 2), Cost Price (Field 3), Quantity (Field 4), Tax (Field 9)
+        float col4W = (formW - 30.f) / 4.f;
+        if (pointInRect(m, formX, dy + 256 + 16, col4W, 32)) { mNewItemActiveField = 2; return; }
+        if (pointInRect(m, formX + col4W + 10.f, dy + 256 + 16, col4W, 32)) { mNewItemActiveField = 3; return; }
+        if (pointInRect(m, formX + (col4W + 10.f) * 2.f, dy + 256 + 16, col4W, 32)) { mNewItemActiveField = 4; return; }
+        if (pointInRect(m, formX + (col4W + 10.f) * 3.f, dy + 256 + 16, col4W, 32)) { mNewItemActiveField = 9; return; }
 
         // Barcode Input Box (Field 6)
         float bcInputW = formW - 310.f;
@@ -3554,6 +3667,9 @@ void PosApp::handleClick(sf::Vector2f m) {
                 reloadAuditData();
                 mSalesScrollOffset = 0.f;
                 mCashCustomActiveField = 0;
+            } else if (mActiveTab == 6) {
+                resetReturnState();
+                reloadAuditData();
             }
             return;
         }
@@ -4322,6 +4438,10 @@ void PosApp::handleClick(sf::Vector2f m) {
         float cx = mMainX + (k % 3) * (Layout::CARD_W + Layout::CARD_GAP);
         float cy = Layout::CARD_Y + (k / 3) * (Layout::CARD_H + Layout::CARD_GAP);
         if (pointInRect(m, cx, cy, Layout::CARD_W, Layout::CARD_H)) {
+            if (mCartService.isPaymentDone()) {
+                showToast("Order already paid. Click New Order first.");
+                return;
+            }
             int pid = visible[k];
             int curQty = 0;
             for (const auto& cl : cart) if (cl.productId == pid) curQty = cl.quantity;
@@ -5069,7 +5189,7 @@ void PosApp::handleTextInput(sf::Uint32 unicode) {
         if (mSpecialDiscountFocused) {
             if (unicode == 8) {
                 if (!mSpecialDiscountInputStr.empty()) mSpecialDiscountInputStr.pop_back();
-            } else if (unicode >= '0' && unicode <= '8' && mSpecialDiscountInputStr.size() < 1) {
+            } else if (unicode >= '0' && unicode <= '8' && (mSpecialDiscountInputStr.empty() || mSpecialDiscountInputStr == "0")) {
                 mSpecialDiscountInputStr = std::string(1, (char)unicode);
             }
             return;
@@ -5132,12 +5252,13 @@ void PosApp::handleTextInput(sf::Uint32 unicode) {
                 case 6: return &mNewItemBarcode;
                 case 7: return &mNewItemUnit;
                 case 8: return &mNewItemExpiryDate;
+                case 9: return &mNewItemTaxStr;
                 default: return nullptr;
             }
         };
         std::string* targetStr = getActiveStr();
         if (unicode == 9) {
-            mNewItemActiveField = (mNewItemActiveField + 1) % 9;
+            mNewItemActiveField = (mNewItemActiveField + 1) % 10;
         } else if (unicode == 8) {
             if (targetStr && !targetStr->empty()) targetStr->pop_back();
         } else if (unicode == 13) {
@@ -5577,7 +5698,7 @@ void PosApp::render() {
                                             mNewItemSupplier, mNewItemDesc, mNewItemCategory,
                                             mCategoryManager.getCategories(),
                                             mNewItemUnit,
-                                            mNewItemPriceStr, mNewItemCostStr, mNewItemQtyStr, mNewItemDateStr, mNewItemExpiryDate,
+                                            mNewItemPriceStr, mNewItemCostStr, mNewItemQtyStr, mNewItemTaxStr, mNewItemDateStr, mNewItemExpiryDate,
                                             mNewItemBarcode, mNewItemActiveField, mNewItemGenerated,
                                             mInventoryManager.getUniqueSuppliers(), mVendorDropdownOpen,
                                             mScanningUniversalSupplier, mNewItemAlsoAddToCatalog,
@@ -5597,6 +5718,7 @@ void PosApp::render() {
                                                 mNewPromoTargetType, mNewPromoTargetValue,
                                                 mNewPromoActiveField,
                                                 mInventoryManager.getUniqueSuppliers(),
+                                                prods, mPromoDropdownOpen, mPromoDropdownScroll, mPromoListScroll,
                                                 mFontRegular, mFontMedium, mFontSemiBold, mFontBold, mFontSerif);
     } else if (mEditProductModalOpen) {
         PosModalsView::drawEditProductModal(mWindow, m, mCurrentWidth, mDesignHeight,

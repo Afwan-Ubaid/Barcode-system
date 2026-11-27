@@ -14,21 +14,8 @@ bool ActivityLogger::loadActivityLogs(const std::string& customPath) {
     if (!customPath.empty() && fs::exists(customPath)) {
         mActivityLogFilePath = customPath;
     } else {
-        std::vector<std::string> candidates = {
-            "activity_log.txt",
-            "frontend/activity_log.txt",
-            "assets/activity_log.txt",
-            "../activity_log.txt"
-        };
-        std::string foundPath;
-        for (const auto& c : candidates) {
-            if (fs::exists(c)) {
-                foundPath = c;
-                break;
-            }
-        }
-        if (foundPath.empty()) {
-            foundPath = "activity_log.txt";
+        std::string foundPath = resolveDataFilePath("activity_log.txt");
+        if (!fs::exists(foundPath)) {
             std::ofstream out(foundPath);
             if (out.is_open()) {
                 out << "# ScanIT Activity Log & Audit Trail\n"

@@ -240,8 +240,11 @@ bool decodeBarcodeFromBMP(const string& imagePath, string& decodedCode, string& 
         return false;
     }
 
-    RawBMPHeader header;
-    file.read(reinterpret_cast<char*>(&header), sizeof(header));
+    RawBMPHeader header{};
+    if (!file.read(reinterpret_cast<char*>(&header), sizeof(header))) {
+        errorMessage = "Error: File is truncated or not a valid BMP image.";
+        return false;
+    }
     if (header.bfType != 0x4D42) {
         errorMessage = "Error: File is not a valid BMP image.";
         return false;
@@ -253,16 +256,23 @@ bool decodeBarcodeFromBMP(const string& imagePath, string& decodedCode, string& 
     }
 
     int width = header.biWidth;
+    if (header.biHeight == INT32_MIN) {
+        errorMessage = "Error: Invalid image dimensions.";
+        return false;
+    }
     int height = abs(header.biHeight);
-    if (width <= 0 || height <= 0) {
+    if (width <= 0 || height <= 0 || width > 32768 || height > 32768) {
         errorMessage = "Error: Invalid image dimensions.";
         return false;
     }
 
-    int rowStride = ((width * 3 + 3) / 4) * 4;
-    vector<uint8_t> bmpData(rowStride * height);
+    size_t rowStride = (static_cast<size_t>(width) * 3 + 3) / 4 * 4;
+    vector<uint8_t> bmpData(rowStride * static_cast<size_t>(height));
     file.seekg(header.bfOffBits, ios::beg);
-    file.read(reinterpret_cast<char*>(bmpData.data()), bmpData.size());
+    if (!file || !file.read(reinterpret_cast<char*>(bmpData.data()), bmpData.size())) {
+        errorMessage = "Error: Unexpected end of file while reading BMP pixel data.";
+        return false;
+    }
     file.close();
 
     // Convert BMP (bottom-up BGR) to top-down RGB

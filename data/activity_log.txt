@@ -1,0 +1,171 @@
+# ScanIT Activity Log & Audit Trail
+# Format: Timestamp|Category|User|Details
+2026-11-17 01:27:10|SALE|admin|Processed sale #1001 of Rs 1,090 (Cash)
+2026-11-17 01:27:11|SALE|admin|Processed sale #1001 of Rs 1,090 (Cash)
+2026-11-17 04:30:21|INVENTORY|admin|Restocked +50 units of Fresh Milk
+2026-11-17 04:30:23|INVENTORY|admin|Restocked +50 units of Fresh Milk
+2026-11-17 04:30:50|STAFF|admin|Added Employee ID: Afwan
+2026-11-17 11:55:35|SALE|admin|Processed sale #1001 of Rs 1,230 by Card
+2026-11-17 19:34:15|PRODUCT|admin|Deleted product: Green Tea
+2026-11-17 19:35:22|INVENTORY|admin|Restocked +50 units of Fresh Milk
+2026-11-17 19:35:23|INVENTORY|admin|Restocked +10 units of Fresh Milk
+2026-11-17 19:35:34|SALE|admin|Processed card sale of Rs 1,090
+2026-11-17 21:42:18|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-17 21:47:50|RETURN|admin|Customer returned 1x Fresh Milk (100001) - Refunded Rs 320 - Restocked in product.txt and inventory.txt
+2026-11-17 21:48:15|SALE|admin|Processed card sale of Rs 1,450
+2026-11-17 21:49:17|SALE|admin|Processed cash sale of Rs 60
+2026-11-17 21:57:55|SALE|admin|Processed card sale of Rs 2,460
+2026-11-17 22:10:40|INVENTORY|admin|Restocked +50 units of Red apples
+2026-11-17 22:27:18|INVENTORY|admin|Bought 30 units of wadood (100009) from Nestle Pakistan at Rs 250/unit on 2026-11-17
+2026-11-17 22:33:22|SALE|admin|Processed cash sale of Rs 420
+2026-11-17 22:36:35|RETURN|admin|Customer returned 1x Fresh Milk (100001) - Refunded Rs 320 - Restocked in product.txt and inventory.txt
+2026-11-17 22:37:30|LOGIN|admin|Operator logged out of terminal session
+2026-11-17 22:37:40|LOGIN|Afwan|Authenticated user session (Employee) via login terminal
+2026-11-18 00:30:50|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-18 00:36:58|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-18 02:00:33|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-18 02:11:18|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-18 02:15:09|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-18 02:57:01|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-18 03:14:19|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-18 03:22:18|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-18 03:24:41|LOGIN|admin|Operator logged out of terminal session
+2026-11-18 03:24:48|LOGIN|Afwan|Authenticated user session (Employee) via login terminal
+2026-11-17 01:00:00|LOGIN|admin|Administrator session authenticated
+2026-11-18 20:12:57|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-19 00:36:16|LOGIN|cashier1|Authenticated user session (Employee) via login terminal
+2026-11-19 00:38:30|SALE|cashier1|Processed cash sale of Rs 486
+2026-11-19 00:44:03|RETURN|cashier1|Customer returned 1x Basmati Rice (100006) - Refunded Rs 540 - Restocked in shop product.txt
+2026-11-19 00:47:08|LOGIN|cashier1|Authenticated user session (Employee) via login terminal
+2026-11-19 00:49:04|SALE|cashier1|Processed cash sale of Rs 486
+2026-11-19 00:49:26|SALE|cashier1|Processed cash sale of Rs 486
+2026-11-19 00:50:02|RETURN|cashier1|Customer returned 1x Basmati Rice (100006) - Refunded Rs 540 - Restocked in shop product.txt
+2026-11-19 00:50:47|RETURN|cashier1|Customer returned 1x Basmati Rice (100006) - Refunded Rs 540 - Restocked in shop product.txt
+2026-11-19 00:54:52|LOGIN|cashier1|Operator logged out of terminal session
+2026-11-19 00:55:07|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-19 00:55:24|PRODUCT|admin|Deleted product: wadood
+2026-11-19 01:02:21|STAFF|admin|Added Employee ID: wadood
+2026-11-19 01:02:58|STAFF|admin|Added Admin ID: awadood
+2026-11-19 01:04:06|SETTINGS|admin|Added promo voucher: CHAUDHARY
+2026-11-19 01:04:43|RETURN|admin|Customer returned 1x Basmati Rice (100006) - Refunded Rs 540 - Restocked in shop product.txt
+2026-11-19 01:04:57|RETURN|admin|Customer returned 1x Basmati Rice (100006) - Refunded Rs 540 - Restocked in shop product.txt
+2026-11-19 01:06:11|RETURN|admin|Customer returned 1x Basmati Rice (100006) - Refunded Rs 540 - Restocked in shop product.txt
+2026-11-19 01:10:26|LOGIN|admin|Operator logged out of terminal session
+2026-11-19 01:10:40|LOGIN|wadood|Authenticated user session (Employee) via login terminal
+2026-11-19 11:34:56|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-19 11:35:58|INVENTORY|admin|Bought 30 units of ahmad (100010) from Nestle Pakistan at Rs 250/unit into inventory.txt
+2026-11-23 17:45:40|RETURN|admin|Customer returned 1x Fresh Milk (100001) - Refunded Rs 320 via Cash [Changed Mind] - Restocked
+2026-11-23 17:49:16|RETURN|admin|Customer returned 1x Fresh Milk (100001) - Refunded Rs 320 via Cash [Changed Mind] - Restocked
+2026-11-26 11:37:54|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-26 11:38:50|ORDER|admin|Held order #00001526 (on-hold)
+2026-11-26 11:38:59|ORDER|admin|Resumed held order #00001526
+2026-11-26 11:39:00|ORDER|admin|Held order #00001526 (on-hold)
+2026-11-26 11:39:01|ORDER|admin|Resumed held order #00001526
+2026-11-26 11:49:39|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-26 11:51:38|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-26 11:55:47|INVENTORY|admin|Added 30 units of lulu (020001) from Nestle Pakistan into inventory.txt & Product.txt
+2026-11-26 11:58:48|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-26 12:02:33|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-26 12:04:17|SETTINGS|admin|Updated student discount rate to 15%
+2026-11-26 12:04:17|SETTINGS|admin|Updated student discount rate to 20%
+2026-11-26 12:04:18|SETTINGS|admin|Updated student discount rate to 25%
+2026-11-26 12:04:18|SETTINGS|admin|Updated student discount rate to 30%
+2026-11-26 12:04:18|SETTINGS|admin|Updated student discount rate to 35%
+2026-11-26 12:04:18|SETTINGS|admin|Updated student discount rate to 40%
+2026-11-26 12:04:18|SETTINGS|admin|Updated student discount rate to 45%
+2026-11-26 12:04:18|SETTINGS|admin|Updated student discount rate to 50%
+2026-11-26 12:04:19|SETTINGS|admin|Updated student discount rate to 55%
+2026-11-26 12:04:19|SETTINGS|admin|Updated student discount rate to 60%
+2026-11-26 12:04:19|SETTINGS|admin|Updated student discount rate to 65%
+2026-11-26 12:04:19|SETTINGS|admin|Updated student discount rate to 70%
+2026-11-26 12:04:19|SETTINGS|admin|Updated student discount rate to 75%
+2026-11-26 12:04:19|SETTINGS|admin|Updated student discount rate to 80%
+2026-11-26 12:04:20|SETTINGS|admin|Updated student discount rate to 85%
+2026-11-26 12:04:20|SETTINGS|admin|Updated student discount rate to 90%
+2026-11-26 12:04:20|SETTINGS|admin|Updated student discount rate to 90%
+2026-11-26 12:04:20|SETTINGS|admin|Updated student discount rate to 90%
+2026-11-26 12:04:20|SETTINGS|admin|Updated student discount rate to 90%
+2026-11-26 12:04:20|SETTINGS|admin|Updated student discount rate to 90%
+2026-11-26 12:04:20|SETTINGS|admin|Updated student discount rate to 90%
+2026-11-26 12:04:21|SETTINGS|admin|Updated student discount rate to 90%
+2026-11-26 12:04:21|SETTINGS|admin|Updated student discount rate to 90%
+2026-11-26 12:04:21|SETTINGS|admin|Updated student discount rate to 90%
+2026-11-26 12:04:21|SETTINGS|admin|Updated student discount rate to 90%
+2026-11-26 12:04:21|SETTINGS|admin|Updated student discount rate to 90%
+2026-11-26 12:04:21|SETTINGS|admin|Updated student discount rate to 90%
+2026-11-26 12:04:22|SETTINGS|admin|Updated student discount rate to 90%
+2026-11-26 12:04:22|SETTINGS|admin|Updated student discount rate to 90%
+2026-11-26 12:04:22|SETTINGS|admin|Updated student discount rate to 90%
+2026-11-26 12:04:22|SETTINGS|admin|Updated student discount rate to 90%
+2026-11-26 12:04:22|SETTINGS|admin|Updated student discount rate to 90%
+2026-11-26 12:04:31|SETTINGS|admin|Updated employee discount rate to 25%
+2026-11-26 12:04:31|SETTINGS|admin|Updated employee discount rate to 30%
+2026-11-26 12:04:31|SETTINGS|admin|Updated employee discount rate to 35%
+2026-11-26 12:04:31|SETTINGS|admin|Updated employee discount rate to 40%
+2026-11-26 12:04:32|SETTINGS|admin|Updated employee discount rate to 45%
+2026-11-26 12:04:32|SETTINGS|admin|Updated employee discount rate to 50%
+2026-11-26 12:04:32|SETTINGS|admin|Updated employee discount rate to 55%
+2026-11-26 12:04:32|SETTINGS|admin|Updated employee discount rate to 60%
+2026-11-26 12:04:32|SETTINGS|admin|Updated employee discount rate to 65%
+2026-11-26 12:04:32|SETTINGS|admin|Updated employee discount rate to 70%
+2026-11-26 12:04:32|SETTINGS|admin|Updated employee discount rate to 75%
+2026-11-26 12:04:32|SETTINGS|admin|Updated employee discount rate to 80%
+2026-11-26 12:04:32|SETTINGS|admin|Updated employee discount rate to 85%
+2026-11-26 12:04:33|SETTINGS|admin|Updated employee discount rate to 90%
+2026-11-26 12:04:33|SETTINGS|admin|Updated employee discount rate to 90%
+2026-11-26 12:04:33|SETTINGS|admin|Updated employee discount rate to 90%
+2026-11-26 12:04:33|SETTINGS|admin|Updated employee discount rate to 90%
+2026-11-26 12:04:33|SETTINGS|admin|Updated employee discount rate to 90%
+2026-11-26 12:04:33|SETTINGS|admin|Updated employee discount rate to 90%
+2026-11-26 12:04:34|SETTINGS|admin|Updated employee discount rate to 90%
+2026-11-26 12:04:34|SETTINGS|admin|Updated employee discount rate to 90%
+2026-11-26 12:04:35|SETTINGS|admin|Updated employee discount rate to 85%
+2026-11-26 12:04:35|SETTINGS|admin|Updated employee discount rate to 80%
+2026-11-26 12:04:35|SETTINGS|admin|Updated employee discount rate to 75%
+2026-11-26 12:04:35|SETTINGS|admin|Updated employee discount rate to 70%
+2026-11-26 12:04:35|SETTINGS|admin|Updated employee discount rate to 65%
+2026-11-26 12:04:36|SETTINGS|admin|Updated employee discount rate to 60%
+2026-11-26 12:04:36|SETTINGS|admin|Updated employee discount rate to 55%
+2026-11-26 12:04:36|SETTINGS|admin|Updated employee discount rate to 50%
+2026-11-26 12:04:36|SETTINGS|admin|Updated employee discount rate to 45%
+2026-11-26 12:04:36|SETTINGS|admin|Updated employee discount rate to 40%
+2026-11-26 12:04:36|SETTINGS|admin|Updated employee discount rate to 35%
+2026-11-26 12:04:37|SETTINGS|admin|Updated employee discount rate to 30%
+2026-11-26 12:04:37|SETTINGS|admin|Updated employee discount rate to 25%
+2026-11-26 12:04:37|SETTINGS|admin|Updated employee discount rate to 20%
+2026-11-26 12:04:37|SETTINGS|admin|Updated employee discount rate to 15%
+2026-11-26 12:04:37|SETTINGS|admin|Updated employee discount rate to 10%
+2026-11-26 12:04:37|SETTINGS|admin|Updated employee discount rate to 5%
+2026-11-26 12:04:37|SETTINGS|admin|Updated employee discount rate to 0%
+2026-11-26 12:04:39|SETTINGS|admin|Updated employee discount rate to 5%
+2026-11-26 12:04:40|SETTINGS|admin|Updated employee discount rate to 10%
+2026-11-26 12:04:41|SETTINGS|admin|Updated student discount rate to 85%
+2026-11-26 12:04:41|SETTINGS|admin|Updated student discount rate to 80%
+2026-11-26 12:04:41|SETTINGS|admin|Updated student discount rate to 75%
+2026-11-26 12:04:41|SETTINGS|admin|Updated student discount rate to 70%
+2026-11-26 12:04:41|SETTINGS|admin|Updated student discount rate to 65%
+2026-11-26 12:04:41|SETTINGS|admin|Updated student discount rate to 60%
+2026-11-26 12:04:42|SETTINGS|admin|Updated student discount rate to 55%
+2026-11-26 12:04:42|SETTINGS|admin|Updated student discount rate to 50%
+2026-11-26 12:04:42|SETTINGS|admin|Updated student discount rate to 45%
+2026-11-26 12:04:42|SETTINGS|admin|Updated student discount rate to 40%
+2026-11-26 12:04:43|SETTINGS|admin|Updated student discount rate to 35%
+2026-11-26 12:04:43|SETTINGS|admin|Updated student discount rate to 30%
+2026-11-26 12:04:43|SETTINGS|admin|Updated student discount rate to 25%
+2026-11-26 12:04:43|SETTINGS|admin|Updated student discount rate to 20%
+2026-11-26 12:04:43|SETTINGS|admin|Updated student discount rate to 15%
+2026-11-26 12:04:43|SETTINGS|admin|Updated student discount rate to 10%
+2026-11-26 12:04:45|SETTINGS|admin|Updated student discount rate to 15%
+2026-11-26 12:05:58|SETTINGS|admin|Added promo voucher: AHMAD
+2026-11-26 12:06:19|SETTINGS|admin|Added promo voucher: AHMAD
+2026-11-26 12:06:36|SETTINGS|admin|Added promo voucher: AHMAD
+2026-11-26 12:13:52|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-26 12:17:54|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-26 12:19:22|INVENTORY|admin|Added 30 units of ccc (090001) from Nestle Pakistan into inventory.txt & Product.txt
+2026-11-26 12:24:16|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-26 12:26:32|INVENTORY|admin|Added 30 units of nunu (090002) from Nestle Pakistan into inventory.txt & Product.txt
+2026-11-26 12:27:17|INVENTORY|admin|Added 10 units of raheel (090003) from Nestle Pakistan into inventory.txt & Product.txt
+2026-11-26 12:28:10|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-26 12:30:33|INVENTORY|admin|Added 5 units of musambi juice (030001) from Nestle Pakistan into inventory.txt & Product.txt
+2026-11-26 12:45:03|LOGIN|admin|Authenticated user session (Admin) via login terminal
+2026-11-26 12:46:36|INVENTORY|admin|Added 30 units of mango shkah (090004) from Nestle into inventory.txt

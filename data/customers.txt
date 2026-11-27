@@ -1,0 +1,2 @@
+phone|name|points|totalSpent|visits|lastVisit
+03136154837|a|19|1976|1|2026-11-26

@@ -1,4 +1,5 @@
 #include "CategoryManager.h"
+#include "UIUtils.h"
 #include <fstream>
 #include <sstream>
 #include <algorithm>
@@ -29,16 +30,12 @@ CategoryManager::CategoryManager() {
 }
 
 bool CategoryManager::loadCategories(const std::string& path) {
-    std::string targetPath = path;
+    std::string targetPath = resolveDataFilePath(path);
     if (!fs::exists(targetPath)) {
-        if (targetPath == "PCategory.txt" && fs::exists("pCategory.txt")) {
-            targetPath = "pCategory.txt";
-        } else if (targetPath == "pCategory.txt" && fs::exists("PCategory.txt")) {
-            targetPath = "PCategory.txt";
-        } else {
-            return false;
-        }
+        if (path == "PCategory.txt") targetPath = resolveDataFilePath("pCategory.txt");
+        else if (path == "pCategory.txt") targetPath = resolveDataFilePath("PCategory.txt");
     }
+    if (!fs::exists(targetPath)) return false;
 
     std::ifstream in(targetPath);
     if (!in.is_open()) return false;
@@ -64,12 +61,8 @@ bool CategoryManager::loadCategories(const std::string& path) {
 }
 
 bool CategoryManager::saveCategories(const std::string& path) const {
-    std::vector<std::string> paths = {path};
-    if (path == "PCategory.txt") paths.push_back("pCategory.txt");
-    else if (path == "pCategory.txt") paths.push_back("PCategory.txt");
-    if (fs::exists("frontend")) {
-        paths.push_back("frontend/pCategory.txt");
-    }
+    std::string target = resolveDataFilePath(path == "PCategory.txt" ? "pCategory.txt" : path);
+    std::vector<std::string> paths = {target};
 
     bool success = false;
     for (const auto& p : paths) {

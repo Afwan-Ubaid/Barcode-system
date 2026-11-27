@@ -292,7 +292,11 @@ void handleRecordOrderAndGenerateBill() {
         getline(cin, qtyStr);
         int reqQty = 1;
         if (!qtyStr.empty()) {
-            try { reqQty = stoi(qtyStr); } catch (...) { reqQty = 1; }
+            try { reqQty = stoi(qtyStr); } catch (...) { reqQty = 0; }
+        }
+        if (reqQty <= 0) {
+            cout << "\n[REJECTED] Quantity must be a positive integer.\n";
+            continue;
         }
 
         int existingInCart = 0;
@@ -404,21 +408,29 @@ void handleRecordOrderAndGenerateBill() {
         appendOrderDetail("OrderDetail.txt", detail);
     }
 
+    BillRecord bill;
+    bill.billId = billId;
+    bill.customerName = custName;
+    bill.orderId = orderId;
+    bill.totalWithoutTax = totalWithoutTax;
+    bill.totalTax = totalTax;
+    bill.totalDiscount = totalDiscount;
+    bill.totalPayable = totalPayable;
+    bill.amountReceived = (orderStatus == "paid") ? totalPayable : 0;
+    bill.balanceReturned = 0;
+    bill.paymentStatus = orderStatus;
+    bill.billDate = orderDate;
+    bill.billTime = orderTime;
+    appendBill("Bill.txt", bill);
+
     for (const auto& entry : cart) {
-        BillRecord bill;
-        bill.billId = billId;
-        bill.customerName = custName;
-        bill.orderId = orderId;
-        bill.productAcronym = entry.item.acronym;
-        bill.unitPrice = entry.item.unitPrice;
-        bill.discountPerUnit = entry.item.discount;
-        bill.quantity = entry.qty;
-        bill.totalWithoutTax = totalWithoutTax;
-        bill.totalTax = totalTax;
-        bill.totalDiscount = totalDiscount;
-        bill.totalPayable = totalPayable;
-        bill.paymentStatus = orderStatus;
-        appendBill("Bill.txt", bill);
+        BillDetailRecord bd;
+        bd.billId = billId;
+        bd.productAcronym = entry.item.acronym;
+        bd.unitPrice = entry.item.unitPrice;
+        bd.quantity = entry.qty;
+        bd.discountOnProduct = entry.item.discount;
+        appendBillDetail("BillDetail.txt", bd);
     }
 
     for (const auto& entry : cart) {

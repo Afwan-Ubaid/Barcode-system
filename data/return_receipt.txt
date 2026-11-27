@@ -1,0 +1,20 @@
+==================================================
+               SCANIT SUPERMARKET                 
+            CUSTOMER RETURN RECEIPT               
+==================================================
+Return ID:       RET-1011
+Timestamp:       2026-11-23 17:49:16
+Cashier:         admin
+Customer:        Ahmed Khan
+Original Order:  #10000117
+--------------------------------------------------
+Returned Item:   Fresh Milk (100001)
+Quantity:        1
+Unit Sold Price: Rs 320
+TOTAL REFUND:    Rs 320
+Refund Method:   Cash
+Return Reason:   Changed Mind
+Item Status:     Restocked
+==================================================
+    * OFFICIAL RETURN PROOF & AUDIT RECORD *     
+==================================================

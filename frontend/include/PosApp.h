@@ -55,6 +55,7 @@ private:
     void simulateScan(int productId = -1);
     void onBarcodeScanned(const std::string& barcode);
     void lookupReturnItem(const std::string& barcode);
+    void resetReturnState();
     void processReturn();
     void recordSaleToOutputFiles(const std::vector<CartLine>& cartItems, const std::string& cashierName,
                                    int paymentMethod, const std::string& orderStatus = "paid");
@@ -208,6 +209,9 @@ private:
     std::string mNewPromoTargetType = "ALL"; // "ALL", "ITEM", "SUPPLIER"
     std::string mNewPromoTargetValue = "ALL";
     int mNewPromoActiveField = 0; // 0=code, 1=discount, 2=targetVal
+    bool mPromoDropdownOpen = false;
+    int mPromoDropdownScroll = 0;
+    int mPromoListScroll = 0;
 
     // Inventory View Sub-Tabs & Supplier Ledger
     int mInventorySubTab = 0; // 0 = Stock & Items, 1 = Supplier Ledger
@@ -221,6 +225,7 @@ private:
     std::string mNewItemPriceStr = "320";
     std::string mNewItemCostStr = "250";
     std::string mNewItemQtyStr = "30";
+    std::string mNewItemTaxStr = "0";
     std::string mNewItemDateStr = "2026-11-17";
     std::string mNewItemBarcode = "";
     int mNewItemActiveField = 1;

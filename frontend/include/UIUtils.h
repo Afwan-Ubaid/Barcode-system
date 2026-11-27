@@ -67,4 +67,7 @@ std::string formatRs(int amount);
 std::string getCurrentDateYYYYMMDD();
 std::string getCurrentTimeHHMMSS();
 
+// Data File Path Resolution (data/ folder)
+std::string resolveDataFilePath(const std::string& filename);
+
 #endif // UI_UTILS_H

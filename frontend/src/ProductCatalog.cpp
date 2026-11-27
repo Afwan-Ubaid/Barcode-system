@@ -42,25 +42,9 @@ bool ProductCatalog::loadProductsFile(const std::string& customPath) {
     if (!customPath.empty() && fs::exists(customPath)) {
         mProductFilePath = customPath;
     } else {
-        std::vector<std::string> candidates = {
-            "product.txt",
-            "frontend/product.txt",
-            "assets/product.txt",
-            "../product.txt",
-            "../../product.txt"
-        };
-
-        std::string foundPath;
-        for (const auto& c : candidates) {
-            if (fs::exists(c)) {
-                foundPath = c;
-                break;
-            }
-        }
-
-        if (foundPath.empty()) {
-            saveDefaultProductFile("product.txt");
-            foundPath = "product.txt";
+        std::string foundPath = resolveDataFilePath("product.txt");
+        if (!fs::exists(foundPath)) {
+            saveDefaultProductFile(foundPath);
         }
         mProductFilePath = foundPath;
     }
@@ -234,6 +218,7 @@ bool ProductCatalog::loadProductsFile(const std::string& customPath) {
 
             sf::Color tint = tints[idCounter % 8];
             ProductItem pi(idCounter, rawName, unit, category, iconKey, barcode, price, stock, tint);
+            pi.acronym    = acronym;
             pi.categoryId = categoryId;
             pi.tax        = tax;
             pi.discount   = discount;
@@ -375,6 +360,7 @@ int ProductCatalog::findProductByName(const std::string& name) const {
 void ProductCatalog::deleteProduct(int index) {
     if (index >= 0 && index < (int)mProducts.size()) {
         mProducts.erase(mProducts.begin() + index);
+        saveProductsFile();
     }
 }
 

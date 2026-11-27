@@ -287,7 +287,7 @@ bool CartService::applyPromoCode(const std::string& code, std::string& outMessag
 }
 
 bool CartService::loadDiscountSettings(const std::string& customPath) {
-    std::vector<std::string> paths = {customPath, "discount_settings.txt", "../discount_settings.txt", "frontend/discount_settings.txt"};
+    std::vector<std::string> paths = {customPath, resolveDataFilePath("discount_settings.txt"), "discount_settings.txt", "../discount_settings.txt"};
     for (const auto& p : paths) {
         if (p.empty()) continue;
         std::ifstream in(p);
@@ -314,8 +314,7 @@ bool CartService::loadDiscountSettings(const std::string& customPath) {
 }
 
 bool CartService::saveDiscountSettings(const std::string& customPath) {
-    std::vector<std::string> targets = {"discount_settings.txt", "frontend/discount_settings.txt"};
-    if (!customPath.empty()) targets.insert(targets.begin(), customPath);
+    std::vector<std::string> targets = {customPath.empty() ? resolveDataFilePath("discount_settings.txt") : customPath};
     for (const auto& t : targets) {
         std::ofstream out(t);
         if (out.is_open()) {
@@ -340,7 +339,7 @@ void CartService::setEmployeeDiscountRate(int rate) {
 
 bool CartService::loadPromoCodes(const std::string& customPath) {
     mPromoDatabase.clear();
-    std::vector<std::string> paths = {customPath, "promo.txt", "../promo.txt", "frontend/promo.txt"};
+    std::vector<std::string> paths = {customPath, resolveDataFilePath("promo.txt"), "promo.txt", "../promo.txt"};
     for (const auto& p : paths) {
         if (p.empty()) continue;
         std::ifstream in(p);
@@ -377,8 +376,7 @@ bool CartService::loadPromoCodes(const std::string& customPath) {
 }
 
 bool CartService::savePromoCodes(const std::string& customPath) {
-    std::vector<std::string> targets = {"promo.txt", "frontend/promo.txt"};
-    if (!customPath.empty()) targets.insert(targets.begin(), customPath);
+    std::vector<std::string> targets = {customPath.empty() ? resolveDataFilePath("promo.txt") : customPath};
     for (const auto& t : targets) {
         std::ofstream out(t);
         if (out.is_open()) {
@@ -617,7 +615,7 @@ std::string CartService::printReceipt(const std::vector<ProductItem>& products, 
 
     mLastReceiptText = ss.str();
 
-    std::ofstream out("receipt.txt");
+    std::ofstream out(resolveDataFilePath("receipt.txt"));
     if (out.is_open()) {
         out << mLastReceiptText;
         out.close();

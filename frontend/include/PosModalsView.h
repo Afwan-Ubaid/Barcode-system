@@ -92,6 +92,7 @@ public:
                                       const std::string& retailPriceStr,
                                       const std::string& costPriceStr,
                                       const std::string& qtyStr,
+                                      const std::string& taxStr,
                                       const std::string& dateStr,
                                       const std::string& expiryDateStr,
                                       const std::string& barcodeStr,
@@ -189,6 +190,8 @@ public:
                                          const std::string& newTargetValue,
                                          int activeField,
                                          const std::vector<std::string>& supplierList,
+                                         const std::vector<ProductItem>& products,
+                                         bool dropdownOpen, int dropdownScroll, int listScroll,
                                          const sf::Font& fontRegular, const sf::Font& fontMedium,
                                          const sf::Font& fontSemiBold, const sf::Font& fontBold,
                                          const sf::Font& fontSerif);

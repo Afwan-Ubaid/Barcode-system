@@ -1,0 +1,7 @@
+# ScanIT Staff Database
+# Format: Name,Password,Role,CreatedDate
+admin,admin123,Admin,2026-11-17
+cashier1,1234,Employee,2026-11-17
+Afwan,123,Employee,2026-11-17
+wadood,123,Employee,2026-11-19
+awadood,1234,Admin,2026-11-19

@@ -810,6 +810,7 @@ void PosModalsView::drawAddInventoryModal(sf::RenderTarget& target, sf::Vector2f
                                           const std::string& retailPriceStr,
                                           const std::string& costPriceStr,
                                           const std::string& qtyStr,
+                                          const std::string& taxStr,
                                           const std::string& dateStr,
                                           const std::string& expiryDateStr,
                                           const std::string& barcodeStr,
@@ -1001,11 +1002,12 @@ void PosModalsView::drawAddInventoryModal(sf::RenderTarget& target, sf::Vector2f
         drawText(target, fontSemiBold, catLabel, 7.8f, sel ? ThemeColor::White : ThemeColor::Ink, cx + pillW / 2.f, cy + 11, TextAlignment::Center);
     }
 
-    // Row 4: Pricing & Quantity
-    float col3W = (formW - 20.f) / 3.f;
-    drawFieldBox("Selling Price (PKR):", retailPriceStr, formX, dy + 256, col3W, 2, "Retail Price");
-    drawFieldBox("Supplier Cost (PKR):", costPriceStr, formX + col3W + 10.f, dy + 256, col3W, 3, "Cost Price");
-    drawFieldBox("Purchase Qty:", qtyStr, formX + (col3W + 10.f) * 2.f, dy + 256, col3W, 4, "Units bought");
+    // Row 4: Pricing, Quantity & Tax
+    float col4W = (formW - 30.f) / 4.f;
+    drawFieldBox("Selling Price (PKR):", retailPriceStr, formX, dy + 256, col4W, 2, "Retail Price");
+    drawFieldBox("Supplier Cost (PKR):", costPriceStr, formX + col4W + 10.f, dy + 256, col4W, 3, "Cost Price");
+    drawFieldBox("Purchase Qty:", qtyStr, formX + (col4W + 10.f) * 2.f, dy + 256, col4W, 4, "Units bought");
+    drawFieldBox("Tax (%):", taxStr, formX + (col4W + 10.f) * 3.f, dy + 256, col4W, 9, "Tax %");
 
     // Row 5: Barcode, Generate & Live Scanner Options
     drawText(target, fontSemiBold, "Barcode (First 2 digits = Category ID):", 9.5f, ThemeColor::Ink, formX, dy + 314);
@@ -1294,9 +1296,8 @@ void PosModalsView::drawQuickCheckModal(sf::RenderTarget& target, sf::Vector2f m
         drawText(target, fontRegular, "Barcode: " + foundProduct->barcode + " | " + foundProduct->category, 8.5f, sf::Color(180, 180, 190), scanX + 22.f, infoY + 52.f);
         drawText(target, fontSemiBold, "[OK] Price: Rs " + std::to_string(foundProduct->price), 9.5f, sf::Color(52, 211, 153), scanX + 22.f, infoY + 74.f);
     } else {
-        drawText(target, fontSemiBold, "Continuous Scanner Ready", 10.5f, sf::Color(240, 240, 240), scanX + 22.f, infoY + 14.f);
-        drawText(target, fontRegular, "Aim any product barcode at the camera or use quick test buttons on the right.", 8.5f, sf::Color(150, 150, 160), scanX + 22.f, infoY + 34.f);
-        drawText(target, fontMedium, "Autofills price, stock, & specs", 8.5f, sf::Color(96, 165, 250), scanX + 22.f, infoY + 68.f);
+        drawText(target, fontSemiBold, "Continuous Scanner Ready", 10.5f, sf::Color(240, 240, 240), scanX + 22.f, infoY + 18.f);
+        drawText(target, fontMedium, "Autofills price, stock, & specs", 8.5f, sf::Color(96, 165, 250), scanX + 22.f, infoY + 46.f);
     }
 
     // Camera Switch Hint
@@ -1913,13 +1914,21 @@ void PosModalsView::drawSaleDetailModal(sf::RenderTarget& target, sf::Vector2f m
             std::string barcode = "N/A";
             int unitPrice = 0;
 
+            bool foundProd = false;
             for (const auto& p : products) {
                 if (p.id == std::to_string(line.productId)) {
                     itemName = p.name;
                     barcode = p.barcode;
                     unitPrice = p.price;
+                    foundProd = true;
                     break;
                 }
+            }
+            if (!foundProd && line.productId >= 0 && line.productId < (int)products.size()) {
+                const auto& p = products[line.productId];
+                itemName = p.name;
+                barcode = p.barcode;
+                unitPrice = p.price;
             }
 
             int lineSubtotal = unitPrice * line.quantity;
@@ -1965,6 +1974,8 @@ void PosModalsView::drawPromoManagementModal(sf::RenderTarget& target, sf::Vecto
                                              const std::string& newTargetValue,
                                              int activeField,
                                              const std::vector<std::string>& supplierList,
+                                             const std::vector<ProductItem>& products,
+                                             bool dropdownOpen, int dropdownScroll, int listScroll,
                                              const sf::Font& fontRegular, const sf::Font& fontMedium,
                                              const sf::Font& fontSemiBold, const sf::Font& fontBold,
                                              const sf::Font& fontSerif) {
@@ -2058,11 +2069,18 @@ void PosModalsView::drawPromoManagementModal(sf::RenderTarget& target, sf::Vecto
         drawText(target, fontRegular, "Universal voucher: applies to all store items", 8.5f, ThemeColor::Mute, dx + 50, fTargY + 29);
     } else {
         drawRounded(target, dx + 40, fTargY + 14, colW - 32, 32, 6, sf::Color(255, 255, 255),
-                    (activeField == 2) ? ThemeColor::Blue : ThemeColor::Line, (activeField == 2) ? 1.5f : 1.f);
-        std::string placeholder = isItem ? "Enter SKU / Barcode (e.g. 010001)" : "Enter vendor (e.g. Nestle Pakistan)";
+                    (activeField == 2 || dropdownOpen) ? ThemeColor::Blue : ThemeColor::Line, (activeField == 2 || dropdownOpen) ? 1.5f : 1.f);
+        std::string placeholder = isItem ? "Select or enter SKU..." : "Select or enter supplier...";
         std::string dispVal = newTargetValue.empty() ? (activeField == 2 ? "|" : placeholder)
                                                      : (newTargetValue + (activeField == 2 ? "|" : ""));
+        if (dispVal.length() > 26) dispVal = dispVal.substr(0, 24) + "..";
         drawText(target, fontRegular, dispVal, 9.f, newTargetValue.empty() ? ThemeColor::Mute : ThemeColor::Ink, dx + 50, fTargY + 29);
+
+        // Dropdown toggle button
+        float ddBtnX = dx + 40 + (colW - 32) - 28.f;
+        bool hovDd = pointInRect(mouse, ddBtnX, fTargY + 14, 28.f, 32.f);
+        drawRounded(target, ddBtnX, fTargY + 15, 27.f, 30.f, 5, hovDd ? sf::Color(232, 224, 210) : sf::Color(244, 238, 228));
+        drawText(target, fontBold, dropdownOpen ? "^" : "v", 10.f, ThemeColor::Ink, ddBtnX + 13.5f, fTargY + 29, TextAlignment::Center);
     }
 
     // Save Promo Button
@@ -2099,9 +2117,12 @@ void PosModalsView::drawPromoManagementModal(sf::RenderTarget& target, sf::Vecto
         drawText(target, fontRegular, "No promo codes active in promo.txt.\nUse the form on the left to add your first voucher.",
                  9.5f, ThemeColor::Mute, rColX + rColW / 2.f, colY + colH / 2.f, TextAlignment::Center);
     } else {
+        const int maxVisRows = 10;
+        int totalRows = (int)promoList.size();
+        int startRow = std::clamp(listScroll, 0, std::max(0, totalRows - maxVisRows));
         int rCount = 0;
-        for (const auto& pr : promoList) {
-            if (rCount >= 7) break; // Display up to 7 items
+        for (int idx = startRow; idx < totalRows && rCount < maxVisRows; idx++) {
+            const auto& pr = promoList[idx];
 
             // Code
             drawText(target, fontBold, pr.code, 10.f, ThemeColor::Ink, rColX + 16, rRowY + 3);
@@ -2139,6 +2160,17 @@ void PosModalsView::drawPromoManagementModal(sf::RenderTarget& target, sf::Vecto
             rRowY += 32.f;
             rCount++;
         }
+
+        if (totalRows > maxVisRows) {
+            float trackX = rColX + rColW - 8.f;
+            float trackY = rHdrY + 20.f;
+            float trackH = maxVisRows * 32.f - 4.f;
+            drawRounded(target, trackX, trackY, 4.f, trackH, 2.f, sf::Color(232, 226, 214));
+            float thumbH = std::max(24.f, trackH * ((float)maxVisRows / (float)totalRows));
+            float frac = (float)startRow / (float)(totalRows - maxVisRows);
+            float thumbY = trackY + frac * (trackH - thumbH);
+            drawRounded(target, trackX, thumbY, 4.f, thumbH, 2.f, ThemeColor::Mute);
+        }
     }
 
     // Bottom Modal Action Bar
@@ -2150,6 +2182,46 @@ void PosModalsView::drawPromoManagementModal(sf::RenderTarget& target, sf::Vecto
     drawRounded(target, dx + dw - 146, botY, 120, 32, 6,
                 hovClose ? sf::Color(228, 218, 204) : sf::Color(235, 226, 212), ThemeColor::Edge, 1);
     drawText(target, fontSemiBold, "Close", 10.5f, ThemeColor::Ink, dx + dw - 86, botY + 15, TextAlignment::Center);
+
+    // Floating Dropdown List for By Item / By Supplier
+    if (dropdownOpen && !isAll) {
+        std::vector<std::string> options;
+        if (isItem) {
+            for (const auto& p : products) {
+                options.push_back(p.barcode + " - " + p.name);
+            }
+        } else if (isSupp) {
+            options = supplierList;
+        }
+
+        float ddX = dx + 40.f;
+        float ddY = fTargY + 48.f;
+        float ddW = colW - 32.f;
+        int maxVis = 6;
+        int total = (int)options.size();
+        int visCount = std::min(maxVis, std::max(1, total));
+        float ddH = visCount * 28.f + 8.f;
+
+        drawRounded(target, ddX + 2, ddY + 3, ddW, ddH, 6, sf::Color(0, 0, 0, 35));
+        drawRounded(target, ddX, ddY, ddW, ddH, 6, sf::Color(255, 255, 255), ThemeColor::Blue, 1.2f);
+
+        if (total == 0) {
+            drawText(target, fontRegular, isItem ? "No products found" : "No suppliers found",
+                     8.5f, ThemeColor::Mute, ddX + 12, ddY + 14);
+        } else {
+            int startIdx = std::clamp(dropdownScroll, 0, std::max(0, total - maxVis));
+            for (int i = 0; i < visCount && (startIdx + i) < total; i++) {
+                float ry = ddY + 4.f + i * 28.f;
+                bool hovRow = pointInRect(mouse, ddX + 4.f, ry, ddW - 8.f, 26.f);
+                if (hovRow) {
+                    drawRounded(target, ddX + 4.f, ry, ddW - 8.f, 26.f, 4, sf::Color(235, 244, 255));
+                }
+                std::string label = options[startIdx + i];
+                if (label.length() > 34) label = label.substr(0, 32) + "..";
+                drawText(target, fontRegular, label, 8.8f, ThemeColor::Ink, ddX + 12.f, ry + 13.f);
+            }
+        }
+    }
 }
 
 // ============================================================================

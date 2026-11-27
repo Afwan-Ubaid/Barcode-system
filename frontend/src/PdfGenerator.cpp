@@ -32,7 +32,7 @@ bool PdfGenerator::generateReceiptPdf(const std::string& outputPath,
     std::ostringstream stream;
 
     // Helper lambda to draw text
-    auto drawText = [&](const std::string& text, float x, float y, const std::string& font, int size, float r = 0.f, float g = 0.f, float b = 0.f) {
+    auto drawText = [&](const std::string& text, float x, float y, const std::string& font, float size, float r = 0.f, float g = 0.f, float b = 0.f) {
         stream << r << " " << g << " " << b << " rg\n";
         stream << "BT /" << font << " " << size << " Tf " << x << " " << y << " Td (" << escapePdf(text) << ") Tj ET\n";
     };

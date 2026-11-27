@@ -55,23 +55,9 @@ bool InventoryManager::loadInventory(const std::string& customPath) {
     if (!customPath.empty() && fs::exists(customPath)) {
         mFilePath = customPath;
     } else {
-        std::vector<std::string> candidates = {
-            "inventory.txt",
-            "frontend/inventory.txt",
-            "../inventory.txt",
-            "../../inventory.txt"
-        };
-
-        std::string found;
-        for (const auto& c : candidates) {
-            if (fs::exists(c)) {
-                found = c;
-                break;
-            }
-        }
-        if (found.empty()) {
-            createDefaultInventoryFile("inventory.txt");
-            found = "inventory.txt";
+        std::string found = resolveDataFilePath("inventory.txt");
+        if (!fs::exists(found)) {
+            createDefaultInventoryFile(found);
         }
         mFilePath = found;
     }

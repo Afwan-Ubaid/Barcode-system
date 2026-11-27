@@ -1,4 +1,5 @@
 #include "SeasonManager.h"
+#include "UIUtils.h"
 #include <fstream>
 #include <sstream>
 #include <filesystem>
@@ -18,7 +19,7 @@ SeasonManager::SeasonManager() {
 }
 
 bool SeasonManager::loadSeasons(const std::string& path) {
-    std::ifstream in(path);
+    std::ifstream in(resolveDataFilePath(path));
     if (!in.is_open()) return false;
 
     mSeasons.clear();
@@ -45,10 +46,7 @@ bool SeasonManager::loadSeasons(const std::string& path) {
 }
 
 bool SeasonManager::saveSeasons(const std::string& path) const {
-    std::vector<std::string> targets = {path};
-    if (path == "Seasons.txt" && fs::exists("frontend")) {
-        targets.push_back("frontend/Seasons.txt");
-    }
+    std::vector<std::string> targets = {resolveDataFilePath(path)};
     bool ok = false;
     for (const auto& p : targets) {
         std::ofstream out(p);

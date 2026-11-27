@@ -2,6 +2,8 @@
 #include <cmath>
 #include <ctime>
 #include <algorithm>
+#include <filesystem>
+#include <vector>
 
 namespace Layout {
     const char* CATEGORIES[] = {
@@ -127,4 +129,24 @@ std::string getCurrentTimeHHMMSS() {
     char buf[32];
     std::strftime(buf, sizeof(buf), "%H:%M:%S", &tmNow);
     return std::string(buf);
+}
+
+std::string resolveDataFilePath(const std::string& filename) {
+    std::vector<std::string> candidates = {
+        "data/" + filename,
+        "../data/" + filename,
+        "../../data/" + filename,
+        filename,
+        "frontend/" + filename,
+        "../" + filename,
+        "../../" + filename
+    };
+    for (const auto& c : candidates) {
+        if (std::filesystem::exists(c)) return c;
+    }
+    if (std::filesystem::exists("data")) return "data/" + filename;
+    if (std::filesystem::exists("../data")) return "../data/" + filename;
+    if (std::filesystem::exists("../../data")) return "../../data/" + filename;
+    std::filesystem::create_directories("data");
+    return "data/" + filename;
 }

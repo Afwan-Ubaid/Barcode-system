@@ -1,4 +1,5 @@
 #include "CustomerManager.h"
+#include "UIUtils.h"
 
 #include <algorithm>
 #include <cctype>
@@ -22,10 +23,10 @@ static std::string sanitizeCustomerField(const std::string& s) {
 }
 
 bool CustomerManager::loadCustomers(const std::string& filePath) {
-    mFilePath = filePath;
+    mFilePath = resolveDataFilePath(filePath);
     mCustomers.clear();
 
-    std::ifstream file(filePath);
+    std::ifstream file(mFilePath);
     if (!file.is_open()) {
         // Seed a couple of sample loyalty customers or start empty cleanly
         return false;

@@ -1,0 +1,45 @@
+# ==============================================================================
+# ScanIT Inventory & Supplier Procurement Database
+# ==============================================================================
+# [INVENTORY_ITEMS]
+# Format: Barcode,Description,Category,Unit,RetailPrice,CostPrice,Stock,Supplier,ArrivalDate,BarcodePath,ExpiryDate
+090010,ahmad,Grocery,1 L,320,250,13,Nestle Pakistan,2026-11-17,barcodes/barcode_090010.bmp,
+030003,Atelier coffee,Drinks,250 g,180,120,29,Espresso Labs,2026-11-14,barcodes/barcode_030003.bmp,
+090006,Basmati rice,Grocery,1 kg,540,420,77,Punjab Grains,2026-11-12,barcodes/barcode_090006.bmp,
+090001,ccc,Grocery,1 L,320,250,30,Nestle Pakistan,2026-11-17,barcodes/barcode_090001.bmp,
+090007,Cereal Box,Grocery,500 g,420,310,42,Morning Foods,2026-11-10,barcodes/barcode_090007.bmp,
+010001,Fresh Milk,Dairy,1 L,320,250,44,Nestle Pakistan,2026-11-15,barcodes/barcode_010001.bmp,
+030006,Green Tea,Drinks,100 g,260,190,48,Himalayan Herbs,2026-11-11,barcodes/barcode_030006.bmp,
+050008,Lavender Deterg.,Household,1.5 L,480,360,27,CleanHome Co,2026-11-17,barcodes/barcode_050008.bmp,
+020001,lulu,Bakery,1 L,260,250,30,Nestle Pakistan,2026-11-17,barcodes/barcode_020001.bmp,
+090004,mango shkah,Grocery,1 L,0,0,30,Nestle,2026-11-17,barcodes/barcode_090004.bmp,
+030001,musambi juice,Drinks,1 L,0,0,5,Nestle Pakistan,2026-11-17,barcodes/barcode_030001.bmp,
+090002,nunu,Grocery,1 L,320,250,30,Nestle Pakistan,2026-11-17,barcodes/barcode_090002.bmp,
+030005,Orange Juice,Drinks,1 L,290,210,18,Citrus Farms,2026-11-15,barcodes/barcode_030005.bmp,
+040007,Pistachio Crunch,Snacks,150 g,350,260,20,NutriDelight,2026-11-16,barcodes/barcode_040007.bmp,
+090003,raheel,Grocery,1 L,0,0,10,Nestle Pakistan,2026-11-17,barcodes/barcode_090003.bmp,
+060004,Red apples,Fruits & Veg,1 kg,240,170,90,Fresh Orchards,2026-11-17,barcodes/barcode_060004.bmp,
+020002,Sourdough Bread,Bakery,1 loaf,180,130,15,Artisan Bakes,2026-11-16,barcodes/barcode_020002.bmp,
+040009,wadood,Snacks,1 L,320,250,30,Nestle Pakistan,2026-11-17,barcodes/barcode_040009.bmp,
+
+# [SUPPLIER_PURCHASE_HISTORY]
+# Format: Date | Supplier | Barcode | Description | QtyPurchased | UnitCostPrice | TotalCost
+2026-11-17 | Nestle | 090004 | mango shkah | 30 | 0 | 0
+2026-11-17 | Nestle Pakistan | 030001 | musambi juice | 5 | 0 | 0
+2026-11-17 | Nestle Pakistan | 090003 | raheel | 10 | 0 | 0
+2026-11-17 | Nestle Pakistan | 090002 | nunu | 30 | 250 | 7500
+2026-11-17 | Nestle Pakistan | 090001 | ccc | 30 | 250 | 7500
+2026-11-17 | Nestle Pakistan | 020001 | lulu | 30 | 250 | 7500
+2026-11-17 | CleanHome Co | 050008 | Lavender Deterg. | 10 | 360 | 3600
+2026-11-17 | Nestle Pakistan | 090010 | ahmad | 30 | 250 | 7500
+2026-11-17 | Nestle Pakistan | 040009 | wadood | 30 | 250 | 7500
+2026-11-15 | Nestle Pakistan | 010001 | Fresh Milk | 50 | 250 | 12500
+2026-11-16 | Artisan Bakes | 020002 | Sourdough Bread | 30 | 130 | 3900
+2026-11-14 | Espresso Labs | 030003 | Atelier coffee | 40 | 120 | 4800
+2026-11-17 | Fresh Orchards | 060004 | Red apples | 60 | 170 | 10200
+2026-11-15 | Citrus Farms | 030005 | Orange Juice | 30 | 210 | 6300
+2026-11-12 | Punjab Grains | 090006 | Basmati rice | 80 | 420 | 33600
+2026-11-16 | NutriDelight | 040007 | Pistachio Crunch | 25 | 260 | 6500
+2026-11-13 | CleanHome Co | 050008 | Lavender Deterg. | 20 | 360 | 7200
+2026-11-10 | Morning Foods | 090007 | Cereal Box | 35 | 310 | 10850
+2026-11-11 | Himalayan Herbs | 030006 | Green Tea | 40 | 190 | 7600

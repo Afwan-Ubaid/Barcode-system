@@ -14,21 +14,9 @@ bool StaffManager::loadStaffFile(const std::string& customPath) {
     if (!customPath.empty() && fs::exists(customPath)) {
         mStaffFilePath = customPath;
     } else {
-        std::vector<std::string> candidates = {
-            "staff.txt",
-            "frontend/staff.txt",
-            "assets/staff.txt",
-            "../staff.txt"
-        };
-        std::string foundPath;
-        for (const auto& c : candidates) {
-            if (fs::exists(c)) {
-                foundPath = c;
-                break;
-            }
-        }
-        if (foundPath.empty()) {
-            std::ofstream out("staff.txt");
+        std::string foundPath = resolveDataFilePath("staff.txt");
+        if (!fs::exists(foundPath)) {
+            std::ofstream out(foundPath);
             if (out.is_open()) {
                 out << "# ScanIT Staff Database\n"
                     << "# Format: Name,Password,Role,CreatedDate\n"
@@ -36,7 +24,6 @@ bool StaffManager::loadStaffFile(const std::string& customPath) {
                     << "cashier1,1234,Employee,2026-11-17\n";
                 out.close();
             }
-            foundPath = "staff.txt";
         }
         mStaffFilePath = foundPath;
     }

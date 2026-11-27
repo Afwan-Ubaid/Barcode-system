@@ -43,6 +43,9 @@ static std::string desanitizeName(std::string name) {
 
 std::string findDataFilePath(const std::string& filename) {
     std::vector<std::string> candidates = {
+        "data/" + filename,
+        "../data/" + filename,
+        "../../data/" + filename,
         filename,
         "frontend/" + filename,
         "backend/" + filename,
@@ -56,7 +59,11 @@ std::string findDataFilePath(const std::string& filename) {
             return c;
         }
     }
-    return filename;
+    if (fs::exists("data")) return "data/" + filename;
+    if (fs::exists("../data")) return "../data/" + filename;
+    if (fs::exists("../../data")) return "../../data/" + filename;
+    fs::create_directories("data");
+    return "data/" + filename;
 }
 
 static void determineCategoryAndIcon(ProductItem& p) {

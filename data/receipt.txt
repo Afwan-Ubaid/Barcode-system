@@ -1,0 +1,36 @@
+========================================================
+             SCANIT SUPERMARKET & SMART POS             
+          Smart Point of Sale & Retail Express          
+        Main Boulevard, Gulberg III, Lahore, PK         
+          Tel: 042-35789000  *  NTN: 8492019-3          
+         Terminal: REG-04  *  Store: PK-LHR-01          
+========================================================
+                 SALES RECEIPT / INVOICE                
+--------------------------------------------------------
+Date:     2026-11-23 17:03:42
+Order ID: #ORD-1014
+Cashier:  admin
+Terminal: POS Counter 04
+Status:   COMPLETED / PAID IN FULL
+--------------------------------------------------------
+ITEM NAME                  QTY    UNIT PRICE     TOTAL  
+--------------------------------------------------------
+Atelier Coffee             x1     Rs 100       Rs 100
+Basmati Rice               x2     Rs 100       Rs 200
+Fresh Milk                 x1     Rs 100       Rs 100
+Green Tea                  x1     Rs 100       Rs 100
+--------------------------------------------------------
+Subtotal:                                  Rs 500
+========================================================
+TOTAL AMOUNT:                              Rs 500
+========================================================
+Payment Method:                            CASH
+Cash Tendered:                             Rs 1,500
+Change Returned:                           Rs 1,000
+--------------------------------------------------------
+                 * ORD-1014 *
+--------------------------------------------------------
+       THANK YOU FOR SHOPPING WITH SCANIT STORE!        
+    Exchange / Return valid for 7 days with this slip   
+         Customer Helpline: info@scanit-pos.com         
+========================================================

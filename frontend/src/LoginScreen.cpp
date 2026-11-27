@@ -388,7 +388,7 @@ void LoginScreen::draw(sf::RenderTarget& target) const {
                                LoginTheme::GlassCardFill, specularRim, 1.8f));
 
     // Card Title (Ivory inside dark glass)
-    std::string titleStr = (currentRole == LoginRole::Admin) ? "Manager Login" : "Salesman Login";
+    std::string titleStr = (currentRole == LoginRole::Admin) ? "Manager Login" : "Cashier Login";
     sf::Text title(titleStr, fontS, 24);
     title.setFillColor(LoginTheme::CardTitle);
     title.setPosition(cardX + 32.f, cardY + 24.f);
@@ -415,8 +415,8 @@ void LoginScreen::draw(sf::RenderTarget& target) const {
     adminLabel.setPosition(roleAdminRect.left + halfW * 0.5f, roleAdminRect.top + roleH * 0.5f);
     target.draw(adminLabel);
 
-    // Salesman label
-    sf::Text empLabel("Salesman", fontSB, 12);
+    // Cashier label
+    sf::Text empLabel("Cashier", fontSB, 12);
     empLabel.setFillColor((currentRole == LoginRole::Employee) ? LoginTheme::RoleTextActive : LoginTheme::RoleTextIdle);
     sf::FloatRect eb = empLabel.getLocalBounds();
     empLabel.setOrigin(std::round(eb.left + eb.width * 0.5f), std::round(eb.top + eb.height * 0.5f));
@@ -497,7 +497,7 @@ void LoginScreen::draw(sf::RenderTarget& target) const {
     sf::Color loginFill = hoveredLoginBtn ? LoginTheme::LoginBtnHover : LoginTheme::LoginBtnFill;
     target.draw(makeRoundedBox({scX, scY}, {scW, scH}, 11.f, loginFill, sf::Color(255, 255, 255, 60), 1.2f));
 
-    std::string btnTextStr = (currentRole == LoginRole::Admin) ? "SIGN IN AS MANAGER" : "SIGN IN AS SALESMAN";
+    std::string btnTextStr = (currentRole == LoginRole::Admin) ? "SIGN IN AS MANAGER" : "SIGN IN AS CASHIER";
     sf::Text btnText(btnTextStr, fontSB, 12);
     btnText.setFillColor(sf::Color(18, 15, 13));
     btnText.setLetterSpacing(1.1f);
